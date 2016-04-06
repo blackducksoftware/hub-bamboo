@@ -21,6 +21,7 @@
 		com.atlassian.bamboo.task,
 		com.atlassian.bamboo.utils.error,
 		com.atlassian.plugin.osgi.factory,
+        com.atlassian.templaterenderer,
 		com.atlassian.sal.api,
 		com.thoughtworks.xstream,
 		com.thoughtworks.xstream.io,
@@ -29,6 +30,8 @@
 		javax.inject,
 		javax.net.ssl,
 		javax.security.auth.x500,
+		javax.servlet,
+		javax.servlet.http,
 		javax.xml.namespace,
 		javax.xml.parsers,
 		javax.xml.transform,
@@ -78,6 +81,8 @@
         <context>int-hub-bamboo</context>
     </web-resource>
     
+    <resource type="i18n" name="i18n-properties" location="com.blackducksoftware.integration.hub.configui.i18n" />
+    
     <!-- publish our component -->
     <component key="myPluginComponent" class="com.blackducksoftware.integration.MyPluginComponentImpl" public="true">
         <interface>com.blackducksoftware.integration.MyPluginComponent</interface>
@@ -85,5 +90,13 @@
     
     <!-- import from the product container -->
     <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties" />
+    
+    <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
+    <component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider"/>
+    <component-import key="renderer" interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer"/>
+    
+    <servlet key="config-servlet" class="com.blackducksoftware.integration.hub.bamboo.config.ConfigServlet">
+        <url-pattern>/blackduckhub/config</url-pattern>
+    </servlet>
     
 </atlassian-plugin>
