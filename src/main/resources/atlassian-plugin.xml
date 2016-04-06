@@ -32,6 +32,7 @@
 		javax.security.auth.x500,
 		javax.servlet,
 		javax.servlet.http,
+		javax.xml.bind,
 		javax.xml.namespace,
 		javax.xml.parsers,
 		javax.xml.transform,
@@ -71,7 +72,7 @@
     <resource type="i18n" name="i18n" location="int-hub-bamboo"/>
     
     <!-- add our web resources -->
-    <web-resource key="int-hub-bamboo-resources" name="int-hub-bamboo Web Resources">
+    <web-resource key="webresources" name="int-hub-bamboo Web Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
         
         <resource type="download" name="int-hub-bamboo.css" location="/css/int-hub-bamboo.css"/>
@@ -94,9 +95,21 @@
     <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
     <component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider"/>
     <component-import key="renderer" interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer"/>
+    <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
+    <component-import key="transactionTemplate" interface="com.atlassian.sal.api.transaction.TransactionTemplate"/>
     
-    <servlet key="config-servlet" class="com.blackducksoftware.integration.hub.bamboo.config.ConfigServlet">
-        <url-pattern>/blackduckhub/config</url-pattern>
+    <rest key="rest" path="/blackduckhub-admin" version="1.0">
+        <description>Provide REST resources for the Black Duck Hub Administration UI.</description>
+    </rest>
+    
+    <servlet key="admin-servlet" class="com.blackducksoftware.integration.hub.bamboo.config.ConfigServlet">
+        <url-pattern>/blackduckhub/admin</url-pattern>
     </servlet>
+    
+    <web-item key="bamboo-menu-item" name="Black Duck Hub Admin" section="system.admin/plugins" weight="10" application="bamboo"> 
+        <description>Link to Black Duck Hub Plugin Administration page.</description> 
+        <label key="Black Duck Hub Admin" /> 
+        <link linkId="blackduckhub-admin-link">/plugins/servlet/blackduckhub/admin</link> 
+    </web-item>
     
 </atlassian-plugin>

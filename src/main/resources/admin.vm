@@ -2,7 +2,7 @@
   <head>
     <title>$i18n.getText("blackduckhub.config.title.label")</title>
     <meta name="decorator" content="atl.admin">
-    $webResourceManager.requireResource("com.atlassian.auiplugin:ajs")
+    $webResourceManager.requireResource("com.blackducksoftware.integration.int-hub-bamboo:webresources")
   </head>
   <body>
     <form id="hubConfig" class="aui">
@@ -10,7 +10,7 @@
         <table border="0" style="width: 100%" class="field-group">
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubUrl.label")</label>
+                    <label for="hubUrl">$i18n.getText("blackduckhub.config.hubUrl.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubUrl" id="hubUrl" value="" class="text"/>
@@ -18,7 +18,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubUser.label")</label>
+                    <label for="hubUser">$i18n.getText("blackduckhub.config.hubUser.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubUser" id="hubUser" value="" class="text"/>
@@ -26,7 +26,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubPass.label")</label>
+                    <label for="hubPass">$i18n.getText("blackduckhub.config.hubPass.label")</label>
                 </td>
                 <td>
                     <input type="password" name="hubPass" id="hubPass" value="" class="text" autocomplete="false"/>
@@ -37,7 +37,7 @@
         <table border="0" style="width: 100%" class="field-group">
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubProxyUrl.label")</label>
+                    <label for="hubProxyUrl">$i18n.getText("blackduckhub.config.hubProxyUrl.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubProxyUrl" id="hubProxyUrl" value="" class="text"/>
@@ -45,7 +45,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubProxyPort.label")</label>
+                    <label for="hubProxyPort">$i18n.getText("blackduckhub.config.hubProxyPort.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubProxyPort" id="hubProxyPort" value="" class="text"/>
@@ -53,7 +53,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubNoProxyHost.label")</label>
+                    <label for="hubNoProxyHost">$i18n.getText("blackduckhub.config.hubNoProxyHost.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubNoProxyHost" id="hubNoProxyHost" value="" class="text"/>
@@ -61,7 +61,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubProxyUser.label")</label>
+                    <label for="hubProxyUser">$i18n.getText("blackduckhub.config.hubProxyUser.label")</label>
                 </td>
                 <td>
                     <input type="text" name="hubProxyUser" id="hubProxyUser" value="" class="text"/>
@@ -69,7 +69,7 @@
             </tr>
             <tr>
                 <td width="200px">
-                    <label>$i18n.getText("blackduckhub.config.hubProxyPass.label")</label>
+                    <label for="hubProxyPass">$i18n.getText("blackduckhub.config.hubProxyPass.label")</label>
                 </td>
                 <td>
                     <input type="password" name="hubProxyPass" id="hubProxyPass" value="" autocomplete="false" class="text"/>
@@ -84,8 +84,7 @@
                     </div>
                 </td>
             </tr>
-        </table>
-      
+        </table>   
     </form>
   </body>
 </html>
