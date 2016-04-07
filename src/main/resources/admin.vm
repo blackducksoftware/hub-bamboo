@@ -78,7 +78,7 @@
             <tr>
                 <td/>
                 <td>
-                    <div class="field-group">
+                    <div>
                         <input type="submit" value="$i18n.getText("blackduckhub.config.save.label")" class="button"/>
                         <input type="button" value="$i18n.getText("blackduckhub.config.testconnection.label")" class="button"/>
                     </div>

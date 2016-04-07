@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.blackducksoftware.integration</groupId>
     <artifactId>int-hub-bamboo</artifactId>
@@ -12,63 +9,58 @@
     <name>Black Duck Hub Plugin for Bamboo</name>
     <description>Open Source Governance with Black Duck Hub (TM).</description>
     <inceptionYear>2016</inceptionYear>
-    
     <organization>
         <name>Blackduck Software</name>
         <url>https://www2.blackducksoftware.com/</url>
     </organization>
-
     <repositories>
-		<repository>
-			<id>integrationRelease</id>
-			<name>bds-artifactory</name>
-			<url>http://artifactory.blackducksoftware.com:8081/artifactory/integration</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-		</repository>
-		<repository>
-			<id>integrationSnap</id>
-			<name>bds-artifactory</name>
-			<url>http://artifactory.blackducksoftware.com:8081/artifactory/integration-snapshot</url>
-		</repository>
-		<repository>
-           <id>atlassian-public</id>
-           <url>https://maven.atlassian.com/repository/public</url>
-           <snapshots>
-             <enabled>true</enabled>
-             <updatePolicy>never</updatePolicy>
-             <checksumPolicy>warn</checksumPolicy>
-           </snapshots>
-           <releases>
-             <enabled>true</enabled>
-             <checksumPolicy>warn</checksumPolicy>
-           </releases>
-         </repository>
+        <repository>
+            <id>integrationRelease</id>
+            <name>bds-artifactory</name>
+            <url>http://artifactory.blackducksoftware.com:8081/artifactory/integration</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+        <repository>
+            <id>integrationSnap</id>
+            <name>bds-artifactory</name>
+            <url>http://artifactory.blackducksoftware.com:8081/artifactory/integration-snapshot</url>
+        </repository>
+        <repository>
+            <id>atlassian-public</id>
+            <url>https://maven.atlassian.com/repository/public</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+        </repository>
     </repositories>
- 
-	<pluginRepositories>
-	  <pluginRepository>
-	    <id>atlassian-public</id>
-	    <url>https://maven.atlassian.com/repository/public</url>
-	    <releases>
-	      <enabled>true</enabled>
-	      <checksumPolicy>warn</checksumPolicy>
-	    </releases>
-	    <snapshots>
-	      <updatePolicy>never</updatePolicy>
-	      <checksumPolicy>warn</checksumPolicy>
-	    </snapshots>
-	  </pluginRepository>
-	</pluginRepositories>
-
+    <pluginRepositories>
+        <pluginRepository>
+            <id>atlassian-public</id>
+            <url>https://maven.atlassian.com/repository/public</url>
+            <releases>
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
     <properties>
         <bamboo.version>5.4.2</bamboo.version>
         <bamboo.data.version>3.2.2</bamboo.data.version>
-        <amps.version>5.0.4</amps.version>
+        <amps.version>5.0.13</amps.version>
         <plugin.testrunner.version>1.1.4</plugin.testrunner.version>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.atlassian.bamboo</groupId>
@@ -94,37 +86,35 @@
             <version>1</version>
             <scope>provided</scope>
         </dependency>
-	   <dependency>
-			<groupId>com.blackducksoftware.integration</groupId>
-			<artifactId>int-hub-ci</artifactId>
-			<version>1.3.X-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>com.thoughtworks.xstream</groupId>
-					<artifactId>xstream</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
+        <dependency>
+            <groupId>com.blackducksoftware.integration</groupId>
+            <artifactId>int-hub-ci</artifactId>
+            <version>1.3.X-SNAPSHOT</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.thoughtworks.xstream</groupId>
+                    <artifactId>xstream</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>jsr311-api</artifactId>
             <version>1.1.1</version>
             <scope>provided</scope>
         </dependency>
-		<dependency>
-		  <groupId>javax.xml.bind</groupId>
-		  <artifactId>jaxb-api</artifactId>
-		  <version>2.1</version>
-		  <scope>provided</scope>
-		</dependency>
-
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.1</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
-
         <!-- WIRED TEST RUNNER DEPENDENCIES -->
         <dependency>
             <groupId>com.atlassian.plugins</groupId>
@@ -132,14 +122,12 @@
             <version>${plugin.testrunner.version}</version>
             <scope>test</scope>
         </dependency>
-        
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.2.2-atlassian-1</version>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -150,13 +138,6 @@
                 <configuration>
                     <productVersion>${bamboo.version}</productVersion>
                     <productDataVersion>${bamboo.data.version}</productDataVersion>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
                 </configuration>
             </plugin>
         </plugins>

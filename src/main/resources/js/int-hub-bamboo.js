@@ -1,6 +1,6 @@
 (function ($) { 
 	// form the url 
-	var url = AJS.contextPath() + "/rest/blackduckhub-admin/1.0/";
+	var url = AJS.contextPath() + "/rest/blackduckhub-admin/1.0/config";
 	
 	$(document).ready(function () {
 		// request the config information from the server
@@ -31,7 +31,7 @@ AJS.$("#hubConfig").submit(function(e) {
 
 function updateConfig() {
 	AJS.$.ajax({
-		url: baseUrl + "/rest/blackduckhub-admin/1.0/",
+		url: baseUrl + "/rest/blackduckhub-admin/1.0/config",
 		type: "PUT",
 		contentType: "application/json",
 		data: '{ "hubUrl": "' + AJS.$("#hubUrl".attr("value"))  
