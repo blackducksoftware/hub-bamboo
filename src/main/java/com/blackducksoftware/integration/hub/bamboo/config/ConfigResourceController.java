@@ -16,7 +16,6 @@ import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.transaction.TransactionCallback;
 import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
-import com.blackducksoftware.integration.hub.bamboo.config.resources.HubConfig;
 
 @Path("/")
 public class ConfigResourceController {

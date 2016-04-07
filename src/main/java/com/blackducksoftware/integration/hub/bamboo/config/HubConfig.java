@@ -1,4 +1,4 @@
-package com.blackducksoftware.integration.hub.bamboo.config.resources;
+package com.blackducksoftware.integration.hub.bamboo.config;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

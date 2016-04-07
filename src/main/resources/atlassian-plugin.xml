@@ -100,6 +100,7 @@
     
     <rest key="rest" path="/blackduckhub-admin" version="1.0">
         <description>Provide REST resources for the Black Duck Hub Administration UI.</description>
+        <package>com.blackducksoftware.integration.hub.bamboo.config</package>
     </rest>
     
     <servlet key="admin-servlet" class="com.blackducksoftware.integration.hub.bamboo.config.ConfigServlet">
