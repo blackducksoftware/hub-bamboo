@@ -13,6 +13,7 @@
 			org.eclipse.gemini.blueprint.service.exporter.support;resolution:=optional,
 	        org.eclipse.gemini.blueprint.service.importer.support;resolution:=optional,
 	        sun.misc;resolution:=optional,
+	        com.sun.net.httpserver;resolution:=optional,
 			org.joda.convert;resolution:=optional,
 			com.atlassian.bamboo.build.logger,
 			com.atlassian.bamboo.bandana,
@@ -110,6 +111,7 @@
     <xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
         <package name="configHubPlugin" extends="admin">
             <action name="configHubServer" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
+                <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
                 <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
             </action>
             <action name="configServerDetails" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction" method="editConfig">

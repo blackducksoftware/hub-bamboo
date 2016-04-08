@@ -1,7 +1,10 @@
 package com.blackducksoftware.integration.hub.bamboo.config.actions;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.Authenticator;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
@@ -15,6 +18,8 @@ import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
+import org.restlet.engine.Engine;
+import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.spring.ComponentAccessor;
@@ -65,28 +70,39 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			final HubConfig config = configManager.readConfig();
 			updateLocalMembers(config);
 			encryptionService = ComponentAccessor.ENCRYPTION_SERVICE.get();
+
+			// configure the Restlet engine so that the HTTPHandle and classes
+			// from the com.sun.net.httpserver package
+			// do not need to be used at runtime to make client calls.
+			// DO NOT REMOVE THIS or the OSGI bundle will throw a
+			// ClassNotFoundException for com.sun.net.httpserver.HttpHandler.
+			// Since we are acting as a client we do not need the httpserver
+			// components.
+
+			// This workaround found here:
+			// http://stackoverflow.com/questions/25179243/com-sun-net-httpserver-httphandler-classnotfound-exception-on-java-embedded-runt
+
+			Engine.register(false);
+			Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
 		}
 	}
 
 	@Override
 	public void validate() {
-
+		clearErrorsAndMessages();
 		if (StringUtils.isBlank(getHubUser())) {
-			addError("errorUserName", "Please specify a UserName.");
+			addFieldError("hubUser", "Please specify a UserName.");
 		}
 		if (StringUtils.isBlank(getHubPass())) {
-			addError("errorPassword", "There is no saved Password. Please specify a Password.");
+			addFieldError("hubPass", "There is no saved Password. Please specify a Password.");
 		}
 
 		if (StringUtils.isBlank(getHubUrl())) {
-			addError("errorUrl", "Please specify a URL.");
+			addFieldError("hubUrl", "Please specify a URL.");
 		}
 
 		validateProxySettings();
 		validateUrl(getHubUrl());
-
-		// use hub ci common validation here....
-		super.validate();
 	}
 
 	private void validateUrl(final String url) { // , boolean isTestConnection)
@@ -98,10 +114,10 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			try {
 				testUrl.toURI();
 			} catch (final URISyntaxException e) {
-				addError("errorUrl", "Please specify a valid URL of a Hub server. " + e.toString());
+				addFieldError("hubUrl", "Please specify a valid URL of a Hub server. " + e.toString());
 			}
 		} catch (final MalformedURLException e) {
-			addError("errorUrl", "Please specify a valid URL of a Hub server. " + e.toString());
+			addFieldError("hubUrl", "Please specify a valid URL of a Hub server. " + e.toString());
 		}
 		// if (isTestConnection) {
 		if (testUrl != null) {
@@ -112,23 +128,22 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 					// results in an error for too many redirects
 					System.setProperty("http.maxRedirects", "3");
 				}
-				final Proxy proxy = null;
+				Proxy proxy = null;
 
-				// if (StringUtils.isNotBlank(getHubProxyUrl())
-				// && StringUtils.isNotBlank(getHubNoProxyHost())) {
-				// for (final Pattern p : getHubNoProxyHost()) {
-				// if (p.matcher(proxyInfo.getHost()).matches()) {
-				// proxy = Proxy.NO_PROXY;
-				// }
-				// }
-				// }
-				// if (proxy == null &&
-				// StringUtils.isNotBlank(proxyInfo.getHost()) &&
-				// proxyInfo.getPort() != null) {
-				// proxy = new Proxy(Proxy.Type.HTTP,
-				// new InetSocketAddress(proxyInfo.getHost(),
-				// proxyInfo.getPort()));
-				// }
+				final HubProxyInfo proxyInfo = createProxyInfo();
+
+				if (StringUtils.isNotBlank(proxyInfo.getHost())
+						&& StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
+					for (final Pattern p : proxyInfo.getNoProxyHostPatterns()) {
+						if (p.matcher(proxyInfo.getHost()).matches()) {
+							proxy = Proxy.NO_PROXY;
+						}
+					}
+				}
+				if (proxy == null && StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != null) {
+					proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyInfo.getHost(), proxyInfo.getPort()));
+				}
+				attemptResetProxyCache();
 				if (proxy != null && proxy != Proxy.NO_PROXY) {
 
 					if (StringUtils.isNotBlank(getHubProxyUser()) && StringUtils.isNotBlank(getHubProxyPass())) {
@@ -151,11 +166,12 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 				connection.getContent();
 			} catch (final IOException ioe) {
-				addError("errorUrl", "Trouble reaching the Hub server. " + ioe.toString());
+				addFieldError("hubUrl", "Trouble reaching the Hub server. " + ioe.toString());
 			} catch (final RuntimeException e) {
-				addError("errorUrl", "Not a valid Hub server. " + e.toString());
+				addFieldError("hubUrl", "Not a valid Hub server. " + e.toString());
 			}
 		}
+
 	}
 
 	private void validateProxySettings() {
@@ -165,17 +181,17 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			try {
 				final int port = Integer.valueOf(proxyPort);
 				if (StringUtils.isNotBlank(getHubProxyUrl()) && port < 0) {
-					addError("errorHubProxyPort", "Please enter a valid Proxy port.");
+					addFieldError("hubProxyPort", "Please enter a valid Proxy port.");
 				}
 			} catch (final NumberFormatException e) {
-				addError("errorHubProxyPort", "Please enter a valid Proxy port. " + e.toString());
+				addFieldError("hubProxyPort", "Please enter a valid Proxy port. " + e.toString());
 			}
 		}
 		final String noProxyHosts = getHubNoProxyHost();
 		if (StringUtils.isNotBlank(noProxyHosts)) {
 			String[] ignoreHosts = null;
 			final List<Pattern> noProxyHostsPatterns = new ArrayList<Pattern>();
-			boolean patternError = false;
+
 			if (StringUtils.isNotBlank(noProxyHosts)) {
 				if (noProxyHosts.contains(",")) {
 					ignoreHosts = noProxyHosts.split(",");
@@ -184,8 +200,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 							final Pattern pattern = Pattern.compile(ignoreHost);
 							noProxyHostsPatterns.add(pattern);
 						} catch (final PatternSyntaxException e) {
-							patternError = true;
-							addError("errorHubNoProxyHost",
+
+							addFieldError("hubNoProxyHost",
 									"The host : " + ignoreHost + " : is not a valid regular expression.");
 						}
 					}
@@ -194,13 +210,47 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 						final Pattern pattern = Pattern.compile(noProxyHosts);
 						noProxyHostsPatterns.add(pattern);
 					} catch (final PatternSyntaxException e) {
-						patternError = true;
-						addError("errorHubNoProxyHost",
+
+						addFieldError("ubNoProxyHost",
 								"The host : " + noProxyHosts + " : is not a valid regular expression.");
 					}
 				}
 			}
 
+		}
+	}
+
+	private void attemptResetProxyCache() {
+		try {
+			// works, and resets the cache when using sun classes
+			// sun.net.www.protocol.http.AuthCacheValue.setAuthCache(new
+			// sun.net.www.protocol.http.AuthCacheImpl());
+
+			// Attempt the same thing using reflection in case they are not
+			// using a jdk with sun classes
+
+			Class<?> sunAuthCacheValue;
+			Class<?> sunAuthCache;
+			Class<?> sunAuthCacheImpl;
+			try {
+				sunAuthCacheValue = Class.forName("sun.net.www.protocol.http.AuthCacheValue");
+				sunAuthCache = Class.forName("sun.net.www.protocol.http.AuthCache");
+				sunAuthCacheImpl = Class.forName("sun.net.www.protocol.http.AuthCacheImpl");
+			} catch (final Exception e) {
+				// Must not be using a JDK with sun classes so we abandon this
+				// reset since it is sun specific
+				return;
+			}
+
+			final Method m = sunAuthCacheValue.getDeclaredMethod("setAuthCache", sunAuthCache);
+
+			final Constructor<?> authCacheImplConstr = sunAuthCacheImpl.getConstructor();
+			final Object authCachImp = authCacheImplConstr.newInstance();
+
+			m.invoke(null, authCachImp);
+
+		} catch (final Exception e) {
+			logger.error(e);
 		}
 	}
 
@@ -263,8 +313,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		logger.info(buffer + " hubProxyPass:    " + config.getHubProxyPass());
 	}
 
-	private void configureProxyToService(final HubIntRestService service) {
-
+	public HubProxyInfo createProxyInfo() {
 		final HubProxyInfo proxyInfo = new HubProxyInfo();
 		proxyInfo.setHost(getHubProxyUrl());
 		if (StringUtils.isNotBlank(getHubProxyPort())) {
@@ -274,6 +323,12 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		proxyInfo.setProxyUsername(getHubProxyUser());
 		proxyInfo.setProxyPassword(getHubProxyPass());
 
+		return proxyInfo;
+	}
+
+	private void configureProxyToService(final HubIntRestService service) {
+
+		final HubProxyInfo proxyInfo = createProxyInfo();
 		Proxy proxy = null;
 
 		if (StringUtils.isNotBlank(proxyInfo.getHost()) && StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
@@ -312,19 +367,19 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	}
 
 	public String getHubUser() {
-		return encryptionService.decrypt(hubUser);
+		return hubUser;
 	}
 
 	public void setHubUser(final String hubUser) {
-		this.hubUser = encryptionService.encrypt(hubUser);
+		this.hubUser = hubUser;
 	}
 
 	public String getHubPass() {
-		return encryptionService.decrypt(hubPass);
+		return hubPass;
 	}
 
 	public void setHubPass(final String hubPass) {
-		this.hubPass = encryptionService.encrypt(hubPass);
+		this.hubPass = hubPass;
 	}
 
 	public String getHubProxyUrl() {

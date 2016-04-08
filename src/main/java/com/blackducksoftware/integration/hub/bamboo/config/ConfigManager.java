@@ -37,8 +37,11 @@ public class ConfigManager implements Serializable {
 
 			final String hubUser = encryptionService.decrypt(config.getHubUser());
 			final String hubProxyUser = encryptionService.decrypt(config.getHubProxyUser());
-			return new HubConfig(config.getHubUrl(), hubUser, config.getHubPass(), config.getHubProxyUrl(),
-					config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, config.getHubProxyPass());
+			final String hubPass = encryptionService.decrypt(config.getHubPass());
+			final String hubProxyPass = encryptionService.decrypt(config.getHubProxyPass());
+
+			return new HubConfig(config.getHubUrl(), hubUser, hubPass, config.getHubProxyUrl(),
+					config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, hubProxyPass);
 		}
 	}
 
