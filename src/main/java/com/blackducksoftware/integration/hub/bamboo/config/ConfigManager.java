@@ -8,6 +8,7 @@ import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.spring.ComponentAccessor;
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.util.concurrent.NotNull;
 
 public class ConfigManager implements Serializable {
 
@@ -20,22 +21,9 @@ public class ConfigManager implements Serializable {
 
 	private final static String HUB_CONFIG_KEY = "com.blackducksoftware.integration.hub.bamboo.configuration";
 
-	// public static ConfigManager getInstance() {
-	// final ConfigManager configManager = new ConfigManager();
-	// ContainerManager.autowireComponent(configManager);
-	// return configManager;
-	// }
-	//
-	// public ConfigManager() {
-	//
-	// }
-
 	public void setBandanaManager(final BandanaManager bandanaManager) {
 		this.bandanaManager = bandanaManager;
-
-		logger.info("BandanaManager wiring for ConfigManager Before Encryption");
 		encryptionService = ComponentAccessor.ENCRYPTION_SERVICE.get();
-		logger.info("BandanaManager wiring for ConfigManager After Encryption");
 	}
 
 	public HubConfig readConfig() {
@@ -43,13 +31,18 @@ public class ConfigManager implements Serializable {
 		final HubConfig config = (HubConfig) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT,
 				HUB_CONFIG_KEY);
 
-		final String hubUser = encryptionService.decrypt(config.getHubUser());
-		final String hubProxyUser = encryptionService.decrypt(config.getHubProxyUser());
-		return new HubConfig(config.getHubUrl(), hubUser, config.getHubPass(), config.getHubProxyUrl(),
-				config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, config.getHubProxyPass());
+		if (config == null) {
+			return new HubConfig();
+		} else {
+
+			final String hubUser = encryptionService.decrypt(config.getHubUser());
+			final String hubProxyUser = encryptionService.decrypt(config.getHubProxyUser());
+			return new HubConfig(config.getHubUrl(), hubUser, config.getHubPass(), config.getHubProxyUrl(),
+					config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, config.getHubProxyPass());
+		}
 	}
 
-	public void writeConfig(final HubConfig config) {
+	public void writeConfig(@NotNull final HubConfig config) {
 
 		final String hubUser = encryptionService.encrypt(config.getHubUser());
 		final String hubPass = encryptionService.encrypt(config.getHubPass());
