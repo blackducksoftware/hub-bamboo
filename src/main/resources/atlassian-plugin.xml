@@ -16,10 +16,16 @@
 	        sun.misc;resolution:=optional,
 			org.joda.convert;resolution:=optional,
 			com.atlassian.bamboo.build.logger,
+			com.atlassian.bamboo.bandana,
 			com.atlassian.bamboo.collections,
 			com.atlassian.bamboo.configuration,
+			com.atlassian.bamboo.spring,
 			com.atlassian.bamboo.task,
 			com.atlassian.bamboo.utils.error,
+			com.atlassian.bamboo.ww2,
+			com.atlassian.bamboo.ww2.aware,
+			com.atlassian.bamboo.ww2.aware.permissions,
+			com.atlassian.spring.container,
 			com.atlassian.plugin.osgi.factory,
 	        com.atlassian.templaterenderer,
 			com.atlassian.sal.api,
@@ -41,6 +47,7 @@
 			javax.xml.xpath,
 			org.apache.commons.lang,
 			org.apache.commons.logging,
+			org.apache.log4j,
 			org.apache.maven.eventspy,
 			org.apache.maven.execution,
 			org.apache.maven.project,
@@ -89,6 +96,9 @@
         <interface>com.blackducksoftware.integration.MyPluginComponent</interface>
     </component>
     
+    <component name="BlackDuck Hub Server Configuration Management Component" key="hubServerConfigManager" 
+               class="com.blackducksoftware.integration.hub.bamboo.config.ConfigManager"/>
+    
     <!-- import from the product container -->
     <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties" />
     
@@ -98,6 +108,16 @@
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
     <component-import key="transactionTemplate" interface="com.atlassian.sal.api.transaction.TransactionTemplate"/>
     
+    <xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
+        <package name="configHubPlugin" extends="admin">
+            <action name="configHubServer" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
+                <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
+                <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+            </action>
+        </package>
+    </xwork>
+    
+    <!-- 
     <rest key="rest" path="/blackduckhub-admin" version="1.0">
         <description>Provide REST resources for the Black Duck Hub Administration UI.</description>
         <package>com.blackducksoftware.integration.hub.bamboo.config</package>
@@ -105,12 +125,12 @@
     
     <servlet key="admin-servlet" class="com.blackducksoftware.integration.hub.bamboo.config.ConfigServlet">
         <url-pattern>/blackduckhub/admin</url-pattern>
-    </servlet>
+    </servlet> -->
     
     <web-item key="bamboo-menu-item" name="Black Duck Hub Admin" section="system.admin/plugins" weight="10" application="bamboo"> 
         <description>Link to Black Duck Hub Plugin Administration page.</description> 
         <label key="Black Duck Hub Admin"/> 
-        <link linkId="blackduckhub-admin-link">/plugins/servlet/blackduckhub/admin</link> 
+        <link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link> 
     </web-item>
     
 </atlassian-plugin>

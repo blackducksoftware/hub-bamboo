@@ -1,30 +1,37 @@
 package com.blackducksoftware.integration.hub.bamboo.config;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import java.io.Serializable;
 
-@XmlRootElement
-@XmlAccessorType(XmlAccessType.FIELD)
-public class HubConfig {
+public class HubConfig implements Serializable {
 
-	@XmlElement
+	private static final long serialVersionUID = -3260976719663527625L;
+
 	private String hubUrl;
-	@XmlElement
 	private String hubUser;
-	@XmlElement
 	private String hubPass;
-	@XmlElement
 	private String hubProxyUrl;
-	@XmlElement
 	private String hubProxyPort;
-	@XmlElement
 	private String hubNoProxyHost;
-	@XmlElement
 	private String hubProxyUser;
-	@XmlElement
 	private String hubProxyPass;
+
+	public HubConfig() {
+
+	}
+
+	public HubConfig(final String hubUrl, final String hubUser, final String hubPass, final String hubProxyUrl,
+			final String hubProxyPort, final String hubNoProxyHost, final String hubProxyUser,
+			final String hubProxyPass) {
+
+		this.hubUrl = hubUrl;
+		this.hubUser = hubUser;
+		this.hubPass = hubPass;
+		this.hubProxyUrl = hubProxyUrl;
+		this.hubProxyPort = hubProxyPort;
+		this.hubNoProxyHost = hubNoProxyHost;
+		this.hubProxyUser = hubProxyUser;
+		this.hubProxyPass = hubProxyPass;
+	}
 
 	public String getHubUrl() {
 		return hubUrl;
