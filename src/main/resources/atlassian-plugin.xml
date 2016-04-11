@@ -114,7 +114,7 @@
                 <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
                 <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
             </action>
-            <action name="configServerDetails" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction" method="editConfig">
+            <action name="configServerDetails" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction" method="save">
                 <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
                 <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
             </action>
@@ -130,5 +130,12 @@
         <label key="Black Duck Hub Admin"/> 
         <link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link> 
     </web-item>
+    
+    <taskType key="hubScanTask" name="Black Duck Hub Scan Task" class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
+        <description>Scan task to upload project data into the Hub during the build.</description>
+        <configuration class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator"/>
+        <resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl"/>
+        <resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl"/>
+    </taskType>
     
 </atlassian-plugin>

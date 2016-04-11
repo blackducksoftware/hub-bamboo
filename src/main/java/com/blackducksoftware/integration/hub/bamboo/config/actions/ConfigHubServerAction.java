@@ -21,14 +21,13 @@ import org.apache.log4j.Logger;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
-import com.atlassian.bamboo.security.EncryptionService;
-import com.atlassian.bamboo.spring.ComponentAccessor;
 import com.atlassian.bamboo.ww2.BambooActionSupport;
 import com.atlassian.bamboo.ww2.aware.permissions.GlobalAdminSecurityAware;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
 import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
+import com.blackducksoftware.integration.hub.bamboo.config.HubServiceUtils;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 
@@ -37,8 +36,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	private static final long serialVersionUID = 4380000697000607530L;
 
 	private transient Logger logger = Logger.getLogger(ConfigHubServerAction.class);
-
-	private EncryptionService encryptionService;
 
 	private String hubUrl;
 	private String hubUser;
@@ -69,7 +66,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		if (this.configManager != null) {
 			final HubConfig config = configManager.readConfig();
 			updateLocalMembers(config);
-			encryptionService = ComponentAccessor.ENCRYPTION_SERVICE.get();
 
 			// configure the Restlet engine so that the HTTPHandle and classes
 			// from the com.sun.net.httpserver package
@@ -130,7 +126,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 				}
 				Proxy proxy = null;
 
-				final HubProxyInfo proxyInfo = createProxyInfo();
+				final HubConfig hubConfig = createHubConfigInstance();
+				final HubProxyInfo proxyInfo = HubServiceUtils.getInstance().createProxyInfo(hubConfig);
 
 				if (StringUtils.isNotBlank(proxyInfo.getHost())
 						&& StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
@@ -254,10 +251,14 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 	}
 
-	public String doEditConfig() {
+	private HubConfig createHubConfigInstance() {
+		return new HubConfig(getHubUrl(), getHubUser(), getHubPass(), getHubProxyUrl(), getHubProxyPort(),
+				getHubNoProxyHost(), getHubProxyUser(), getHubProxyPass());
+	}
 
-		final HubConfig config = new HubConfig(getHubUrl(), getHubUser(), getHubPass(), getHubProxyUrl(),
-				getHubProxyPort(), getHubNoProxyHost(), getHubProxyUser(), getHubProxyPass());
+	public String doSave() {
+
+		final HubConfig config = createHubConfigInstance();
 		configManager.writeConfig(config);
 
 		logInputValues();
@@ -273,9 +274,9 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		// debugger they could see the values.
 		try {
 			logInputValues();
-
-			final HubIntRestService service = new HubIntRestService(getHubUrl());
-			configureProxyToService(service);
+			final HubConfig hubConfig = createHubConfigInstance();
+			final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
+			HubServiceUtils.getInstance().configureProxyToService(hubConfig, service);
 			service.setCookies(getHubUser(), getHubPass());
 			addActionMessage("Connection Successful!"); // internationalize it.
 		} catch (final HubIntegrationException ex) {
@@ -311,45 +312,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		logger.info(buffer + " hubProxyNoHosts: " + config.getHubNoProxyHost());
 		logger.info(buffer + " hubProxyUser:    " + config.getHubProxyUser());
 		logger.info(buffer + " hubProxyPass:    " + config.getHubProxyPass());
-	}
-
-	public HubProxyInfo createProxyInfo() {
-		final HubProxyInfo proxyInfo = new HubProxyInfo();
-		proxyInfo.setHost(getHubProxyUrl());
-		if (StringUtils.isNotBlank(getHubProxyPort())) {
-			proxyInfo.setPort(Integer.valueOf(getHubProxyPort()));
-		}
-		proxyInfo.setIgnoredProxyHosts(getHubNoProxyHost());
-		proxyInfo.setProxyUsername(getHubProxyUser());
-		proxyInfo.setProxyPassword(getHubProxyPass());
-
-		return proxyInfo;
-	}
-
-	private void configureProxyToService(final HubIntRestService service) {
-
-		final HubProxyInfo proxyInfo = createProxyInfo();
-		Proxy proxy = null;
-
-		if (StringUtils.isNotBlank(proxyInfo.getHost()) && StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
-			for (final Pattern p : proxyInfo.getNoProxyHostPatterns()) {
-				if (p.matcher(proxyInfo.getHost()).matches()) {
-					proxy = Proxy.NO_PROXY;
-				}
-			}
-		}
-
-		if (proxyInfo != null && (proxy == null || proxy != Proxy.NO_PROXY)) {
-			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-				if (StringUtils.isNotBlank(proxyInfo.getProxyUsername())
-						&& StringUtils.isNotBlank(proxyInfo.getProxyPassword())) {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null,
-							proxyInfo.getProxyUsername(), proxyInfo.getProxyPassword());
-				} else {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, null, null);
-				}
-			}
-		}
 	}
 
 	private void handleTestConnectionError(final Exception ex) {

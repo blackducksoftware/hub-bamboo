@@ -2,8 +2,6 @@ package com.blackducksoftware.integration.hub.bamboo.config;
 
 import java.io.Serializable;
 
-import org.apache.log4j.Logger;
-
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.spring.ComponentAccessor;
@@ -13,8 +11,6 @@ import com.atlassian.util.concurrent.NotNull;
 public class ConfigManager implements Serializable {
 
 	private static final long serialVersionUID = 631572820626880758L;
-
-	private transient Logger logger = Logger.getLogger(ConfigManager.class);
 
 	private EncryptionService encryptionService;
 	private transient BandanaManager bandanaManager;
