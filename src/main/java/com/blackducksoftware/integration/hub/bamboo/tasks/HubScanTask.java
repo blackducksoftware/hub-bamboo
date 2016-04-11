@@ -12,14 +12,14 @@ import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.blackducksoftware.integration.hub.HubIntRestService;
-import com.blackducksoftware.integration.hub.HubScanJobConfig;
-import com.blackducksoftware.integration.hub.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
 import com.blackducksoftware.integration.hub.bamboo.config.HubServiceUtils;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
+import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 
 public class HubScanTask implements TaskType {
 
