@@ -1,22 +1,31 @@
-package com.blackducksoftware.integration.hub.bamboo.config;
+package com.blackducksoftware.integration.hub.bamboo;
 
 import java.net.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.blackducksoftware.integration.hub.HubIntRestService;
+import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
+import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
 
-public class HubServiceUtils {
+public class HubBambooUtils implements Cloneable {
 
-	private final static HubServiceUtils instance = new HubServiceUtils();
+	private final static HubBambooUtils instance = new HubBambooUtils();
 
-	public static HubServiceUtils getInstance() {
+	public static HubBambooUtils getInstance() {
 		return instance;
 	}
 
-	private HubServiceUtils() {
+	private HubBambooUtils() {
 
+	}
+
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		throw new CloneNotSupportedException();
 	}
 
 	public HubProxyInfo createProxyInfo(final HubConfig hubConfig) {
@@ -56,5 +65,12 @@ public class HubServiceUtils {
 				}
 			}
 		}
+	}
+
+	public List<String> createScanTargetPaths(final String targetPathText) {
+
+		final List<String> scanTargets = new ArrayList<String>();
+
+		return scanTargets;
 	}
 }

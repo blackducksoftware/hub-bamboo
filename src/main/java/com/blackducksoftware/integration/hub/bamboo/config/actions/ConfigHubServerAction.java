@@ -24,10 +24,10 @@ import org.restlet.engine.connector.HttpClientHelper;
 import com.atlassian.bamboo.ww2.BambooActionSupport;
 import com.atlassian.bamboo.ww2.aware.permissions.GlobalAdminSecurityAware;
 import com.blackducksoftware.integration.hub.HubIntRestService;
+import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
 import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
-import com.blackducksoftware.integration.hub.bamboo.config.HubServiceUtils;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 
@@ -127,7 +127,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 				Proxy proxy = null;
 
 				final HubConfig hubConfig = createHubConfigInstance();
-				final HubProxyInfo proxyInfo = HubServiceUtils.getInstance().createProxyInfo(hubConfig);
+				final HubProxyInfo proxyInfo = HubBambooUtils.getInstance().createProxyInfo(hubConfig);
 
 				if (StringUtils.isNotBlank(proxyInfo.getHost())
 						&& StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
@@ -276,7 +276,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			logInputValues();
 			final HubConfig hubConfig = createHubConfigInstance();
 			final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
-			HubServiceUtils.getInstance().configureProxyToService(hubConfig, service);
+			HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
 			service.setCookies(getHubUser(), getHubPass());
 			addActionMessage("Connection Successful!"); // internationalize it.
 		} catch (final HubIntegrationException ex) {

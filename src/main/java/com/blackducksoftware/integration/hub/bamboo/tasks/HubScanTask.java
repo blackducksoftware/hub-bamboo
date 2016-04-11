@@ -2,7 +2,6 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.atlassian.bamboo.configuration.ConfigurationMap;
@@ -13,9 +12,9 @@ import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
+import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
-import com.blackducksoftware.integration.hub.bamboo.config.HubServiceUtils;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
@@ -41,7 +40,7 @@ public class HubScanTask implements TaskType {
 			final int scanMemory = 4096;
 			final String targets = configurationMap.get(HubScanParamEnum.PROJECT.getKey());
 
-			final List<String> scanTargets = createScanTargetPaths(targets);
+			final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets);
 
 			final HubConfig hubConfig = configManager.readConfig();
 			final HubIntRestService service = getService(hubConfig);
@@ -76,21 +75,13 @@ public class HubScanTask implements TaskType {
 		return resultBuilder.build();
 	}
 
-	private List<String> createScanTargetPaths(final String targetPathText) {
-
-		final List<String> scanTargets = new ArrayList<String>();
-
-		return scanTargets;
-
-	}
-
 	public void setConfigManager(final ConfigManager configManager) {
 		this.configManager = configManager;
 	}
 
 	private HubIntRestService getService(final HubConfig hubConfig) {
 		final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
-		HubServiceUtils.getInstance().configureProxyToService(hubConfig, service);
+		HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
 		return service;
 	}
 }
