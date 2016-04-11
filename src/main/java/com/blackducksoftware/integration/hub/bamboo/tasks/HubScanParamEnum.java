@@ -1,9 +1,9 @@
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 public enum HubScanParamEnum {
-	PROJECT("project"), VERSION("version"), PHASE("phase"), DISTRIBUTION("distribution"), GENERATERISKREPORT(
-			"generateRiskReport"), MAXWAITTIMEFORRISKREPORT(
-					"maxWaitTimeForRiskReport"), SCANMEMORY("scanmemory"), TARGETS("targets");
+	PROJECT("hubProject"), VERSION("hubVersion"), PHASE("hubPhase"), DISTRIBUTION(
+			"hubDistribution"), GENERATERISKREPORT("generateRiskReport"), MAXWAITTIMEFORRISKREPORT(
+					"maxWaitTimeForRiskReport"), SCANMEMORY("hubScanMemory"), TARGETS("hubTargets");
 
 	private String key;
 

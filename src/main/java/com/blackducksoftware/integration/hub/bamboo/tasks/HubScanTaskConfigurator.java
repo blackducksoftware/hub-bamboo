@@ -12,7 +12,22 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 	@Override
 	public Map<String, String> generateTaskConfigMap(final ActionParametersMap params,
 			final TaskDefinition previousTaskDefinition) {
-		return super.generateTaskConfigMap(params, previousTaskDefinition);
+		final Map<String, String> configMap = super.generateTaskConfigMap(params, previousTaskDefinition);
+
+		String key = HubScanParamEnum.PROJECT.getKey();
+		configMap.put(key, params.getString(key));
+		key = HubScanParamEnum.VERSION.getKey();
+		configMap.put(key, params.getString(key));
+		key = HubScanParamEnum.PHASE.getKey();
+		configMap.put(key, params.getString(key));
+		key = HubScanParamEnum.DISTRIBUTION.getKey();
+		configMap.put(key, params.getString(key));
+		key = HubScanParamEnum.SCANMEMORY.getKey();
+		configMap.put(key, params.getString(key));
+		key = HubScanParamEnum.TARGETS.getKey();
+		configMap.put(key, params.getString(key));
+
+		return configMap;
 	}
 
 	@Override
