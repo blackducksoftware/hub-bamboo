@@ -10,7 +10,6 @@ import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.atlassian.bamboo.task.TaskContext;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
@@ -24,11 +23,8 @@ import com.google.gson.GsonBuilder;
 
 public class TaskHubEventPolling extends HubEventPolling {
 
-	private final TaskContext taskContext;
-
-	public TaskHubEventPolling(final HubIntRestService service, final TaskContext taskContext) {
+	public TaskHubEventPolling(final HubIntRestService service) {
 		super(service);
-		this.taskContext = taskContext;
 	}
 
 	/**
@@ -43,8 +39,8 @@ public class TaskHubEventPolling extends HubEventPolling {
 		if (StringUtils.isBlank(hubReportGenerationInfo.getScanStatusDirectory())) {
 			throw new HubIntegrationException("The scan status directory must be a non empty value.");
 		}
-		final File statusDirectory = new File(taskContext.getWorkingDirectory().getAbsolutePath(),
-				hubReportGenerationInfo.getScanStatusDirectory());
+		final File statusDirectory = new File(hubReportGenerationInfo.getScanStatusDirectory());
+
 		if (!statusDirectory.exists()) {
 			throw new HubIntegrationException("The scan status directory does not exist.");
 		}

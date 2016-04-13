@@ -186,8 +186,6 @@ public class HubScanTask implements TaskType {
 			scanTargets.add(workingDirectory.getAbsolutePath());
 		}
 
-		logger.info("Phase string = " + phase);
-
 		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder();
 		hubScanJobConfigBuilder.setProjectName(project);
 		hubScanJobConfigBuilder.setVersion(version);
@@ -533,7 +531,7 @@ public class HubScanTask implements TaskType {
 			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
 			HubIntegrationException, URISyntaxException, IOException {
 
-		final TaskHubEventPolling hubEventPolling = new TaskHubEventPolling(service, taskContext);
+		final TaskHubEventPolling hubEventPolling = new TaskHubEventPolling(service);
 
 		if (supportHelper.isCliStatusDirOptionSupport()) {
 			hubEventPolling.assertBomUpToDate(bomUpdateInfo, logger);
