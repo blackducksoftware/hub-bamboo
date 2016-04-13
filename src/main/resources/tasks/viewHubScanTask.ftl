@@ -6,7 +6,7 @@
               list="{'External','SaaS','Internal','Open Source'}" emptyOption='false' readonly='true'/]
 <!--
 [@ww.label labelKey='blackduckhub.task.scan.genriskreport.label' name='generateRiskReport'/]
-[@ww.label labelKey='blackduckhub.task.scan.maxriskreportwaittime.label' name='maxWaitTimeForRiskReport'/] 
 -->
+[@ww.label labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
 [@ww.label labelKey='blackduckhub.task.scan.scanmemory.label' name='hubScanMemory'/]
 [@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets' readonly='true'/]

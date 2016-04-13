@@ -41,43 +41,43 @@ public class HubBambooLogger implements IntLogger {
 	}
 
 	public void error(final String txt, final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logThrowable(txt, throwable);
 		}
 	}
 
 	public void error(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logErrorMessage(txt);
 		}
 	}
 
 	public void error(final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logThrowable(throwable);
 		}
 	}
 
 	public void info(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.INFO)) {
 			logMessage(txt);
 		}
 	}
 
 	public void trace(final String txt, final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
 			logThrowable(txt, throwable);
 		}
 	}
 
 	public void trace(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
 			logMessage(txt);
 		}
 	}
 
 	public void warn(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+		if (LogLevel.isLoggable(level, LogLevel.WARN)) {
 			logMessage(txt);
 		}
 	}

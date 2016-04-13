@@ -21,6 +21,7 @@
 			com.atlassian.bamboo.configuration,
 			com.atlassian.bamboo.spring,
 			com.atlassian.bamboo.task,
+			com.atlassian.bamboo.utils,
 			com.atlassian.bamboo.utils.error,
 			com.atlassian.bamboo.ww2,
 			com.atlassian.bamboo.ww2.aware,

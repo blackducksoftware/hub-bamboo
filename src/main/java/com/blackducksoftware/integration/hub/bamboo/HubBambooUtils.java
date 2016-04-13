@@ -1,5 +1,6 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
+import java.io.File;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.List;
@@ -67,9 +68,23 @@ public class HubBambooUtils implements Cloneable {
 		}
 	}
 
-	public List<String> createScanTargetPaths(final String targetPathText) {
+	public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
 
 		final List<String> scanTargets = new ArrayList<String>();
+
+		if (StringUtils.isNotBlank(targetPathText)) {
+			final String[] scanTargetPathsArray = targetPathText.split("\\r?\\n");
+			for (final String target : scanTargetPathsArray) {
+				if (!StringUtils.isBlank(target)) {
+					if (workingDirectory != null && StringUtils.isBlank(workingDirectory.getAbsolutePath())) {
+						scanTargets.add(target);
+
+					} else {
+						scanTargets.add(new File(workingDirectory, target).getAbsolutePath());
+					}
+				}
+			}
+		}
 
 		return scanTargets;
 	}
