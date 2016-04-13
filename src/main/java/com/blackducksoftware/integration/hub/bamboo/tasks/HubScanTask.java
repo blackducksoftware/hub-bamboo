@@ -6,15 +6,17 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
+import org.joda.time.DateTime;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.configuration.ConfigurationMap;
-import com.atlassian.bamboo.configuration.SystemInfo;
+import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
@@ -28,35 +30,49 @@ import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
 import com.blackducksoftware.integration.hub.ScanExecutor.Result;
+import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
+import com.blackducksoftware.integration.hub.bamboo.bom.TaskHubEventPolling;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
 import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.exception.MissingPolicyStatusException;
+import com.blackducksoftware.integration.hub.exception.ProjectDoesNotExistException;
+import com.blackducksoftware.integration.hub.exception.VersionDoesNotExistException;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
+import com.blackducksoftware.integration.hub.policy.api.PolicyStatus;
+import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
+import com.blackducksoftware.integration.hub.project.api.ProjectItem;
+import com.blackducksoftware.integration.hub.report.api.HubReportGenerationInfo;
 import com.blackducksoftware.integration.hub.util.HostnameHelper;
+import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
+import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
+import com.blackducksoftware.integration.hub.version.api.ReleaseItem;
 
 public class HubScanTask implements TaskType {
 
 	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
 
-	private ConfigManager configManager;
-	private SystemInfo systemInfo;
+	private final ConfigManager configManager;
 	private final ProcessService processService;
+	private final EnvironmentVariableAccessor environmentVariableAccessor;
 
-	public HubScanTask(final ProcessService processService, final SystemInfo systemInfo) {
+	public HubScanTask(final ConfigManager configManager, final ProcessService processService,
+			final EnvironmentVariableAccessor environmentVariableAccessor) {
+		this.configManager = configManager;
 		this.processService = processService;
-		this.systemInfo = systemInfo;
+		this.environmentVariableAccessor = environmentVariableAccessor;
 	}
 
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
 
-		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).failed();
+		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
 		final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
 		try {
 
@@ -91,13 +107,49 @@ public class HubScanTask implements TaskType {
 			final HubSupportHelper hubSupport = new HubSupportHelper();
 			hubSupport.checkHubSupport(service, logger);
 
+			ProjectItem project = null;
+			ReleaseItem version = null;
+			final String projectName = jobConfig.getProjectName();
+			final String projectVersion = jobConfig.getVersion();
+			if (StringUtils.isNotBlank(projectName) && StringUtils.isNotBlank(projectVersion)) {
+				project = ensureProjectExists(service, logger, projectName);
+				version = ensureVersionExists(service, logger, projectVersion, project, jobConfig);
+				logger.debug("Found Project : " + projectName);
+				logger.debug("Found Version : " + projectVersion);
+			}
+
 			// run the scan
+			final DateTime beforeScanTime = new DateTime();
 			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
 					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport);
-
+			final DateTime afterScanTime = new DateTime();
 			// check the policy failures
 
-			resultBuilder.success();
+			final boolean isFailOnPolicySelected = taskContext.getConfigurationMap()
+					.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
+			if (isFailOnPolicySelected && !hubSupport.isPolicyApiSupport()) {
+				logger.error("This version of the Hub does not have support for Policies.");
+				resultBuilder.failed();
+				return resultBuilder.build();
+			} else if (isFailOnPolicySelected) {
+
+				final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
+				bomUpdateInfo.setService(service);
+				bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
+				bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
+
+				bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
+
+				bomUpdateInfo.setBeforeScanTime(beforeScanTime);
+				bomUpdateInfo.setAfterScanTime(afterScanTime);
+
+				bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
+
+				final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
+						hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
+
+				return policyResult.build();
+			}
 
 		} catch (final HubIntegrationException e) {
 			logger.error("Hub Scan Task error", e);
@@ -109,17 +161,11 @@ public class HubScanTask implements TaskType {
 			logger.error("Hub Scan Task error", e);
 		} catch (final InterruptedException e) {
 			logger.error("Hub Scan Task error", e);
+		} catch (final BDBambooHubPluginException e) {
+			logger.error("Hub Scan Task error", e);
 		}
 
 		return resultBuilder.build();
-	}
-
-	public void setConfigManager(final ConfigManager configManager) {
-		this.configManager = configManager;
-	}
-
-	public void setSystemInfo(final SystemInfo systemInfo) {
-		this.systemInfo = systemInfo;
 	}
 
 	private HubScanJobConfig getJobConfig(final ConfigurationMap configMap, final File workingDirectory,
@@ -140,11 +186,13 @@ public class HubScanTask implements TaskType {
 			scanTargets.add(workingDirectory.getAbsolutePath());
 		}
 
+		logger.info("Phase string = " + phase);
+
 		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder();
 		hubScanJobConfigBuilder.setProjectName(project);
 		hubScanJobConfigBuilder.setVersion(version);
-		hubScanJobConfigBuilder.setPhase(phase);
-		hubScanJobConfigBuilder.setDistribution(distribution);
+		hubScanJobConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
+		hubScanJobConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
 		hubScanJobConfigBuilder.setWorkingDirectory(workingDirectory.getAbsolutePath());
 		hubScanJobConfigBuilder.setShouldGenerateRiskReport(generateRiskReport);
 		hubScanJobConfigBuilder.setMaxWaitTimeForBomUpdate(maxWaitTimeForBomUpdate);
@@ -245,7 +293,8 @@ public class HubScanTask implements TaskType {
 		logger.info("-> Using Build Number : " + buildContext.getBuildNumber());
 		logger.info("-> Using Build Workspace Path : " + taskContext.getWorkingDirectory().getAbsolutePath());
 		logger.info(
-				"-> Using Hub Project Name : " + jobConfig.getProjectName() + ", Version : " + jobConfig.getVersion());
+				"-> Using Hub Project Name : " + jobConfig.getProjectName() + ", Version : " + jobConfig.getVersion()
+						+ ", Phase : " + jobConfig.getPhase() + ", Distribution : " + jobConfig.getDistribution());
 
 		logger.info("-> Scanning the following targets  : ");
 		for (final String target : jobConfig.getScanTargetPaths()) {
@@ -266,8 +315,11 @@ public class HubScanTask implements TaskType {
 			throws HubIntegrationException, MalformedURLException, URISyntaxException {
 		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl(), hubConfig.getHubUser(),
 				hubConfig.getHubPass(), jobConfig.getScanTargetPaths(), taskContext.getBuildContext().getBuildNumber(),
-				supportHelper, processService);
+				supportHelper);
 		scan.setLogger(logger);
+		scan.setTaskContext(taskContext);
+		scan.setProcessService(processService);
+		scan.setEnvironmentVariableAccessor(environmentVariableAccessor);
 
 		if (proxyInfo != null) {
 			final URL hubUrl = new URL(hubConfig.getHubUrl());
@@ -336,87 +388,157 @@ public class HubScanTask implements TaskType {
 		}
 	}
 
-	private String getEnvironmentVariable(@NotNull final String parameterName, final IntLogger logger) {
+	private ProjectItem ensureProjectExists(final HubIntRestService service, final IntLogger logger,
+			final String projectName) throws IOException, URISyntaxException, BDBambooHubPluginException {
+		ProjectItem project = null;
+		try {
+			project = service.getProjectByName(projectName);
 
-		if (this.systemInfo == null) {
-			logger.info("System info is null!!!");
-		} else {
-			logger.info("System info " + systemInfo);
+		} catch (final ProjectDoesNotExistException e) {
+			// Project was not found, try to create it
+			try {
+				final String projectUrl = service.createHubProject(projectName);
+				project = service.getProject(projectUrl);
+			} catch (final BDRestException e1) {
+				if (e1.getResource() != null) {
+					logger.error("Status : " + e1.getResource().getStatus().getCode());
+					logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+				}
+				throw new BDBambooHubPluginException("Problem creating the Project. ", e1);
+			}
+		} catch (final BDRestException e) {
+			if (e.getResource() != null) {
+				if (e.getResource() != null) {
+					logger.error("Status : " + e.getResource().getStatus().getCode());
+					logger.error("Response : " + e.getResource().getResponse().getEntityAsText());
+				}
+				throw new BDBambooHubPluginException("Problem getting the Project. ", e);
+			}
 		}
-		final String result = "";
-		return result;
 
+		return project;
 	}
 
-	// private boolean hasPolicyFailures(final IntLogger logger, final
-	// HubSupportHelper hubSupport,
-	// final HubIntRestService restService, final String projectId, final String
-	// versionId) {
-	//
-	// // The feature is only allowed to have a single instance in the
-	// // configuration therefore we just want to make
-	// // sure the feature collection has something meaning that it was
-	// // configured.
-	//
-	// if (hubSupport.isPolicyApiSupport() == false) {
-	// final String message = "This version of the Hub does not have support for
-	// Policies.";
-	// logger.error(message);
-	// return false;
-	// } else {
-	// try {
-	// // We use this conditional in case there are other failure
-	// // conditions in the future
-	// final PolicyStatus policyStatus =
-	// restService.getPolicyStatus(policyStatusUrl)(projectId, versionId);
-	// if (policyStatus == null) {
-	// final String message = "Could not find any information about the Policy
-	// status of the bom.";
-	// logger.error(message);
-	// return false;
-	// }
-	// if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION)
-	// {
-	// logger.error("There are Policy Violations");
-	// return false;
-	// }
-	// if (policyStatus.getCountInViolation() == null) {
-	// logger.error("Could not find the number of bom entries In Violation of a
-	// Policy.");
-	// } else {
-	// logger.info("Found " + policyStatus.getCountInViolation().getValue()
-	// + " bom entries to be In Violation of a defined Policy.");
-	// }
-	// if (policyStatus.getCountInViolationOverridden() == null) {
-	// logger.error("Could not find the number of bom entries In Violation
-	// Overridden of a Policy.");
-	// } else {
-	// logger.info("Found " +
-	// policyStatus.getCountInViolationOverridden().getValue()
-	// + " bom entries to be In Violation of a defined Policy, but they have
-	// been overridden.");
-	// }
-	// if (policyStatus.getCountNotInViolation() == null) {
-	// logger.error("Could not find the number of bom entries Not In Violation
-	// of a Policy.");
-	// } else {
-	// logger.info("Found " + policyStatus.getCountNotInViolation().getValue()
-	// + " bom entries to be Not In Violation of a defined Policy.");
-	// }
-	// } catch (final MissingPolicyStatusException e) {
-	// logger.warn(e.getMessage());
-	// } catch (final IOException e) {
-	// logger.error(e.getMessage(), e);
-	// return false;
-	// } catch (final BDRestException e) {
-	// logger.error(e.getMessage(), e);
-	// return false;
-	// } catch (final URISyntaxException e) {
-	// logger.error(e.getMessage(), e);
-	// return false;
-	// }
-	// }
-	//
-	// return true;
-	// }
+	/**
+	 * Ensures the Version exists. Returns the version URL
+	 */
+	private ReleaseItem ensureVersionExists(final HubIntRestService service, final IntLogger logger,
+			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
+			throws IOException, URISyntaxException, BDBambooHubPluginException {
+		ReleaseItem version = null;
+
+		try {
+			version = service.getVersion(project, projectVersion);
+			if (!version.getPhase().equals(jobConfig.getPhase())) {
+				logger.warn(
+						"The selected Phase does not match the Phase of this Version. If you wish to update the Phase please do so in the Hub UI.");
+			}
+			if (!version.getDistribution().equals(jobConfig.getDistribution())) {
+				logger.warn(
+						"The selected Distribution does not match the Distribution of this Version. If you wish to update the Distribution please do so in the Hub UI.");
+			}
+		} catch (final VersionDoesNotExistException e) {
+			try {
+				final String versionURL = service.createHubVersion(project, projectVersion, jobConfig.getPhase(),
+						jobConfig.getDistribution());
+				version = service.getProjectVersion(versionURL);
+			} catch (final BDRestException e1) {
+				if (e1.getResource() != null) {
+					logger.error("Status : " + e1.getResource().getStatus().getCode());
+					logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+				}
+				throw new BDBambooHubPluginException("Problem creating the Version. ", e1);
+			}
+		} catch (final BDRestException e) {
+			throw new BDBambooHubPluginException("Could not retrieve or create the specified version.", e);
+		}
+		return version;
+	}
+
+	private String getEnvironmentVariable(@NotNull final String parameterName, final IntLogger logger) {
+		final Map<String, String> envVars = environmentVariableAccessor.getEnvironment();
+		final String value = envVars.get(parameterName);
+
+		if (value == null || value.trim().length() == 0) {
+			return null;
+		}
+		final String result = value.trim();
+		return result;
+	}
+
+	private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
+			final IntLogger logger, final HubIntRestService service, final HubSupportHelper hubSupport,
+			final HubReportGenerationInfo bomUpdateInfo, final String policyStatusUrl) {
+		try {
+			waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
+
+			try {
+				// We use this conditional in case there are other failure
+				// conditions in the future
+				final PolicyStatus policyStatus = service.getPolicyStatus(policyStatusUrl);
+				if (policyStatus == null) {
+					logger.error("Could not find any information about the Policy status of the bom.");
+					return resultBuilder.failed();
+				}
+				if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
+					return resultBuilder.failed();
+				}
+
+				if (policyStatus.getCountInViolation() == null) {
+					logger.error("Could not find the number of bom entries In Violation of a Policy.");
+				} else {
+					logger.info("Found " + policyStatus.getCountInViolation().getValue()
+							+ " bom entries to be In Violation of a defined Policy.");
+				}
+				if (policyStatus.getCountInViolationOverridden() == null) {
+					logger.error("Could not find the number of bom entries In Violation Overridden of a Policy.");
+				} else {
+					logger.info("Found " + policyStatus.getCountInViolationOverridden().getValue()
+							+ " bom entries to be In Violation of a defined Policy, but they have been overridden.");
+				}
+				if (policyStatus.getCountNotInViolation() == null) {
+					logger.error("Could not find the number of bom entries Not In Violation of a Policy.");
+				} else {
+					logger.info("Found " + policyStatus.getCountNotInViolation().getValue()
+							+ " bom entries to be Not In Violation of a defined Policy.");
+				}
+				return resultBuilder.success();
+			} catch (final MissingPolicyStatusException e) {
+				logger.warn(e.getMessage());
+				return resultBuilder.success();
+			}
+		} catch (final BDBambooHubPluginException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		} catch (final HubIntegrationException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		} catch (final URISyntaxException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		} catch (final BDRestException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		} catch (final InterruptedException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		} catch (final IOException e) {
+			logger.error(e.getMessage(), e);
+			return resultBuilder.failed();
+		}
+	}
+
+	public void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
+			final HubSupportHelper supportHelper, final HubReportGenerationInfo bomUpdateInfo,
+			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
+			HubIntegrationException, URISyntaxException, IOException {
+
+		final TaskHubEventPolling hubEventPolling = new TaskHubEventPolling(service, taskContext);
+
+		if (supportHelper.isCliStatusDirOptionSupport()) {
+			hubEventPolling.assertBomUpToDate(bomUpdateInfo, logger);
+		} else {
+			hubEventPolling.assertBomUpToDate(bomUpdateInfo);
+		}
+	}
 }

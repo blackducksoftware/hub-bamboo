@@ -12,8 +12,6 @@ import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 import com.blackducksoftware.integration.hub.logging.LogLevel;
-import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
-import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
 
 public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
@@ -22,22 +20,10 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 			final TaskDefinition previousTaskDefinition) {
 		final Map<String, String> configMap = super.generateTaskConfigMap(params, previousTaskDefinition);
 
-		String key = HubScanParamEnum.PROJECT.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.VERSION.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.PHASE.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.DISTRIBUTION.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.GENERATE_RISK_REPORT.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.SCANMEMORY.getKey();
-		configMap.put(key, params.getString(key));
-		key = HubScanParamEnum.TARGETS.getKey();
-		configMap.put(key, params.getString(key));
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			configMap.put(key, params.getString(key));
+		}
 
 		return configMap;
 	}
@@ -81,6 +67,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
 			if (!hubScanJobConfigBuilder.validateProjectAndVersion(bufferedLogger)) {
 
+				// clean the logs to avoid duplicate error messages
+				bufferedLogger.resetAllLogs();
 				if (!bufferedLogger.getOutputList(LogLevel.ERROR).isEmpty()) {
 					// project or version is the cause of the error
 
@@ -126,22 +114,11 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 	public void populateContextForCreate(final Map<String, Object> context) {
 
 		super.populateContextForCreate(context);
-		String key = HubScanParamEnum.PROJECT.getKey();
-		context.put(key, "");
-		key = HubScanParamEnum.VERSION.getKey();
-		context.put(key, "");
-		key = HubScanParamEnum.PHASE.getKey();
-		context.put(key, PhaseEnum.PLANNING.getDisplayValue());
-		key = HubScanParamEnum.DISTRIBUTION.getKey();
-		context.put(key, DistributionEnum.EXTERNAL.getDisplayValue());
-		key = HubScanParamEnum.GENERATE_RISK_REPORT.getKey();
-		context.put(key, "false");
-		key = HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey();
-		context.put(key, "5");
-		key = HubScanParamEnum.SCANMEMORY.getKey();
-		context.put(key, "4096");
-		key = HubScanParamEnum.TARGETS.getKey();
-		context.put(key, "");
+
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			context.put(key, param.getDefaultValue());
+		}
 	}
 
 	@Override
@@ -159,21 +136,11 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 	}
 
 	private void populateContextMap(final Map<String, Object> context, final TaskDefinition taskDefinition) {
-		String key = HubScanParamEnum.PROJECT.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.VERSION.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.PHASE.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.DISTRIBUTION.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.GENERATE_RISK_REPORT.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.SCANMEMORY.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
-		key = HubScanParamEnum.TARGETS.getKey();
-		context.put(key, taskDefinition.getConfiguration().get(key));
+
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+
+			final String key = param.getKey();
+			context.put(key, taskDefinition.getConfiguration().get(key));
+		}
 	}
 }
