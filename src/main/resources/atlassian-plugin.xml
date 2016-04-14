@@ -86,8 +86,6 @@
 	<web-resource key="webresources" name="int-hub-bamboo Web Resources">
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
 
-		<resource type="download" name="int-hub-bamboo.css" location="/css/int-hub-bamboo.css" />
-		<resource type="download" name="int-hub-bamboo.js" location="/js/int-hub-bamboo.js" />
 		<resource type="download" name="images/" location="/images" />
 
 		<context>int-hub-bamboo</context>
