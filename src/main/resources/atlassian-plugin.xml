@@ -1,144 +1,156 @@
-<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
-    <plugin-info>
-        <description>${project.description}</description>
-        <version>${project.version}</version>
-        <vendor name="${project.organization.name}" url="${project.organization.url}" />
-        <param name="plugin-icon">images/pluginIcon.png</param>
-        <param name="plugin-logo">images/pluginLogo.png</param>
+<atlassian-plugin key="${project.groupId}.${project.artifactId}"
+	name="${project.name}" plugins-version="2">
+	<plugin-info>
+		<description>${project.description}</description>
+		<version>${project.version}</version>
+		<vendor name="${project.organization.name}" url="${project.organization.url}" />
+		<param name="plugin-icon">images/pluginIcon.png</param>
+		<param name="plugin-logo">images/pluginLogo.png</param>
 		<bundle-instructions>
 			<Import-Package>
-			org.springframework.osgi.service.exporter.support;resolution:=optional,
-	 		org.springframework.osgi.service.importer.support;resolution:=optional,
-	 		org.eclipse.gemini.blueprint.service.exporter;resolution:=optional,
-			org.eclipse.gemini.blueprint.service.exporter.support;resolution:=optional,
-	        org.eclipse.gemini.blueprint.service.importer.support;resolution:=optional,
-	        sun.misc;resolution:=optional,
-	        com.sun.net.httpserver;resolution:=optional,
-			org.joda.convert;resolution:=optional,
-			com.atlassian.bamboo.build.logger,
-			com.atlassian.bamboo.bandana,
-			com.atlassian.bamboo.collections,
-			com.atlassian.bamboo.configuration,
-			com.atlassian.bamboo.spring,
-			com.atlassian.bamboo.task,
-			com.atlassian.bamboo.utils,
-			com.atlassian.bamboo.utils.error,
-			com.atlassian.bamboo.ww2,
-			com.atlassian.bamboo.ww2.aware,
-			com.atlassian.bamboo.ww2.aware.permissions,
-			com.atlassian.spring.container,
-			com.atlassian.plugin.osgi.factory,
-	        com.atlassian.templaterenderer,
-			com.atlassian.sal.api,
-			com.google.gson;version="0.0",
-			com.google.gson.*;version="0.0",
-			com.thoughtworks.xstream,
-			com.thoughtworks.xstream.io,
-			com.thoughtworks.xstream.io.xml,
-			javax.annotation,
-			javax.inject,
-			javax.net.ssl,
-			javax.security.auth.x500,
-			javax.servlet,
-			javax.servlet.http,
-			javax.xml.bind,
-			javax.xml.namespace,
-			javax.xml.parsers,
-			javax.xml.transform,
-			javax.xml.transform.sax,
-			javax.xml.transform.stream,
-			javax.xml.xpath,
-			org.apache.commons.lang,
-			org.apache.commons.logging,
-			org.apache.log4j,
-			org.apache.maven.eventspy,
-			org.apache.maven.execution,
-			org.apache.maven.project,
-			org.codehaus.plexus.component.annotations,
-			org.osgi.framework,
-			org.osgi.util.tracker,
-			org.slf4j.impl,
-			org.sonatype.aether.artifact,
-			org.sonatype.aether.graph,
-			org.springframework.beans,
-			org.springframework.beans.factory,
-			org.springframework.beans.factory.annotation,
-			org.springframework.beans.factory.config,
-			org.springframework.beans.factory.parsing,
-			org.springframework.beans.factory.support,
-			org.springframework.beans.factory.xml,
-			org.springframework.context.annotation,
-			org.springframework.stereotype,
-			org.springframework.util,
-			org.w3c.dom,
-			org.w3c.dom.ls,
-			org.xml.sax,
-			org.xml.sax.helpers
+				org.springframework.osgi.service.exporter.support;resolution:=optional,
+				org.springframework.osgi.service.importer.support;resolution:=optional,
+				org.eclipse.gemini.blueprint.service.exporter;resolution:=optional,
+				org.eclipse.gemini.blueprint.service.exporter.support;resolution:=optional,
+				org.eclipse.gemini.blueprint.service.importer.support;resolution:=optional,
+				sun.misc;resolution:=optional,
+				com.sun.net.httpserver;resolution:=optional,
+				org.joda.convert;resolution:=optional,
+				com.atlassian.bamboo.build.logger,
+				com.atlassian.bamboo.bandana,
+				com.atlassian.bamboo.collections,
+				com.atlassian.bamboo.configuration,
+				com.atlassian.bamboo.spring,
+				com.atlassian.bamboo.task,
+				com.atlassian.bamboo.utils,
+				com.atlassian.bamboo.utils.error,
+				com.atlassian.bamboo.ww2,
+				com.atlassian.bamboo.ww2.aware,
+				com.atlassian.bamboo.ww2.aware.permissions,
+				com.atlassian.spring.container,
+				com.atlassian.plugin.osgi.factory,
+				com.atlassian.templaterenderer,
+				com.atlassian.sal.api,
+				com.google.gson;version="0.0",
+				com.google.gson.*;version="0.0",
+				com.thoughtworks.xstream,
+				com.thoughtworks.xstream.io,
+				com.thoughtworks.xstream.io.xml,
+				javax.annotation,
+				javax.inject,
+				javax.net.ssl,
+				javax.security.auth.x500,
+				javax.servlet,
+				javax.servlet.http,
+				javax.xml.bind,
+				javax.xml.namespace,
+				javax.xml.parsers,
+				javax.xml.transform,
+				javax.xml.transform.sax,
+				javax.xml.transform.stream,
+				javax.xml.xpath,
+				org.apache.commons.lang,
+				org.apache.commons.logging,
+				org.apache.log4j,
+				org.apache.maven.eventspy,
+				org.apache.maven.execution,
+				org.apache.maven.project,
+				org.codehaus.plexus.component.annotations,
+				org.osgi.framework,
+				org.osgi.util.tracker,
+				org.slf4j.impl,
+				org.sonatype.aether.artifact,
+				org.sonatype.aether.graph,
+				org.springframework.beans,
+				org.springframework.beans.factory,
+				org.springframework.beans.factory.annotation,
+				org.springframework.beans.factory.config,
+				org.springframework.beans.factory.parsing,
+				org.springframework.beans.factory.support,
+				org.springframework.beans.factory.xml,
+				org.springframework.context.annotation,
+				org.springframework.stereotype,
+				org.springframework.util,
+				org.w3c.dom,
+				org.w3c.dom.ls,
+				org.xml.sax,
+				org.xml.sax.helpers
 			</Import-Package>
 		</bundle-instructions>
-    </plugin-info>
+	</plugin-info>
 
-    <!-- add our i18n resource -->
-    <resource type="i18n" name="i18n" location="int-hub-bamboo"/>
-    
-    <!-- add our web resources -->
-    <web-resource key="webresources" name="int-hub-bamboo Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        
-        <resource type="download" name="int-hub-bamboo.css" location="/css/int-hub-bamboo.css"/>
-        <resource type="download" name="int-hub-bamboo.js" location="/js/int-hub-bamboo.js"/>
-        <resource type="download" name="images/" location="/images"/>
+	<!-- add our i18n resource -->
+	<resource type="i18n" name="i18n" location="int-hub-bamboo" />
 
-        <context>int-hub-bamboo</context>
-    </web-resource>
-    
-    <resource type="i18n" name="i18n-properties" location="i18n" />
-    
-    <!-- publish our component -->
-    <component key="myPluginComponent" class="com.blackducksoftware.integration.MyPluginComponentImpl" public="true">
-        <interface>com.blackducksoftware.integration.MyPluginComponent</interface>
-    </component>
-    
-    <component name="BlackDuck Hub Server Configuration Management Component" key="hubServerConfigManager" 
-               class="com.blackducksoftware.integration.hub.bamboo.config.ConfigManager"/>
-    
-    <!-- import from the product container -->
-    <component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties" />
-    
-    <component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager"/>
-    <component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider"/>
-    <component-import key="renderer" interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer"/>
-    <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
-    <component-import key="transactionTemplate" interface="com.atlassian.sal.api.transaction.TransactionTemplate"/>
-    
-    <xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
-        <package name="configHubPlugin" extends="admin">
-            <action name="configHubServer" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
-                <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-                <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
-            </action>
-            <action name="configServerDetails" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction" method="save">
-                <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-                <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
-            </action>
-            <action name="testConnection" class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction" method="testConnection">
-                <result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-                <result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
-            </action>
-        </package>
-    </xwork>
-    
-    <web-item key="bamboo-menu-item" name="Black Duck Hub Admin" section="system.admin/plugins" weight="10" application="bamboo"> 
-        <description>Link to Black Duck Hub Plugin Administration page.</description> 
-        <label key="Black Duck Hub Admin"/> 
-        <link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link> 
-    </web-item>
-    
-    <taskType key="hubScanTask" name="Black Duck Hub Scan Task" class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
-        <description>Scan task to upload project data into the Hub during the build.</description>
-        <configuration class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator"/>
-        <resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl"/>
-        <resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl"/>
-    </taskType>
-    
+	<!-- add our web resources -->
+	<web-resource key="webresources" name="int-hub-bamboo Web Resources">
+		<dependency>com.atlassian.auiplugin:ajs</dependency>
+
+		<resource type="download" name="int-hub-bamboo.css" location="/css/int-hub-bamboo.css" />
+		<resource type="download" name="int-hub-bamboo.js" location="/js/int-hub-bamboo.js" />
+		<resource type="download" name="images/" location="/images" />
+
+		<context>int-hub-bamboo</context>
+	</web-resource>
+
+	<resource type="i18n" name="i18n-properties" location="i18n" />
+
+	<!-- publish our component -->
+	<component name="BlackDuck Hub Server Configuration Management Component"
+		key="hubServerConfigManager"
+		class="com.blackducksoftware.integration.hub.bamboo.config.ConfigManager" />
+
+	<!-- import from the product container -->
+	<component-import key="applicationProperties"
+		interface="com.atlassian.sal.api.ApplicationProperties" />
+	<component-import key="userManager"
+		interface="com.atlassian.sal.api.user.UserManager" />
+	<component-import key="loginUriProvider"
+		interface="com.atlassian.sal.api.auth.LoginUriProvider" />
+	<component-import key="renderer"
+		interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
+	<component-import key="pluginSettingsFactory"
+		interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" />
+	<component-import key="transactionTemplate"
+		interface="com.atlassian.sal.api.transaction.TransactionTemplate" />
+
+	<xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
+		<package name="configHubPlugin" extends="admin">
+			<action name="configHubServer"
+				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
+				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+			</action>
+			<action name="configServerDetails"
+				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
+				method="save">
+				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+			</action>
+			<action name="testConnection"
+				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
+				method="testConnection">
+				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+			</action>
+		</package>
+	</xwork>
+
+	<web-item key="bamboo-menu-item" name="Black Duck Hub Admin"
+		section="system.admin/plugins" weight="10" application="bamboo">
+		<description>Link to Black Duck Hub Plugin Administration page.</description>
+		<label key="Black Duck Hub Admin" />
+		<link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link>
+	</web-item>
+
+	<taskType key="hubScanTask" name="Black Duck Hub Scan Task"
+		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
+		<description>Scan task to upload project data into the Hub during the
+			build.</description>
+		<configuration
+			class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator" />
+		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
+		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
+	</taskType>
+
 </atlassian-plugin>

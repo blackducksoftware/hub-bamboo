@@ -14,7 +14,7 @@ public class HubProxyInfo implements Serializable {
 
 	private String host = "";
 
-	private Integer port = null;
+	private Integer port;
 
 	private String proxyUsername = "";
 

@@ -35,7 +35,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 	private static final long serialVersionUID = 4380000697000607530L;
 
-	private transient Logger logger = Logger.getLogger(ConfigHubServerAction.class);
+	private final Logger logger = Logger.getLogger(ConfigHubServerAction.class);
 
 	private String hubUrl;
 	private String hubUser;
@@ -46,7 +46,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	private String hubProxyUser;
 	private String hubProxyPass;
 
-	private transient ConfigManager configManager;
+	private ConfigManager configManager;
 
 	private void updateLocalMembers(final HubConfig config) {
 		setHubUrl(config.getHubUrl());
@@ -213,7 +213,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 					}
 				}
 			}
-
 		}
 	}
 
