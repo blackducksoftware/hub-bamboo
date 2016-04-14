@@ -392,18 +392,10 @@ public class HubScanTask implements TaskType {
 		try {
 			project = service.getProjectByName(projectName);
 
+		} catch (final NullPointerException npe) {
+			project = createProject(service, logger, projectName);
 		} catch (final ProjectDoesNotExistException e) {
-			// Project was not found, try to create it
-			try {
-				final String projectUrl = service.createHubProject(projectName);
-				project = service.getProject(projectUrl);
-			} catch (final BDRestException e1) {
-				if (e1.getResource() != null) {
-					logger.error("Status : " + e1.getResource().getStatus().getCode());
-					logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
-				}
-				throw new BDBambooHubPluginException("Problem creating the Project. ", e1);
-			}
+			project = createProject(service, logger, projectName);
 		} catch (final BDRestException e) {
 			if (e.getResource() != null) {
 				if (e.getResource() != null) {
@@ -412,6 +404,24 @@ public class HubScanTask implements TaskType {
 				}
 				throw new BDBambooHubPluginException("Problem getting the Project. ", e);
 			}
+		}
+
+		return project;
+	}
+
+	private ProjectItem createProject(final HubIntRestService service, final IntLogger logger, final String projectName)
+			throws IOException, URISyntaxException, BDBambooHubPluginException {
+		// Project was not found, try to create it
+		ProjectItem project = null;
+		try {
+			final String projectUrl = service.createHubProject(projectName);
+			project = service.getProject(projectUrl);
+		} catch (final BDRestException e1) {
+			if (e1.getResource() != null) {
+				logger.error("Status : " + e1.getResource().getStatus().getCode());
+				logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+			}
+			throw new BDBambooHubPluginException("Problem creating the Project. ", e1);
 		}
 
 		return project;
@@ -435,21 +445,33 @@ public class HubScanTask implements TaskType {
 				logger.warn(
 						"The selected Distribution does not match the Distribution of this Version. If you wish to update the Distribution please do so in the Hub UI.");
 			}
+		} catch (final NullPointerException npe) {
+			version = createVersion(service, logger, projectVersion, project, jobConfig);
 		} catch (final VersionDoesNotExistException e) {
-			try {
-				final String versionURL = service.createHubVersion(project, projectVersion, jobConfig.getPhase(),
-						jobConfig.getDistribution());
-				version = service.getProjectVersion(versionURL);
-			} catch (final BDRestException e1) {
-				if (e1.getResource() != null) {
-					logger.error("Status : " + e1.getResource().getStatus().getCode());
-					logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
-				}
-				throw new BDBambooHubPluginException("Problem creating the Version. ", e1);
-			}
+			version = createVersion(service, logger, projectVersion, project, jobConfig);
 		} catch (final BDRestException e) {
 			throw new BDBambooHubPluginException("Could not retrieve or create the specified version.", e);
 		}
+		return version;
+	}
+
+	private ReleaseItem createVersion(final HubIntRestService service, final IntLogger logger,
+			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
+			throws IOException, URISyntaxException, BDBambooHubPluginException {
+		ReleaseItem version = null;
+
+		try {
+			final String versionURL = service.createHubVersion(project, projectVersion, jobConfig.getPhase(),
+					jobConfig.getDistribution());
+			version = service.getProjectVersion(versionURL);
+		} catch (final BDRestException e1) {
+			if (e1.getResource() != null) {
+				logger.error("Status : " + e1.getResource().getStatus().getCode());
+				logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+			}
+			throw new BDBambooHubPluginException("Problem creating the Version. ", e1);
+		}
+
 		return version;
 	}
 
