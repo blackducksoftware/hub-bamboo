@@ -30,6 +30,8 @@
 			com.atlassian.plugin.osgi.factory,
 	        com.atlassian.templaterenderer,
 			com.atlassian.sal.api,
+			com.google.gson;version="0.0",
+			com.google.gson.*;version="0.0",
 			com.thoughtworks.xstream,
 			com.thoughtworks.xstream.io,
 			com.thoughtworks.xstream.io.xml,
