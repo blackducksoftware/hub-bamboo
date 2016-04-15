@@ -51,7 +51,6 @@ import com.blackducksoftware.integration.hub.ScanExecutor.Result;
 import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.bamboo.bom.TaskHubEventPolling;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
 import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
@@ -66,6 +65,7 @@ import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatus;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
+import com.blackducksoftware.integration.hub.polling.HubEventPolling;
 import com.blackducksoftware.integration.hub.project.api.ProjectItem;
 import com.blackducksoftware.integration.hub.report.api.HubReportGenerationInfo;
 import com.blackducksoftware.integration.hub.util.HostnameHelper;
@@ -571,7 +571,7 @@ public class HubScanTask implements TaskType {
 			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
 			HubIntegrationException, URISyntaxException, IOException {
 
-		final TaskHubEventPolling hubEventPolling = new TaskHubEventPolling(service);
+		final HubEventPolling hubEventPolling = new HubEventPolling(service);
 
 		if (supportHelper.isCliStatusDirOptionSupport()) {
 			hubEventPolling.assertBomUpToDate(bomUpdateInfo, logger);

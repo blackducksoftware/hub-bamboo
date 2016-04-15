@@ -116,7 +116,10 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 
 		validateProxySettings();
-		validateUrl(getHubUrl());
+
+		if (StringUtils.isNotBlank(getHubUrl())) {
+			validateUrl(getHubUrl());
+		}
 	}
 
 	private void validateUrl(final String url) { // , boolean isTestConnection)
@@ -226,7 +229,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 						noProxyHostsPatterns.add(pattern);
 					} catch (final PatternSyntaxException e) {
 
-						addFieldError("ubNoProxyHost",
+						addFieldError("hubNoProxyHost",
 								"The host : " + noProxyHosts + " : is not a valid regular expression.");
 					}
 				}
@@ -278,8 +281,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		final HubConfig config = createHubConfigInstance();
 		configManager.writeConfig(config);
 
-		logInputValues();
-
 		return SUCCESS;
 	}
 
@@ -290,7 +291,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		// set and get methods. Think about it because if someone attached a
 		// debugger they could see the values.
 		try {
-			logInputValues();
 			final HubConfig hubConfig = createHubConfigInstance();
 			final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
 			HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
@@ -305,30 +305,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 
 		return SUCCESS;
-	}
-
-	private void logInputValues() {
-		final HubConfig config = configManager.readConfig();
-		logger.info("##### Input Parameters #####");
-		final String buffer = "                 ";
-		logger.info("      Local:     ");
-		logger.info(buffer + " hubUrl:          " + getHubUrl());
-		logger.info(buffer + " hubUser:         " + getHubUser());
-		logger.info(buffer + " hubPass:         " + getHubPass());
-		logger.info(buffer + " hubProxyUrl:     " + getHubProxyUrl());
-		logger.info(buffer + " hubProxyPort:    " + getHubProxyPort());
-		logger.info(buffer + " hubProxyNoHosts: " + getHubNoProxyHost());
-		logger.info(buffer + " hubProxyUser:    " + getHubProxyUser());
-		logger.info(buffer + " hubProxyPass:    " + getHubProxyPass());
-		logger.info("      Persisted: ");
-		logger.info(buffer + " hubUrl:          " + config.getHubUrl());
-		logger.info(buffer + " hubUser:         " + config.getHubUser());
-		logger.info(buffer + " hubPass:         " + config.getHubPass());
-		logger.info(buffer + " hubProxyUrl:     " + config.getHubProxyUrl());
-		logger.info(buffer + " hubProxyPort:    " + config.getHubProxyPort());
-		logger.info(buffer + " hubProxyNoHosts: " + config.getHubNoProxyHost());
-		logger.info(buffer + " hubProxyUser:    " + config.getHubProxyUser());
-		logger.info(buffer + " hubProxyPass:    " + config.getHubProxyPass());
 	}
 
 	private void handleTestConnectionError(final Exception ex) {
