@@ -19,7 +19,7 @@
 				com.atlassian.bamboo.build.logger,
 				com.atlassian.bamboo.bandana,
 				com.atlassian.bamboo.collections,
-				com.atlassian.bamboo.configuration,
+				com.atlassian.bamboo.fileserver,
 				com.atlassian.bamboo.spring,
 				com.atlassian.bamboo.task,
 				com.atlassian.bamboo.utils,
@@ -116,20 +116,20 @@
 		<package name="configHubPlugin" extends="admin">
 			<action name="configHubServer"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
-				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>
 			<action name="configServerDetails"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
 				method="save">
-				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>
 			<action name="testConnection"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
 				method="testConnection">
-				<result name="input" type="freemarker">/admin/configHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/configHubServerEdit.ftl</result>
+				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
+				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>
 		</package>
 	</xwork>

@@ -34,6 +34,7 @@ import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.configuration.ConfigurationMap;
+import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.task.TaskContext;
@@ -41,7 +42,6 @@ import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
-import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
@@ -224,8 +224,7 @@ public class HubScanTask implements TaskType {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-			final File bambooHome = new File(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
-			final File toolsDir = new File(bambooHome, CLI_FOLDER_NAME);
+			final File toolsDir = new File(SystemDirectory.getApplicationHome(), CLI_FOLDER_NAME);
 
 			// make the directories for the hub scan CLI tool
 			if (!toolsDir.exists()) {
@@ -233,9 +232,7 @@ public class HubScanTask implements TaskType {
 			}
 
 			final CLIInstaller installer = new CLIInstaller(toolsDir);
-
 			installer.performInstallation(logger, restService, localHostName);
-
 			return installer;
 		} catch (final IOException e) {
 			logger.error(e);
@@ -247,7 +244,10 @@ public class HubScanTask implements TaskType {
 			logger.error(e);
 		} catch (final HubIntegrationException e) {
 			logger.error(e);
+		} catch (final Exception e) {
+			logger.error(e);
 		}
+
 		return null;
 	}
 
@@ -301,7 +301,9 @@ public class HubScanTask implements TaskType {
 			final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
 		logger.info("Initializing - Hub Bamboo Plugin");
 
-		logger.info("-> Bamboo home directory: " + SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
+		taskContext.getConfigurationMap();
+
+		logger.info("-> Bamboo home directory: " + SystemDirectory.getApplicationHome());
 		final BuildContext buildContext = taskContext.getBuildContext();
 		logger.info("-> Using Url : " + hubConfig.getHubUrl());
 		logger.info("-> Using Username : " + hubConfig.getHubUser());

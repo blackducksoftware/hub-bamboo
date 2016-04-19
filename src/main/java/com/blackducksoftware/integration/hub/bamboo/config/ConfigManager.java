@@ -33,7 +33,15 @@ public class ConfigManager implements Serializable {
 	private EncryptionService encryptionService;
 	private transient BandanaManager bandanaManager;
 
-	private final static String HUB_CONFIG_KEY = "com.blackducksoftware.integration.hub.bamboo.configuration";
+	private final static String HUB_CONFIG_KEY_PREFIX = "com.blackducksoftware.integration.hub.bamboo.configuration";
+	private final static String CONFIG_HUB_URL = ".huburl";
+	private final static String CONFIG_HUB_USER = ".hubuser";
+	private final static String CONFIG_HUB_PASS = ".hubpassword";
+	private final static String CONFIG_PROXY_URL = ".hubproxyurl";
+	private final static String CONFIG_PROXY_PORT = ".hubproxyport";
+	private final static String CONFIG_PROXY_USER = ".hubproxyuser";
+	private final static String CONFIG_PROXY_PASS = ".hubproxypass";
+	private final static String CONFIG_PROXY_NO_HOST = ".hubproxynohost";
 
 	public void setBandanaManager(final BandanaManager bandanaManager) {
 		this.bandanaManager = bandanaManager;
@@ -42,33 +50,56 @@ public class ConfigManager implements Serializable {
 
 	public HubConfig readConfig() {
 
-		final HubConfig config = (HubConfig) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT,
-				HUB_CONFIG_KEY);
+		final String hubUrl = getPersistedValue(CONFIG_HUB_URL, false);
+		final String hubUser = getPersistedValue(CONFIG_HUB_USER, true);
+		final String hubPass = getPersistedValue(CONFIG_HUB_PASS, true);
+		final String hubProxyUrl = getPersistedValue(CONFIG_PROXY_URL, false);
+		final String hubProxyPort = getPersistedValue(CONFIG_PROXY_PORT, false);
+		final String hubProxyNoHost = getPersistedValue(CONFIG_PROXY_NO_HOST, false);
+		final String hubProxyUser = getPersistedValue(CONFIG_PROXY_USER, true);
+		final String hubProxyPass = getPersistedValue(CONFIG_PROXY_PASS, true);
 
-		if (config == null) {
-			return new HubConfig();
-		} else {
-
-			final String hubUser = encryptionService.decrypt(config.getHubUser());
-			final String hubProxyUser = encryptionService.decrypt(config.getHubProxyUser());
-			final String hubPass = encryptionService.decrypt(config.getHubPass());
-			final String hubProxyPass = encryptionService.decrypt(config.getHubProxyPass());
-
-			return new HubConfig(config.getHubUrl(), hubUser, hubPass, config.getHubProxyUrl(),
-					config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, hubProxyPass);
-		}
+		return new HubConfig(hubUrl, hubUser, hubPass, hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser,
+				hubProxyPass);
 	}
 
 	public void writeConfig(@NotNull final HubConfig config) {
 
-		final String hubUser = encryptionService.encrypt(config.getHubUser());
-		final String hubPass = encryptionService.encrypt(config.getHubPass());
-		final String hubProxyUser = encryptionService.encrypt(config.getHubProxyUser());
-		final String hubProxyPass = encryptionService.encrypt(config.getHubProxyPass());
+		persistValue(CONFIG_HUB_URL, config.getHubUrl(), false);
+		persistValue(CONFIG_HUB_USER, config.getHubUser(), true);
+		persistValue(CONFIG_HUB_PASS, config.getHubPass(), true);
+		persistValue(CONFIG_PROXY_URL, config.getHubProxyUrl(), false);
+		persistValue(CONFIG_PROXY_PORT, config.getHubProxyPort(), false);
+		persistValue(CONFIG_PROXY_NO_HOST, config.getHubNoProxyHost(), false);
+		persistValue(CONFIG_PROXY_USER, config.getHubProxyUser(), true);
+		persistValue(CONFIG_PROXY_PASS, config.getHubProxyPass(), true);
 
-		final HubConfig encryptedConfig = new HubConfig(config.getHubUrl(), hubUser, hubPass, config.getHubProxyUrl(),
-				config.getHubProxyPort(), config.getHubNoProxyHost(), hubProxyUser, hubProxyPass);
+	}
 
-		bandanaManager.setValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, HUB_CONFIG_KEY, encryptedConfig);
+	private String getPersistedValue(final String key, final boolean decrypt) {
+
+		String value = null;
+
+		value = (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, HUB_CONFIG_KEY_PREFIX + key);
+
+		if (decrypt) {
+			final String original = value;
+
+			value = encryptionService.decrypt(original);
+		}
+
+		return value;
+	}
+
+	private void persistValue(final String key, final String value, final boolean encrypt) {
+
+		String persist = value;
+
+		if (encrypt) {
+			persist = encryptionService.encrypt(value);
+		}
+
+		bandanaManager.setValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, HUB_CONFIG_KEY_PREFIX + key, persist);
+
 	}
 }
