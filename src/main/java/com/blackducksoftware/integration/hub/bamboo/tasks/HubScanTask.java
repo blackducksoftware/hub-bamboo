@@ -301,8 +301,6 @@ public class HubScanTask implements TaskType {
 			final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
 		logger.info("Initializing - Hub Bamboo Plugin");
 
-		taskContext.getConfigurationMap();
-
 		logger.info("-> Bamboo home directory: " + SystemDirectory.getApplicationHome());
 		final BuildContext buildContext = taskContext.getBuildContext();
 		logger.info("-> Using Url : " + hubConfig.getHubUrl());
