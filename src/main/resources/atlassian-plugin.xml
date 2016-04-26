@@ -87,7 +87,7 @@
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
 
 		<resource type="download" name="images/" location="/images" />
-
+        <resource type="download" name="js/" location="/js" />
 		<context>int-hub-bamboo</context>
 	</web-resource>
 
@@ -122,12 +122,6 @@
 			<action name="configServerDetails"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
 				method="save">
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-			<action name="testConnection"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
-				method="testConnection">
 				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>

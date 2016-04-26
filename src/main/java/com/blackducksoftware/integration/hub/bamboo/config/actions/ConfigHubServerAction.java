@@ -55,6 +55,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 	private final Logger logger = Logger.getLogger(ConfigHubServerAction.class);
 
+	private final static String HUB_CONFIG_MODE = "submit";
+
 	private String hubUrl;
 	private String hubUser;
 	private String hubPass;
@@ -63,6 +65,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	private String hubNoProxyHost;
 	private String hubProxyUser;
 	private String hubProxyPass;
+	private String hubConfigMode;
 
 	private ConfigManager configManager;
 
@@ -76,6 +79,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		setHubNoProxyHost(config.getHubNoProxyHost());
 		setHubProxyUser(config.getHubProxyUser());
 		setHubProxyPass(config.getHubProxyPass());
+		setHubConfigMode(HUB_CONFIG_MODE);
 	}
 
 	public void setConfigManager(final ConfigManager configManager) {
@@ -279,7 +283,13 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	public String doSave() {
 
 		final HubConfig config = createHubConfigInstance();
-		configManager.writeConfig(config);
+
+		if (HUB_CONFIG_MODE.equals(getHubConfigMode())) {
+			configManager.writeConfig(config);
+			addActionMessage("Save Successful!"); // internationalize it.
+		} else {
+			doTestConnection();
+		}
 
 		return SUCCESS;
 	}
@@ -375,5 +385,13 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 	public void setHubProxyPass(final String hubProxyPass) {
 		this.hubProxyPass = hubProxyPass;
+	}
+
+	public String getHubConfigMode() {
+		return this.hubConfigMode;
+	}
+
+	public void setHubConfigMode(final String hubConfigMode) {
+		this.hubConfigMode = hubConfigMode;
 	}
 }
