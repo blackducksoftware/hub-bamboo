@@ -19,10 +19,9 @@
 <html>
   <head>
     <meta name="decorator" content="atl.admin">
-    <title>$i18n.getText('blackduckhub.config.title.label')</title>
+    <title>Black Duck Hub Settings</title>
     <script type="text/javascript">
     // <![CDATA [
-
         
         function performTestConnection(mode) {
             
@@ -33,7 +32,7 @@
         }
         
         function ensureSubmit() {
-            updateMode("submit");
+            updateMode("submit");            
         }
         
         function updateMode(mode) {
@@ -44,7 +43,7 @@
     </script>
   </head>
   <body>
-    [@ww.form action="configServerDetails" onsubmit="ensureSubmit()" id="configForm"]        
+    [@ww.form action="configHubServerDetails" onsubmit="ensureSubmit()" id="configForm"]        
         [@ww.textfield labelKey='blackduckhub.config.hubUrl.label' name='hubUrl' required='true' /]
         [@ww.textfield labelKey='blackduckhub.config.hubUser.label' name='hubUser' required='true' /]
         [@ww.password labelKey='blackduckhub.config.hubPass.label' name='hubPass' required='true' showPassword='true' /]

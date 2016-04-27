@@ -109,14 +109,14 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	public void validate() {
 		clearErrorsAndMessages();
 		if (StringUtils.isBlank(getHubUser())) {
-			addFieldError("hubUser", "Please specify a UserName.");
+			addFieldError("hubUser", getText("blackduckhub.action.config.validation.error.hub.user"));
 		}
 		if (StringUtils.isBlank(getHubPass())) {
-			addFieldError("hubPass", "There is no saved Password. Please specify a Password.");
+			addFieldError("hubPass", getText("blackduckhub.action.config.validation.error.hub.password"));
 		}
 
 		if (StringUtils.isBlank(getHubUrl())) {
-			addFieldError("hubUrl", "Please specify a URL.");
+			addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url"));
 		}
 
 		validateProxySettings();
@@ -135,10 +135,12 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			try {
 				testUrl.toURI();
 			} catch (final URISyntaxException e) {
-				addFieldError("hubUrl", "Please specify a valid URL of a Hub server. " + e.toString());
+				addFieldError("hubUrl",
+						getText("blackduckhub.action.config.validation.error.hub.url.syntax") + e.toString());
 			}
 		} catch (final MalformedURLException e) {
-			addFieldError("hubUrl", "Please specify a valid URL of a Hub server. " + e.toString());
+			addFieldError("hubUrl",
+					getText("blackduckhub.action.config.validation.error.hub.url.syntax") + e.toString());
 		}
 		// if (isTestConnection) {
 		if (testUrl != null) {
@@ -188,9 +190,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 				connection.getContent();
 			} catch (final IOException ioe) {
-				addFieldError("hubUrl", "Trouble reaching the Hub server. " + ioe.toString());
+				addFieldError("hubUrl",
+						getText("blackduckhub.action.config.validation.error.hub.url.unreachable") + ioe.toString());
 			} catch (final RuntimeException e) {
-				addFieldError("hubUrl", "Not a valid Hub server. " + e.toString());
+				addFieldError("hubUrl",
+						getText("blackduckhub.action.config.validation.error.hub.url.default") + e.toString());
 			}
 		}
 
@@ -203,10 +207,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			try {
 				final int port = Integer.valueOf(proxyPort);
 				if (StringUtils.isNotBlank(getHubProxyUrl()) && port < 0) {
-					addFieldError("hubProxyPort", "Please enter a valid Proxy port.");
+					addFieldError("hubProxyPort", getText("blackduckhub.action.config.validation.error.proxy.port"));
 				}
 			} catch (final NumberFormatException e) {
-				addFieldError("hubProxyPort", "Please enter a valid Proxy port. " + e.toString());
+				addFieldError("hubProxyPort",
+						getText("blackduckhub.action.config.validation.error.proxy.port") + e.toString());
 			}
 		}
 		final String noProxyHosts = getHubNoProxyHost();
@@ -223,8 +228,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 							noProxyHostsPatterns.add(pattern);
 						} catch (final PatternSyntaxException e) {
 
-							addFieldError("hubNoProxyHost",
-									"The host : " + ignoreHost + " : is not a valid regular expression.");
+							final StringBuilder sb = new StringBuilder(100);
+							sb.append(getText("blackduckhub.action.config.validation.error.proxy.host.ignore.prefix"));
+							sb.append(ignoreHost);
+							sb.append(getText("blackduckhub.action.config.validation.error.proxy.host.ignore.suffix"));
+							addFieldError("hubNoProxyHost", sb.toString());
 						}
 					}
 				} else {
@@ -233,8 +241,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 						noProxyHostsPatterns.add(pattern);
 					} catch (final PatternSyntaxException e) {
 
-						addFieldError("hubNoProxyHost",
-								"The host : " + noProxyHosts + " : is not a valid regular expression.");
+						final StringBuilder sb = new StringBuilder(100);
+						sb.append(getText("blackduckhub.action.config.validation.error.proxy.host.ignore.prefix"));
+						sb.append(noProxyHosts);
+						sb.append(getText("blackduckhub.action.config.validation.error.proxy.host.ignore.suffix"));
+						addFieldError("hubNoProxyHost", sb.toString());
 					}
 				}
 			}
@@ -286,7 +297,9 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 		if (HUB_CONFIG_MODE.equals(getHubConfigMode())) {
 			configManager.writeConfig(config);
-			addActionMessage("Save Successful!"); // internationalize it.
+			addActionMessage(getText("blackduckhub.action.config.save.success")); // internationalize
+																					// it.
+
 		} else {
 			doTestConnection();
 		}
@@ -305,7 +318,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
 			HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
 			service.setCookies(getHubUser(), getHubPass());
-			addActionMessage("Connection Successful!"); // internationalize it.
+			addActionMessage(getText("blackduckhub.action.config.test.success"));
 		} catch (final HubIntegrationException ex) {
 			handleTestConnectionError(ex);
 		} catch (final URISyntaxException ex) {
@@ -318,8 +331,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	}
 
 	private void handleTestConnectionError(final Exception ex) {
-
-		addActionError("Connection Failed. Cause: " + ex.getMessage());
+		addActionError(getText("blackduckhub.action.config.test.failed") + ex.getMessage());
 		logger.error("Test Connection Failed", ex);
 	}
 
