@@ -126,8 +126,7 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 	}
 
-	private void validateUrl(final String url) { // , boolean isTestConnection)
-													// {
+	private void validateUrl(final String url) {
 
 		URL testUrl = null;
 		try {
@@ -142,7 +141,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			addFieldError("hubUrl",
 					getText("blackduckhub.action.config.validation.error.hub.url.syntax") + e.toString());
 		}
-		// if (isTestConnection) {
 		if (testUrl != null) {
 			try {
 				if (StringUtils.isBlank(System.getProperty("http.maxRedirects"))) {
