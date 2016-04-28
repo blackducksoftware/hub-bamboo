@@ -19,16 +19,22 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
-import java.net.Proxy;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.blackducksoftware.integration.hub.HubIntRestService;
-import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
-import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
+import com.blackducksoftware.integration.hub.exception.EncryptionException;
+import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.global.HubCredentialsBuilder;
+import com.blackducksoftware.integration.hub.global.HubProxyInfo;
+import com.blackducksoftware.integration.hub.global.HubProxyInfoBuilder;
+import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.global.HubServerConfigBuilder;
+import com.blackducksoftware.integration.hub.logging.IntLogger;
 
 public class HubBambooUtils implements Cloneable {
 
@@ -47,38 +53,51 @@ public class HubBambooUtils implements Cloneable {
 		throw new CloneNotSupportedException();
 	}
 
-	public HubProxyInfo createProxyInfo(final HubConfig hubConfig) {
-		final HubProxyInfo proxyInfo = new HubProxyInfo();
-		proxyInfo.setHost(hubConfig.getHubProxyUrl());
-		if (StringUtils.isNotBlank(hubConfig.getHubProxyPort())) {
-			proxyInfo.setPort(Integer.valueOf(hubConfig.getHubProxyPort()));
-		}
-		proxyInfo.setIgnoredProxyHosts(hubConfig.getHubNoProxyHost());
-		proxyInfo.setProxyUsername(hubConfig.getHubProxyUser());
-		proxyInfo.setProxyPassword(hubConfig.getHubProxyPass());
+	public HubServerConfig buildConfigFromStrings(final String hubUrl, final String hubUser, final String hubPass,
+			final String hubProxyUrl, final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
+			final String hubProxyPass, final IntLogger logger)
+			throws IllegalArgumentException, HubIntegrationException, EncryptionException, MalformedURLException {
+		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder();
 
-		return proxyInfo;
-	}
+		final HubCredentialsBuilder credentialBuilder = new HubCredentialsBuilder();
+		credentialBuilder.setUsername(hubUser);
+		credentialBuilder.setPassword(hubPass);
 
-	public void configureProxyToService(final HubConfig hubConfig, final HubIntRestService service) {
-
-		final HubProxyInfo proxyInfo = createProxyInfo(hubConfig);
-		Proxy proxy = null;
-
-		if (StringUtils.isNotBlank(proxyInfo.getHost()) && StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
-			for (final Pattern p : proxyInfo.getNoProxyHostPatterns()) {
-				if (p.matcher(proxyInfo.getHost()).matches()) {
-					proxy = Proxy.NO_PROXY;
+		HubProxyInfo proxyInfo = null;
+		if (StringUtils.isNotBlank(hubProxyUrl)) {
+			final HubProxyInfoBuilder proxyBuilder = new HubProxyInfoBuilder();
+			proxyBuilder.setHost(hubProxyUrl);
+			if (StringUtils.isNotBlank(hubProxyPort)) {
+				try {
+					proxyBuilder.setPort(Integer.valueOf(hubProxyPort));
+				} catch (final NumberFormatException ex) {
+					// ignore the default value is 0.
 				}
+
+				proxyBuilder.setIgnoredProxyHosts(hubProxyNoHost);
+				proxyBuilder.setUsername(hubProxyUser);
+				proxyBuilder.setPassword(hubProxyPass);
+				proxyInfo = proxyBuilder.build();
 			}
 		}
+		configBuilder.setHubUrl(hubUrl);
+		configBuilder.setCredentials(credentialBuilder.build(logger));
+		configBuilder.setProxyInfo(proxyInfo);
 
-		if (proxyInfo != null && (proxy == null || proxy != Proxy.NO_PROXY)) {
+		return configBuilder.build(logger);
+	}
+
+	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service)
+			throws MalformedURLException {
+
+		final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
+
+		if (proxyInfo != null && (proxyInfo.shouldUseProxyForUrl(new URL(proxyInfo.getHost())))) {
 			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-				if (StringUtils.isNotBlank(proxyInfo.getProxyUsername())
-						&& StringUtils.isNotBlank(proxyInfo.getProxyPassword())) {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null,
-							proxyInfo.getProxyUsername(), proxyInfo.getProxyPassword());
+				if (StringUtils.isNotBlank(proxyInfo.getUsername())
+						&& StringUtils.isNotBlank(proxyInfo.getEncryptedPassword())) {
+					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, proxyInfo.getUsername(),
+							proxyInfo.getEncryptedPassword());
 				} else {
 					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, null, null);
 				}

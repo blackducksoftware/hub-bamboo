@@ -19,12 +19,19 @@
 package com.blackducksoftware.integration.hub.bamboo.config;
 
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
+import java.net.MalformedURLException;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.security.EncryptionService;
 import com.atlassian.bamboo.spring.ComponentAccessor;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.util.concurrent.NotNull;
+import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
+import com.blackducksoftware.integration.hub.exception.EncryptionException;
+import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 
 public class ConfigManager implements Serializable {
 
@@ -48,8 +55,10 @@ public class ConfigManager implements Serializable {
 		encryptionService = ComponentAccessor.ENCRYPTION_SERVICE.get();
 	}
 
-	public HubConfig readConfig() {
+	public HubServerConfig readConfig()
+			throws MalformedURLException, IllegalArgumentException, HubIntegrationException, EncryptionException {
 
+		HubServerConfig config = null;
 		final String hubUrl = getPersistedValue(CONFIG_HUB_URL, false);
 		final String hubUser = getPersistedValue(CONFIG_HUB_USER, true);
 		final String hubPass = getPersistedValue(CONFIG_HUB_PASS, true);
@@ -59,20 +68,45 @@ public class ConfigManager implements Serializable {
 		final String hubProxyUser = getPersistedValue(CONFIG_PROXY_USER, true);
 		final String hubProxyPass = getPersistedValue(CONFIG_PROXY_PASS, true);
 
-		return new HubConfig(hubUrl, hubUser, hubPass, hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser,
-				hubProxyPass);
+		// reading the current values don't care if there are errors i.e.
+		// null values or empty strings.
+		final IntBufferedLogger bufferedLogger = new IntBufferedLogger();
+		config = HubBambooUtils.getInstance().buildConfigFromStrings(hubUrl, hubUser, hubPass, hubProxyUrl,
+				hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass, bufferedLogger);
+
+		return config;
 	}
 
-	public void writeConfig(@NotNull final HubConfig config) {
+	public void writeConfig(@NotNull final HubServerConfig config) throws NoSuchMethodException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, EncryptionException {
 
-		persistValue(CONFIG_HUB_URL, config.getHubUrl(), false);
-		persistValue(CONFIG_HUB_USER, config.getHubUser(), true);
-		persistValue(CONFIG_HUB_PASS, config.getHubPass(), true);
-		persistValue(CONFIG_PROXY_URL, config.getHubProxyUrl(), false);
-		persistValue(CONFIG_PROXY_PORT, config.getHubProxyPort(), false);
-		persistValue(CONFIG_PROXY_NO_HOST, config.getHubNoProxyHost(), false);
-		persistValue(CONFIG_PROXY_USER, config.getHubProxyUser(), true);
-		persistValue(CONFIG_PROXY_PASS, config.getHubProxyPass(), true);
+		if (config == null) {
+			persistValue(CONFIG_HUB_URL, "", false);
+			persistValue(CONFIG_HUB_USER, "", true);
+			persistValue(CONFIG_HUB_PASS, "", true);
+			persistValue(CONFIG_PROXY_URL, "", false);
+			persistValue(CONFIG_PROXY_PORT, "", false);
+			persistValue(CONFIG_PROXY_NO_HOST, "", false);
+			persistValue(CONFIG_PROXY_USER, "", true);
+			persistValue(CONFIG_PROXY_PASS, "", true);
+		} else {
+			persistValue(CONFIG_HUB_URL, config.getHubUrl().toString(), false);
+			persistValue(CONFIG_HUB_USER, config.getGlobalCredentials().getUsername(), true);
+			persistValue(CONFIG_HUB_PASS, config.getGlobalCredentials().getDecryptedPassword(), true);
+			if (config.getProxyInfo() != null) {
+				persistValue(CONFIG_PROXY_URL, config.getProxyInfo().getHost(), false);
+				persistValue(CONFIG_PROXY_PORT, String.valueOf(config.getProxyInfo().getPort()), false);
+				persistValue(CONFIG_PROXY_NO_HOST, config.getProxyInfo().getIgnoredProxyHosts(), false);
+				persistValue(CONFIG_PROXY_USER, config.getProxyInfo().getUsername(), true);
+				persistValue(CONFIG_PROXY_PASS, config.getProxyInfo().getDecryptedPassword(), true);
+			} else {
+				persistValue(CONFIG_PROXY_URL, "", false);
+				persistValue(CONFIG_PROXY_PORT, "", false);
+				persistValue(CONFIG_PROXY_NO_HOST, "", false);
+				persistValue(CONFIG_PROXY_USER, "", true);
+				persistValue(CONFIG_PROXY_PASS, "", true);
+			}
+		}
 
 	}
 

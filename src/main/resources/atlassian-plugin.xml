@@ -7,6 +7,7 @@
 		<param name="plugin-icon">images/BlackDuckLogo.png</param>
 		<param name="plugin-logo">images/BlackDuckLogo.png</param>
 		<bundle-instructions>
+		    <Embed-Dependency>com.javax.</Embed-Dependency>
 			<Import-Package>
 				org.springframework.osgi.service.exporter.support;resolution:=optional,
 				org.springframework.osgi.service.importer.support;resolution:=optional,
@@ -37,6 +38,7 @@
 				com.thoughtworks.xstream.io,
 				com.thoughtworks.xstream.io.xml,
 				javax.annotation,
+				javax.crypto,
 				javax.inject,
 				javax.net.ssl,
 				javax.security.auth.x500,
@@ -115,12 +117,14 @@
 		<package name="configHubPlugin" extends="admin">
 			<action name="configHubServer"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
+				<result name="error" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>
 			<action name="configHubServerDetails"
 				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
 				method="save">
+				<result name="error" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
 			</action>
