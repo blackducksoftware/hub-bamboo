@@ -77,7 +77,7 @@ public class HubBambooUtils implements Cloneable {
 				proxyBuilder.setIgnoredProxyHosts(hubProxyNoHost);
 				proxyBuilder.setUsername(hubProxyUser);
 				proxyBuilder.setPassword(hubProxyPass);
-				proxyInfo = proxyBuilder.build();
+				proxyInfo = proxyBuilder.build(logger);
 			}
 		}
 		configBuilder.setHubUrl(hubUrl);

@@ -18,6 +18,7 @@
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.config.actions;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -30,12 +31,20 @@ import org.restlet.engine.connector.HttpClientHelper;
 import com.atlassian.bamboo.ww2.BambooActionSupport;
 import com.atlassian.bamboo.ww2.aware.permissions.GlobalAdminSecurityAware;
 import com.blackducksoftware.integration.hub.HubIntRestService;
+import com.blackducksoftware.integration.hub.ValidationExceptionEnum;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
+import com.blackducksoftware.integration.hub.bamboo.config.valdators.HubBambooCredentialsValidator;
+import com.blackducksoftware.integration.hub.bamboo.config.valdators.HubBambooProxyInfoValidator;
+import com.blackducksoftware.integration.hub.bamboo.config.valdators.HubBambooServerConfigValidator;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.exception.ValidationException;
+import com.blackducksoftware.integration.hub.global.HubProxyInfo;
+import com.blackducksoftware.integration.hub.global.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.global.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 
 public class ConfigHubServerAction extends BambooActionSupport implements GlobalAdminSecurityAware {
@@ -128,22 +137,116 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 	public void validate() {
 		clearErrorsAndMessages();
 
-		if (StringUtils.isBlank(getHubUser())) {
+		final HubBambooCredentialsValidator credentialvalidator = new HubBambooCredentialsValidator();
+		ValidationException validationEx;
+		try {
+			validationEx = credentialvalidator.validateUserName(getHubUser());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				addFieldError("hubUser", getText("blackduckhub.action.config.validation.error.hub.user"));
+			}
+		} catch (final IOException ex) {
 			addFieldError("hubUser", getText("blackduckhub.action.config.validation.error.hub.user"));
 		}
-		if (StringUtils.isBlank(getHubPass())) {
+
+		try {
+			validationEx = credentialvalidator.validatePassword(getHubPass());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				addFieldError("hubPass", getText("blackduckhub.action.config.validation.error.hub.password"));
+			}
+		} catch (final IOException ex) {
 			addFieldError("hubPass", getText("blackduckhub.action.config.validation.error.hub.password"));
 		}
 
-		if (StringUtils.isBlank(getHubUrl())) {
+		final HubBambooServerConfigValidator validator = new HubBambooServerConfigValidator();
+		try {
+			validationEx = validator.validateServerUrl(getHubUrl());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url"));
+			}
+		} catch (final IOException ex) {
 			addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url"));
 		}
 
-		// validateProxySettings();
-		//
-		// if (StringUtils.isNotBlank(getHubUrl())) {
-		// validateUrl(getHubUrl());
-		// }
+		boolean proxyInfoValid = true;
+		final HubBambooProxyInfoValidator proxyValidator = new HubBambooProxyInfoValidator();
+
+		try {
+			validationEx = proxyValidator.validatePort(getHubProxyUrl(), getHubProxyPort());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				proxyInfoValid = false;
+				addFieldError("hubProxyPort", getText("blackduckhub.action.config.validation.error.proxy.port"));
+			}
+		} catch (final IOException ex) {
+			addFieldError("hubProxyPort", getText("blackduckhub.action.config.validation.error.proxy.port"));
+		}
+
+		try {
+			validationEx = proxyValidator.validateCredentials(getHubProxyUrl(), getHubProxyUser(), getHubProxyPass());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				proxyInfoValid = false;
+				addFieldError("hubProxyUser", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
+				addFieldError("hubProxyPass", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
+			}
+		} catch (final IOException ex) {
+			addFieldError("hubProxyUser", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
+			addFieldError("hubProxyPass", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
+		}
+		try {
+			validationEx = proxyValidator.validateIgnoreHosts(getHubProxyUrl(), getHubNoProxyHost());
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+				proxyInfoValid = false;
+				addFieldError("hubNoProxyHost",
+						getText("blackduckhub.action.config.validation.error.proxy.host.ignore"));
+			}
+		} catch (final IOException ex) {
+			addFieldError("hubNoProxyHost", getText("blackduckhub.action.config.validation.error.proxy.host.ignore"));
+		}
+		HubProxyInfo proxyInfo = null;
+
+		if (proxyInfoValid) {
+			final HubProxyInfoBuilder builder = new HubProxyInfoBuilder();
+
+			builder.setHost(getHubProxyUrl());
+			if (StringUtils.isNotBlank(getHubProxyPort())) {
+				builder.setPort(Integer.valueOf(getHubProxyPort()));
+			}
+			builder.setUsername(getHubProxyUser());
+			builder.setPassword(getHubProxyPass());
+			builder.setIgnoredProxyHosts(getHubNoProxyHost());
+			final IntBufferedLogger logger = new IntBufferedLogger();
+			try {
+				proxyInfo = builder.build(logger);
+			} catch (final IllegalArgumentException e) {
+				proxyInfo = null;
+			} catch (final EncryptionException e) {
+				proxyInfo = null;
+			} catch (final HubIntegrationException e) {
+				proxyInfo = null;
+			}
+		}
+
+		try {
+			validationEx = validator.validateServerUrl(getHubUrl(), proxyInfo);
+
+			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+
+				final String message = validationEx.getMessage();
+
+				if (message != null) {
+					if (message.startsWith(HubServerConfigBuilder.ERROR_MSG_UNREACHABLE_PREFIX)) {
+						addFieldError("hubUrl",
+								"blackduckhub.action.config.validation.error.hub.url.unreachable" + message);
+					} else if (message.startsWith(HubServerConfigBuilder.ERROR_MSG_URL_NOT_VALID_PREFIX)) {
+						addFieldError("hubUrl",
+								"blackduckhub.action.config.validation.error.hub.url.default" + message);
+					}
+				} else {
+					addFieldError("hubUrl", "blackduckhub.action.config.validation.error.hub.url.default");
+				}
+			}
+		} catch (final IOException e) {
+			addFieldError("hubUrl", "blackduckhub.action.config.validation.error.hub.url.default");
+		}
 	}
 
 	// private void validateUrl(final String url) {
@@ -337,31 +440,31 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 					configManager.writeConfig(config);
 					addActionMessage(getText("blackduckhub.action.config.save.success"));
 				} catch (final NoSuchMethodException e) {
-					addActionError(e.getLocalizedMessage());
+					addActionError(e.getMessage());
 				} catch (final IllegalAccessException e) {
-					addActionError(e.getLocalizedMessage());
+					addActionError(e.getMessage());
 				} catch (final IllegalArgumentException e) {
-					addActionError(e.getLocalizedMessage());
+					addActionError(e.getMessage());
 				} catch (final InvocationTargetException e) {
-					addActionError(e.getLocalizedMessage());
+					addActionError(e.getMessage());
 				} catch (final EncryptionException e) {
-					addActionError(e.getLocalizedMessage());
+					addActionError(e.getMessage());
 				}
 			} else if (HUB_CONFIG_MODE_TEST.equals(getHubConfigMode())) {
 				doTestConnection();
 			}
 			return SUCCESS;
 		} catch (final IllegalArgumentException ex) {
-			addActionError(ex.getLocalizedMessage());
+			addActionError(ex.getMessage());
 			return ERROR;
 		} catch (final MalformedURLException ex) {
-			addActionError(ex.getLocalizedMessage());
+			addActionError(ex.getMessage());
 			return ERROR;
 		} catch (final HubIntegrationException ex) {
-			addActionError(ex.getLocalizedMessage());
+			addActionError(ex.getMessage());
 			return ERROR;
 		} catch (final EncryptionException ex) {
-			addActionError(ex.getLocalizedMessage());
+			addActionError(ex.getMessage());
 			return ERROR;
 		}
 	}
