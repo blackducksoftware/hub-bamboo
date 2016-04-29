@@ -63,6 +63,18 @@ public class HubBambooUtils implements Cloneable {
 		credentialBuilder.setUsername(hubUser);
 		credentialBuilder.setPassword(hubPass);
 
+		final HubProxyInfo proxyInfo = buildProxyInfoFromString(hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser,
+				hubProxyPass, logger);
+		configBuilder.setHubUrl(hubUrl);
+		configBuilder.setCredentials(credentialBuilder.build(logger));
+		configBuilder.setProxyInfo(proxyInfo);
+
+		return configBuilder.build(logger);
+	}
+
+	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,
+			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass, final IntLogger logger)
+			throws IllegalArgumentException, EncryptionException, HubIntegrationException {
 		HubProxyInfo proxyInfo = null;
 		if (StringUtils.isNotBlank(hubProxyUrl)) {
 			final HubProxyInfoBuilder proxyBuilder = new HubProxyInfoBuilder();
@@ -80,11 +92,7 @@ public class HubBambooUtils implements Cloneable {
 				proxyInfo = proxyBuilder.build(logger);
 			}
 		}
-		configBuilder.setHubUrl(hubUrl);
-		configBuilder.setCredentials(credentialBuilder.build(logger));
-		configBuilder.setProxyInfo(proxyInfo);
-
-		return configBuilder.build(logger);
+		return proxyInfo;
 	}
 
 	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service)

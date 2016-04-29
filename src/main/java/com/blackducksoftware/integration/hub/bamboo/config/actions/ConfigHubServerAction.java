@@ -23,7 +23,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
@@ -42,7 +41,6 @@ import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.exception.ValidationException;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
-import com.blackducksoftware.integration.hub.global.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.global.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
@@ -204,18 +202,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		HubProxyInfo proxyInfo = null;
 
 		if (proxyInfoValid) {
-			final HubProxyInfoBuilder builder = new HubProxyInfoBuilder();
 
-			builder.setHost(getHubProxyUrl());
-			if (StringUtils.isNotBlank(getHubProxyPort())) {
-				builder.setPort(Integer.valueOf(getHubProxyPort()));
-			}
-			builder.setUsername(getHubProxyUser());
-			builder.setPassword(getHubProxyPass());
-			builder.setIgnoredProxyHosts(getHubNoProxyHost());
-			final IntBufferedLogger logger = new IntBufferedLogger();
+			final IntBufferedLogger bufferedLogger = new IntBufferedLogger();
 			try {
-				proxyInfo = builder.build(logger);
+				proxyInfo = HubBambooUtils.getInstance().buildProxyInfoFromString(getHubProxyUrl(), getHubProxyPort(),
+						getHubNoProxyHost(), getHubProxyUser(), getHubProxyPass(), bufferedLogger);
 			} catch (final IllegalArgumentException e) {
 				proxyInfo = null;
 			} catch (final EncryptionException e) {
@@ -235,17 +226,17 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 				if (message != null) {
 					if (message.startsWith(HubServerConfigBuilder.ERROR_MSG_UNREACHABLE_PREFIX)) {
 						addFieldError("hubUrl",
-								"blackduckhub.action.config.validation.error.hub.url.unreachable" + message);
+								getText("blackduckhub.action.config.validation.error.hub.url.unreachable") + message);
 					} else if (message.startsWith(HubServerConfigBuilder.ERROR_MSG_URL_NOT_VALID_PREFIX)) {
 						addFieldError("hubUrl",
-								"blackduckhub.action.config.validation.error.hub.url.default" + message);
+								getText("blackduckhub.action.config.validation.error.hub.url.default") + message);
 					}
 				} else {
-					addFieldError("hubUrl", "blackduckhub.action.config.validation.error.hub.url.default");
+					addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url.default"));
 				}
 			}
 		} catch (final IOException e) {
-			addFieldError("hubUrl", "blackduckhub.action.config.validation.error.hub.url.default");
+			addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url.default"));
 		}
 	}
 
