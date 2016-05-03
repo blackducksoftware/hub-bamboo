@@ -1,17 +1,11 @@
 package com.blackducksoftware.integration.hub.bamboo.config.valdators;
 
-import com.blackducksoftware.integration.hub.exception.ValidationException;
 import com.blackducksoftware.integration.hub.validate.HubCredentialsValidator;
+import com.blackducksoftware.integration.hub.validate.ValidationResult;
 
-public class HubBambooCredentialsValidator extends HubCredentialsValidator<ValidationException> {
-
+public class HubBambooCredentialsValidator extends HubCredentialsValidator<ValidationResult> {
 	@Override
-	public ValidationException handleValidationException(final ValidationException e) {
-		return BambooValidatorDelegate.getInstance().handleValidationException(e);
-	}
-
-	@Override
-	public ValidationException handleSuccess() {
-		return BambooValidatorDelegate.getInstance().handleSuccess();
+	public ValidationResult processResult(final ValidationResult result) {
+		return result;
 	}
 }

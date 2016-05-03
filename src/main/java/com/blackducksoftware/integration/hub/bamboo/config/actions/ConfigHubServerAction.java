@@ -30,7 +30,6 @@ import org.restlet.engine.connector.HttpClientHelper;
 import com.atlassian.bamboo.ww2.BambooActionSupport;
 import com.atlassian.bamboo.ww2.aware.permissions.GlobalAdminSecurityAware;
 import com.blackducksoftware.integration.hub.HubIntRestService;
-import com.blackducksoftware.integration.hub.ValidationExceptionEnum;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.bamboo.config.valdators.HubBambooCredentialsValidator;
@@ -39,11 +38,12 @@ import com.blackducksoftware.integration.hub.bamboo.config.valdators.HubBambooSe
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
-import com.blackducksoftware.integration.hub.exception.ValidationException;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.global.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
+import com.blackducksoftware.integration.hub.validate.ValidationResult;
+import com.blackducksoftware.integration.hub.validate.ValidationResultEnum;
 
 public class ConfigHubServerAction extends BambooActionSupport implements GlobalAdminSecurityAware {
 
@@ -136,10 +136,10 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		clearErrorsAndMessages();
 
 		final HubBambooCredentialsValidator credentialvalidator = new HubBambooCredentialsValidator();
-		ValidationException validationEx;
+		ValidationResult result;
 		try {
-			validationEx = credentialvalidator.validateUserName(getHubUser());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = credentialvalidator.validateUserName(getHubUser());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				addFieldError("hubUser", getText("blackduckhub.action.config.validation.error.hub.user"));
 			}
 		} catch (final IOException ex) {
@@ -147,8 +147,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 
 		try {
-			validationEx = credentialvalidator.validatePassword(getHubPass());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = credentialvalidator.validatePassword(getHubPass());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				addFieldError("hubPass", getText("blackduckhub.action.config.validation.error.hub.password"));
 			}
 		} catch (final IOException ex) {
@@ -157,8 +157,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 
 		final HubBambooServerConfigValidator validator = new HubBambooServerConfigValidator();
 		try {
-			validationEx = validator.validateServerUrl(getHubUrl());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = validator.validateServerUrl(getHubUrl());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url"));
 			}
 		} catch (final IOException ex) {
@@ -169,8 +169,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		final HubBambooProxyInfoValidator proxyValidator = new HubBambooProxyInfoValidator();
 
 		try {
-			validationEx = proxyValidator.validatePort(getHubProxyUrl(), getHubProxyPort());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = proxyValidator.validatePort(getHubProxyUrl(), getHubProxyPort());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				proxyInfoValid = false;
 				addFieldError("hubProxyPort", getText("blackduckhub.action.config.validation.error.proxy.port"));
 			}
@@ -179,8 +179,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 
 		try {
-			validationEx = proxyValidator.validateCredentials(getHubProxyUrl(), getHubProxyUser(), getHubProxyPass());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = proxyValidator.validateCredentials(getHubProxyUrl(), getHubProxyUser(), getHubProxyPass());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				proxyInfoValid = false;
 				addFieldError("hubProxyUser", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
 				addFieldError("hubProxyPass", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
@@ -190,8 +190,8 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			addFieldError("hubProxyPass", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
 		}
 		try {
-			validationEx = proxyValidator.validateIgnoreHosts(getHubProxyUrl(), getHubNoProxyHost());
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			result = proxyValidator.validateIgnoreHosts(getHubProxyUrl(), getHubNoProxyHost());
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 				proxyInfoValid = false;
 				addFieldError("hubNoProxyHost",
 						getText("blackduckhub.action.config.validation.error.proxy.host.ignore"));
@@ -217,11 +217,11 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		}
 
 		try {
-			validationEx = validator.validateServerUrl(getHubUrl(), proxyInfo);
+			result = validator.validateServerUrl(getHubUrl(), proxyInfo);
 
-			if (validationEx != null && validationEx.getValidationExceptionEnum() == ValidationExceptionEnum.ERROR) {
+			if (result.getResultType() == ValidationResultEnum.ERROR) {
 
-				final String message = validationEx.getMessage();
+				final String message = result.getMessage();
 
 				if (message != null) {
 					if (message.startsWith(HubServerConfigBuilder.ERROR_MSG_UNREACHABLE_PREFIX)) {
