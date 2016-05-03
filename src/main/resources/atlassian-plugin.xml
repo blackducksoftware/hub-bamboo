@@ -7,7 +7,6 @@
 		<param name="plugin-icon">images/BlackDuckLogo.png</param>
 		<param name="plugin-logo">images/BlackDuckLogo.png</param>
 		<bundle-instructions>
-		    <Embed-Dependency>com.javax.</Embed-Dependency>
 			<Import-Package>
 				org.springframework.osgi.service.exporter.support;resolution:=optional,
 				org.springframework.osgi.service.importer.support;resolution:=optional,
