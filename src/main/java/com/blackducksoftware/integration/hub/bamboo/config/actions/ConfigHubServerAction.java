@@ -18,10 +18,8 @@
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.config.actions;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.restlet.engine.Engine;
@@ -33,7 +31,6 @@ import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
-import com.blackducksoftware.integration.hub.builder.ValidationResult;
 import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
@@ -43,7 +40,6 @@ import com.blackducksoftware.integration.hub.global.HubCredentialsFieldEnum;
 import com.blackducksoftware.integration.hub.global.HubProxyInfoFieldEnum;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.global.HubServerConfigFieldEnum;
-import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 
 public class ConfigHubServerAction extends BambooActionSupport implements GlobalAdminSecurityAware {
 
@@ -146,50 +142,42 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 		config.setIgnoredProxyHosts(getHubNoProxyHost());
 		final ValidationResults<GlobalFieldKey, HubServerConfig> result = config.build();
 		if (!result.isSuccess()) {
-			List<ValidationResult> resultList = null;
 
-			resultList = result.getResultList(HubCredentialsFieldEnum.USERNAME);
-			if (resultList != null && !resultList.isEmpty()) {
+			if (result.hasErrors(HubCredentialsFieldEnum.USERNAME)) {
 				addFieldError("hubUser", getText("blackduckhub.action.config.validation.error.hub.user"));
 			}
 
-			resultList = result.getResultList(HubCredentialsFieldEnum.PASSWORD);
-			if (resultList != null && !resultList.isEmpty()) {
+			if (result.hasErrors(HubCredentialsFieldEnum.PASSWORD)) {
 				addFieldError("hubPass", getText("blackduckhub.action.config.validation.error.hub.password"));
 			}
-			resultList = result.getResultList(HubServerConfigFieldEnum.HUBURL);
-			if (resultList != null && !resultList.isEmpty()) {
+
+			if (result.hasErrors(HubServerConfigFieldEnum.HUBURL)) {
 				addFieldError("hubUrl", getText("blackduckhub.action.config.validation.error.hub.url"));
 			}
-			resultList = result.getResultList(HubProxyInfoFieldEnum.PROXYPORT);
-			if (resultList != null && !resultList.isEmpty()) {
+
+			if (result.hasErrors(HubProxyInfoFieldEnum.PROXYPORT)) {
 				addFieldError("hubProxyPort", getText("blackduckhub.action.config.validation.error.proxy.port"));
 			}
 
-			resultList = result.getResultList(HubProxyInfoFieldEnum.PROXYUSERNAME);
-			if (resultList != null && !resultList.isEmpty()) {
+			if (result.hasErrors(HubProxyInfoFieldEnum.PROXYUSERNAME)) {
 				addFieldError("hubProxyUser", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
 			}
 
-			resultList = result.getResultList(HubProxyInfoFieldEnum.PROXYPASSWORD);
-			if (resultList != null && !resultList.isEmpty()) {
+			if (result.hasErrors(HubProxyInfoFieldEnum.PROXYPASSWORD)) {
 				addFieldError("hubProxyPass", getText("blackduckhub.action.config.validation.error.proxy.credentials"));
 			}
 
-			resultList = result.getResultList(HubProxyInfoFieldEnum.NOPROXYHOSTS);
-			if (resultList != null && !resultList.isEmpty()) {
+			if (result.hasErrors(HubProxyInfoFieldEnum.NOPROXYHOSTS)) {
 				addFieldError("hubNoProxyHost",
 						getText("blackduckhub.action.config.validation.error.proxy.host.ignore"));
 			}
 		}
 	}
 
-	private HubServerConfig createHubConfigInstance()
-			throws IllegalArgumentException, MalformedURLException, HubIntegrationException, EncryptionException {
+	private HubServerConfig createHubConfigInstance() {
 
 		return HubBambooUtils.getInstance().buildConfigFromStrings(getHubUrl(), getHubUser(), getHubPass(),
-				getHubProxyUrl(), getHubProxyPort(), getHubNoProxyHost(), getHubProxyUser(), getHubProxyPass(),
-				new IntBufferedLogger());
+				getHubProxyUrl(), getHubProxyPort(), getHubNoProxyHost(), getHubProxyUser(), getHubProxyPass());
 	}
 
 	public String doSave() {
@@ -202,14 +190,9 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 				try {
 					configManager.writeConfig(config);
 					addActionMessage(getText("blackduckhub.action.config.save.success"));
-				} catch (final NoSuchMethodException e) {
-					addActionError(e.getMessage());
-				} catch (final IllegalAccessException e) {
-					addActionError(e.getMessage());
 				} catch (final IllegalArgumentException e) {
 					addActionError(e.getMessage());
-				} catch (final InvocationTargetException e) {
-					addActionError(e.getMessage());
+
 				} catch (final EncryptionException e) {
 					addActionError(e.getMessage());
 				}
@@ -218,15 +201,6 @@ public class ConfigHubServerAction extends BambooActionSupport implements Global
 			}
 			return SUCCESS;
 		} catch (final IllegalArgumentException ex) {
-			addActionError(ex.getMessage());
-			return ERROR;
-		} catch (final MalformedURLException ex) {
-			addActionError(ex.getMessage());
-			return ERROR;
-		} catch (final HubIntegrationException ex) {
-			addActionError(ex.getMessage());
-			return ERROR;
-		} catch (final EncryptionException ex) {
 			addActionError(ex.getMessage());
 			return ERROR;
 		}

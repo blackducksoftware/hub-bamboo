@@ -33,7 +33,6 @@ import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.logging.IntLogger;
 
 public class HubBambooUtils implements Cloneable {
 
@@ -54,9 +53,8 @@ public class HubBambooUtils implements Cloneable {
 
 	public HubServerConfig buildConfigFromStrings(final String hubUrl, final String hubUser, final String hubPass,
 			final String hubProxyUrl, final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
-			final String hubProxyPass, final IntLogger logger)
-			throws IllegalArgumentException, HubIntegrationException, EncryptionException, MalformedURLException {
-		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder();
+			final String hubProxyPass) {
+		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
 		configBuilder.setHubUrl(hubUrl);
 		configBuilder.setUsername(hubUser);
 		configBuilder.setPassword(hubPass);
@@ -70,7 +68,7 @@ public class HubBambooUtils implements Cloneable {
 	}
 
 	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,
-			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass, final IntLogger logger)
+			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass)
 			throws IllegalArgumentException, EncryptionException, HubIntegrationException {
 		HubProxyInfo proxyInfo = null;
 		if (StringUtils.isNotBlank(hubProxyUrl)) {

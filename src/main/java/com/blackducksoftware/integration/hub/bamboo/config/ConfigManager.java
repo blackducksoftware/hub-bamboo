@@ -19,7 +19,6 @@
 package com.blackducksoftware.integration.hub.bamboo.config;
 
 import java.io.Serializable;
-import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
@@ -31,7 +30,6 @@ import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 
 public class ConfigManager implements Serializable {
 
@@ -68,17 +66,14 @@ public class ConfigManager implements Serializable {
 		final String hubProxyUser = getPersistedValue(CONFIG_PROXY_USER, true);
 		final String hubProxyPass = getPersistedValue(CONFIG_PROXY_PASS, true);
 
-		// reading the current values don't care if there are errors i.e.
-		// null values or empty strings.
-		final IntBufferedLogger bufferedLogger = new IntBufferedLogger();
 		config = HubBambooUtils.getInstance().buildConfigFromStrings(hubUrl, hubUser, hubPass, hubProxyUrl,
-				hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass, bufferedLogger);
+				hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass);
 
 		return config;
 	}
 
-	public void writeConfig(@NotNull final HubServerConfig config) throws NoSuchMethodException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, EncryptionException {
+	public void writeConfig(@NotNull final HubServerConfig config)
+			throws IllegalArgumentException, EncryptionException {
 
 		if (config == null) {
 			persistValue(CONFIG_HUB_URL, "", false);
