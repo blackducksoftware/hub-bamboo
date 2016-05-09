@@ -27,13 +27,12 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.blackducksoftware.integration.hub.HubIntRestService;
+import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
+import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
-import com.blackducksoftware.integration.hub.global.HubCredentialsBuilder;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
-import com.blackducksoftware.integration.hub.global.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.global.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 
 public class HubBambooUtils implements Cloneable {
@@ -58,18 +57,16 @@ public class HubBambooUtils implements Cloneable {
 			final String hubProxyPass, final IntLogger logger)
 			throws IllegalArgumentException, HubIntegrationException, EncryptionException, MalformedURLException {
 		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder();
-
-		final HubCredentialsBuilder credentialBuilder = new HubCredentialsBuilder();
-		credentialBuilder.setUsername(hubUser);
-		credentialBuilder.setPassword(hubPass);
-
-		final HubProxyInfo proxyInfo = buildProxyInfoFromString(hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser,
-				hubProxyPass, logger);
 		configBuilder.setHubUrl(hubUrl);
-		configBuilder.setCredentials(credentialBuilder.build(logger));
-		configBuilder.setProxyInfo(proxyInfo);
+		configBuilder.setUsername(hubUser);
+		configBuilder.setPassword(hubPass);
+		configBuilder.setProxyHost(hubProxyUrl);
+		configBuilder.setProxyPort(hubProxyPort);
+		configBuilder.setProxyUsername(hubProxyUser);
+		configBuilder.setProxyPassword(hubProxyPass);
+		configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
 
-		return configBuilder.build(logger);
+		return configBuilder.build().getConstructedObject();
 	}
 
 	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,
@@ -89,7 +86,7 @@ public class HubBambooUtils implements Cloneable {
 				proxyBuilder.setIgnoredProxyHosts(hubProxyNoHost);
 				proxyBuilder.setUsername(hubProxyUser);
 				proxyBuilder.setPassword(hubProxyPass);
-				proxyInfo = proxyBuilder.build(logger);
+				proxyInfo = proxyBuilder.build().getConstructedObject();
 			}
 		}
 		return proxyInfo;

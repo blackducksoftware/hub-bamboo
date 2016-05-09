@@ -18,6 +18,69 @@
  *******************************************************************************/
 package ut.com.blackducksoftware.integration.hub.bamboo.tasks;
 
+import static org.junit.Assert.assertEquals;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.junit.Test;
+
+import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanParamEnum;
+import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator;
+
+import ut.com.blackducksoftware.integration.hub.bamboo.utils.TestTaskDefinition;
+
 public class HubScanTaskConfiguratorTest {
 
+	private Map<String, String> createConfigurationMap() {
+		final Map<String, String> configMap = new HashMap<String, String>();
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			configMap.put(key, param.getDefaultValue());
+		}
+		return configMap;
+	}
+
+	@Test
+	public void testPopulateContextForCreate() {
+		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+
+		final Map<String, Object> context = new HashMap<String, Object>();
+		taskConfigurator.populateContextForCreate(context);
+
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			assertEquals(param.getDefaultValue(), context.get(key));
+		}
+	}
+
+	@Test
+	public void testPopulateContextForEdit() {
+		final TestTaskDefinition taskDefinition = new TestTaskDefinition();
+		taskDefinition.setConfiguration(createConfigurationMap());
+		final Map<String, Object> context = new HashMap<String, Object>();
+
+		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+		taskConfigurator.populateContextForEdit(context, taskDefinition);
+
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			assertEquals(param.getDefaultValue(), context.get(key));
+		}
+	}
+
+	@Test
+	public void testPopulateContextForView() {
+		final TestTaskDefinition taskDefinition = new TestTaskDefinition();
+		taskDefinition.setConfiguration(createConfigurationMap());
+		final Map<String, Object> context = new HashMap<String, Object>();
+
+		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+		taskConfigurator.populateContextForView(context, taskDefinition);
+
+		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+			final String key = param.getKey();
+			assertEquals(param.getDefaultValue(), context.get(key));
+		}
+	}
 }

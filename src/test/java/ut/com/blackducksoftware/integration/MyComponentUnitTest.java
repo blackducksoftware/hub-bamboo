@@ -18,11 +18,12 @@
  *******************************************************************************/
 package ut.com.blackducksoftware.integration;
 
+import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
+
 import com.blackducksoftware.integration.MyPluginComponent;
 import com.blackducksoftware.integration.MyPluginComponentImpl;
-
-import static org.junit.Assert.assertEquals;
 
 public class MyComponentUnitTest
 {

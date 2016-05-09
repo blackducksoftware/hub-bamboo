@@ -52,6 +52,7 @@ import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
+import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
@@ -62,7 +63,6 @@ import com.blackducksoftware.integration.hub.exception.VersionDoesNotExistExcept
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
-import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatus;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
@@ -105,6 +105,12 @@ public class HubScanTask implements TaskType {
 					taskContext.getWorkingDirectory(), logger);
 			final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 			printGlobalConfiguration(hubConfig, proxyInfo, logger);
+
+			if (jobConfig == null) {
+				// invalid job configuration fail the build.
+				logger.error("Task Configuration invalid.  Please validate configuration settings.");
+				return resultBuilder.failedWithError().build();
+			}
 			printConfiguration(taskContext, hubConfig, logger, jobConfig);
 
 			service.setCookies(hubConfig.getGlobalCredentials().getUsername(),
@@ -214,7 +220,7 @@ public class HubScanTask implements TaskType {
 			scanTargets.add(workingDirectory.getAbsolutePath());
 		}
 
-		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder();
+		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder(false);
 		hubScanJobConfigBuilder.setProjectName(project);
 		hubScanJobConfigBuilder.setVersion(version);
 		hubScanJobConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
@@ -226,7 +232,7 @@ public class HubScanTask implements TaskType {
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
 
-		return hubScanJobConfigBuilder.build(logger);
+		return hubScanJobConfigBuilder.build().getConstructedObject();
 	}
 
 	private CLIInstaller installCLI(final IntLogger logger, final HubIntRestService restService,
@@ -326,7 +332,6 @@ public class HubScanTask implements TaskType {
 		for (final String target : jobConfig.getScanTargetPaths()) {
 			logger.info("-> " + target);
 		}
-
 		// logger.info("-> Generate Hub report : " +
 		// jobConfig.isShouldGenerateRiskReport());
 		final String formattedTime = String.format("%d minutes",
@@ -334,7 +339,7 @@ public class HubScanTask implements TaskType {
 		logger.info("-> Maximum wait time for the BOM Update : " + formattedTime);
 	}
 
-	public ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
+	private ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
 			final IntLogger logger, final HubIntRestService service, final File oneJarFile, final File scanExec,
 			File javaExec, final HubServerConfig hubConfig, final HubScanJobConfig jobConfig,
 			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper) throws HubIntegrationException,
@@ -393,7 +398,7 @@ public class HubScanTask implements TaskType {
 		return scan;
 	}
 
-	public void addProxySettingsToScanner(final IntLogger logger, final BambooScanExecutor scan,
+	private void addProxySettingsToScanner(final IntLogger logger, final BambooScanExecutor scan,
 			final HubProxyInfo proxyInfo) throws HubIntegrationException, URISyntaxException, MalformedURLException,
 			IllegalArgumentException, EncryptionException {
 		if (proxyInfo != null) {
@@ -585,7 +590,7 @@ public class HubScanTask implements TaskType {
 		return "Found " + count + " bom entries to be" + type + " of a defined Policy";
 	}
 
-	public void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
+	private void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
 			final HubSupportHelper supportHelper, final HubReportGenerationInfo bomUpdateInfo,
 			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
 			HubIntegrationException, URISyntaxException, IOException {
