@@ -19,8 +19,6 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,20 +88,13 @@ public class HubBambooUtils implements Cloneable {
 		return proxyInfo;
 	}
 
-	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service)
-			throws MalformedURLException {
+	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service) {
 
 		final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 
-		if (proxyInfo != null && (proxyInfo.shouldUseProxyForUrl(new URL(proxyInfo.getHost())))) {
-			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-				if (StringUtils.isNotBlank(proxyInfo.getUsername())
-						&& StringUtils.isNotBlank(proxyInfo.getEncryptedPassword())) {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, proxyInfo.getUsername(),
-							proxyInfo.getEncryptedPassword());
-				} else {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, null, null);
-				}
+		if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
+			if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
+				service.setProxyProperties(proxyInfo);
 			}
 		}
 	}

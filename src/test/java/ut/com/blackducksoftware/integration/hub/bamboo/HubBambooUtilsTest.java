@@ -23,13 +23,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
@@ -37,8 +34,6 @@ import com.blackducksoftware.integration.hub.builder.HubCredentialsBuilder;
 import com.blackducksoftware.integration.hub.global.HubCredentials;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-
-import ut.com.blackducksoftware.integration.hub.bamboo.utils.TestLogger;
 
 public class HubBambooUtilsTest {
 
@@ -53,11 +48,6 @@ public class HubBambooUtilsTest {
 	private static final String VALID_IGNORE_HOST = "google";
 	private static final String INVALID_IGNORE_HOST_LIST = "google,[^-z!,abc";
 	private static final String INVALID_IGNORE_HOST = "[^-z!";
-
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
-
-	private final TestLogger logger = new TestLogger();
 
 	@Test
 	public void testGetInstance() throws Exception {
@@ -164,7 +154,6 @@ public class HubBambooUtilsTest {
 
 	@Test
 	public void testConfigureServiceNullProxy() throws Exception {
-		exception.expect(MalformedURLException.class);
 		final HubIntRestService service = new HubIntRestService(HUB_URL);
 		final HubServerConfig config = HubBambooUtils.getInstance().buildConfigFromStrings(HUB_URL, USER, PASSWORD,
 				null, null, null, null, null);
