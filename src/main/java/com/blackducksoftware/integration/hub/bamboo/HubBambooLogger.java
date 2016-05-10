@@ -20,6 +20,9 @@ package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
@@ -44,6 +47,19 @@ public class HubBambooLogger implements IntLogger {
 
 	public void setLogLevel(final LogLevel level) {
 		this.level = level;
+	}
+
+	public void setLogLevel(final Map<String, String> envVars) {
+		final String logLevel = HubBambooUtils.getInstance().getEnvironmentVariable(envVars, "HUB_LOG_LEVEL", true);
+		try {
+			if (StringUtils.isNotBlank(logLevel)) {
+				setLogLevel(LogLevel.valueOf(logLevel.toUpperCase()));
+			} else {
+				setLogLevel(LogLevel.INFO);
+			}
+		} catch (final IllegalArgumentException e) {
+			setLogLevel(LogLevel.INFO);
+		}
 	}
 
 	public void debug(final String txt, final Throwable throwable) {

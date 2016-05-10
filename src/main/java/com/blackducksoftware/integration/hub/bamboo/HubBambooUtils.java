@@ -20,10 +20,13 @@ package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
@@ -118,5 +121,31 @@ public class HubBambooUtils implements Cloneable {
 		}
 
 		return scanTargets;
+	}
+
+	public Map<String, String> getEnvironmentVariablesMap(@NotNull final Map<String, String> systemVariables,
+			@NotNull final Map<String, String> taskContextVariables) {
+		final Map<String, String> allVariablesMap = new HashMap<String, String>(
+				systemVariables.size() + taskContextVariables.size());
+
+		allVariablesMap.putAll(systemVariables);
+		allVariablesMap.putAll(taskContextVariables);
+
+		return allVariablesMap;
+	}
+
+	public String getEnvironmentVariable(@NotNull final Map<String, String> envVars,
+			@NotNull final String parameterName, final boolean taskContextVariable) {
+		String variable;
+
+		if (taskContextVariable) {
+			variable = "bamboo_" + parameterName;
+		} else {
+			variable = parameterName;
+		}
+
+		final String value = envVars.get(variable);
+
+		return StringUtils.trimToNull(value);
 	}
 }

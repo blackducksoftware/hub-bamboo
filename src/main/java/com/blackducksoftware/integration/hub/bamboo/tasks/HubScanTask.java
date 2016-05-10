@@ -43,7 +43,6 @@ import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
-import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
@@ -97,6 +96,11 @@ public class HubScanTask implements TaskType {
 
 		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
 		final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
+
+		final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
+				environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
+
+		logger.setLogLevel(envVars);
 		try {
 
 			final HubServerConfig hubConfig = configManager.readConfig();
@@ -151,7 +155,7 @@ public class HubScanTask implements TaskType {
 			// run the scan
 			final DateTime beforeScanTime = new DateTime();
 			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
-					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport);
+					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
 			final DateTime afterScanTime = new DateTime();
 			// check the policy failures
 
@@ -342,8 +346,9 @@ public class HubScanTask implements TaskType {
 	private ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
 			final IntLogger logger, final HubIntRestService service, final File oneJarFile, final File scanExec,
 			File javaExec, final HubServerConfig hubConfig, final HubScanJobConfig jobConfig,
-			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper) throws HubIntegrationException,
-			MalformedURLException, URISyntaxException, IllegalArgumentException, EncryptionException {
+			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper, final Map<String, String> envVars)
+			throws HubIntegrationException, MalformedURLException, URISyntaxException, IllegalArgumentException,
+			EncryptionException {
 		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl().toString(),
 				hubConfig.getGlobalCredentials().getUsername(), hubConfig.getGlobalCredentials().getDecryptedPassword(),
 				jobConfig.getScanTargetPaths(), taskContext.getBuildContext().getBuildNumber(), supportHelper);
@@ -369,7 +374,7 @@ public class HubScanTask implements TaskType {
 		}
 
 		if (javaExec == null) {
-			String javaHome = getEnvironmentVariable("JAVA_HOME", logger);
+			String javaHome = HubBambooUtils.getInstance().getEnvironmentVariable(envVars, "JAVA_HOME", false);
 			if (StringUtils.isBlank(javaHome)) {
 				// We couldn't get the JAVA_HOME variable so lets try to get the
 				// home
@@ -507,17 +512,6 @@ public class HubScanTask implements TaskType {
 		}
 
 		return version;
-	}
-
-	private String getEnvironmentVariable(@NotNull final String parameterName, final IntLogger logger) {
-		final Map<String, String> envVars = environmentVariableAccessor.getEnvironment();
-		final String value = envVars.get(parameterName);
-
-		if (value == null || value.trim().length() == 0) {
-			return null;
-		}
-		final String result = value.trim();
-		return result;
 	}
 
 	private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
