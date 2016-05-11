@@ -19,12 +19,16 @@
 package ut.com.blackducksoftware.integration.hub.bamboo;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -48,6 +52,28 @@ public class HubBambooUtilsTest {
 	private static final String VALID_IGNORE_HOST = "google";
 	private static final String INVALID_IGNORE_HOST_LIST = "google,[^-z!,abc";
 	private static final String INVALID_IGNORE_HOST = "[^-z!";
+
+	private final Map<String, String> map1 = new HashMap<String, String>();
+	private final Map<String, String> map2 = new HashMap<String, String>();
+
+	private static final String key_1 = "key1";
+	private static final String key_2 = "key2";
+	private static final String key_3 = "key3";
+	private static final String key_4 = "key4";
+	private static final String value_1 = "value1";
+	private static final String value_2 = "value2";
+	private static final String value_3 = "value3";
+	private static final String value_4 = "value4";
+
+	private Map<String, String> createVarMap() {
+		map1.put(key_1, value_1);
+		map1.put(key_2, value_2);
+		map2.put(key_3, value_3);
+		map2.put(key_4, value_4);
+
+		final Map<String, String> result = HubBambooUtils.getInstance().getEnvironmentVariablesMap(map1, map2);
+		return result;
+	}
 
 	@Test
 	public void testGetInstance() throws Exception {
@@ -201,5 +227,39 @@ public class HubBambooUtilsTest {
 		final HubServerConfig config = new HubServerConfig(new URL(VALID_HOST), 5, creds, proxyInfo);
 
 		HubBambooUtils.getInstance().configureProxyToService(config, service);
+	}
+
+	@Test
+	public void testCreateEnvVarMap() {
+
+		final Map<String, String> result = createVarMap();
+		assertEquals(result.size(), map1.size() + map2.size());
+		assertEquals(result.get(key_1), value_1);
+		assertEquals(result.get(key_2), value_2);
+		assertEquals(result.get(key_3), value_3);
+		assertEquals(result.get(key_4), value_4);
+		assertFalse(result.containsKey("anunknownkey"));
+	}
+
+	@Test
+	public void testGetVariable() {
+		final Map<String, String> result = createVarMap();
+		result.put("bamboo_" + key_1, value_1);
+		result.put("bamboo_" + key_2, value_2);
+		result.put("bamboo_" + key_3, value_3);
+		result.put("bamboo_" + key_4, value_4);
+
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_1, false), value_1);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_2, false), value_2);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_3, false), value_3);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_4, false), value_4);
+
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_1, true), value_1);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_2, true), value_2);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_3, true), value_3);
+		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_4, true), value_4);
+
+		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", false));
+		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", true));
 	}
 }
