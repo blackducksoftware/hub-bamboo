@@ -19,6 +19,7 @@
 				com.atlassian.bamboo.build.logger,
 				com.atlassian.bamboo.bandana,
 				com.atlassian.bamboo.collections,
+				com.atlassian.bamboo.configuration,
 				com.atlassian.bamboo.fileserver,
 				com.atlassian.bamboo.spring,
 				com.atlassian.bamboo.task,
@@ -27,9 +28,9 @@
 				com.atlassian.bamboo.ww2,
 				com.atlassian.bamboo.ww2.aware,
 				com.atlassian.bamboo.ww2.aware.permissions,
+				com.atlassian.bamboo.v2.build,
 				com.atlassian.spring.container,
 				com.atlassian.plugin.osgi.factory,
-				com.atlassian.templaterenderer,
 				com.atlassian.sal.api,
 				com.google.gson;version="0.0",
 				com.google.gson.*;version="0.0",
@@ -93,11 +94,6 @@
 
 	<resource type="i18n" name="i18n-properties" location="i18n" />
 
-	<!-- publish our component -->
-	<component name="BlackDuck Hub Server Configuration Management Component"
-		key="hubServerConfigManager"
-		class="com.blackducksoftware.integration.hub.bamboo.config.ConfigManager" />
-
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"
 		interface="com.atlassian.sal.api.ApplicationProperties" />
@@ -112,37 +108,13 @@
 	<component-import key="transactionTemplate"
 		interface="com.atlassian.sal.api.transaction.TransactionTemplate" />
 
-	<xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
-		<package name="configHubPlugin" extends="admin">
-			<action name="configHubServer"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
-				<result name="error" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-			<action name="configHubServerDetails"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
-				method="save">
-				<result name="error" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-		</package>
-	</xwork>
-
-	<web-item key="bamboo-menu-item" name="Black Duck Hub Admin"
-		section="system.admin/plugins" weight="10" application="bamboo">
-		<description>Link to Black Duck Hub Plugin Administration page.</description>
-		<label key="Black Duck Hub Admin" />
-		<link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link>
-	</web-item>
-
 	<taskType key="hubScanTask" name="Black Duck Hub Scan Task"
 		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
 		<description>Scan task to upload project data into the Hub during the
 			build.</description>
 		<configuration
 			class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator" />
+		<resource type="download" name="icon" location="images/BlackDuckLogo.png"/>
 		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
 		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
 	</taskType>

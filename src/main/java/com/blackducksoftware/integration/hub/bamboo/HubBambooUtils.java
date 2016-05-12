@@ -53,8 +53,9 @@ public class HubBambooUtils implements Cloneable {
 	}
 
 	public HubServerConfig buildConfigFromStrings(final String hubUrl, final String hubUser, final String hubPass,
-			final String hubProxyUrl, final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
-			final String hubProxyPass) {
+			final String hubPassLength, final String hubProxyUrl, final String hubProxyPort,
+			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass,
+			final String hubProxyPassLength) {
 		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
 		configBuilder.setHubUrl(hubUrl);
 		configBuilder.setUsername(hubUser);
@@ -63,7 +64,18 @@ public class HubBambooUtils implements Cloneable {
 		configBuilder.setProxyPort(hubProxyPort);
 		configBuilder.setProxyUsername(hubProxyUser);
 		configBuilder.setProxyPassword(hubProxyPass);
+
 		configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
+		int length = 0;
+		if (StringUtils.isNotBlank(hubPassLength)) {
+			length = Integer.valueOf(hubPassLength);
+			configBuilder.setPasswordLength(length);
+		}
+
+		if (StringUtils.isNotBlank(hubProxyPassLength)) {
+			length = Integer.valueOf(hubProxyPassLength);
+			configBuilder.setProxyPasswordLength(length);
+		}
 
 		return configBuilder.build().getConstructedObject();
 	}

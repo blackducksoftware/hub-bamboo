@@ -52,6 +52,7 @@ public class HubBambooUtilsTest {
 	private static final String VALID_IGNORE_HOST = "google";
 	private static final String INVALID_IGNORE_HOST_LIST = "google,[^-z!,abc";
 	private static final String INVALID_IGNORE_HOST = "[^-z!";
+	private static final String EMPTY_PASSWORD_LENGTH = "";
 
 	private final Map<String, String> map1 = new HashMap<String, String>();
 	private final Map<String, String> map2 = new HashMap<String, String>();
@@ -83,7 +84,8 @@ public class HubBambooUtilsTest {
 	@Test
 	public void testBuildConfig() throws Exception {
 		final HubServerConfig config = HubBambooUtils.getInstance().buildConfigFromStrings(HUB_URL, USER, PASSWORD,
-				VALID_HOST, VALID_PORT, VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD);
+				EMPTY_PASSWORD_LENGTH, VALID_HOST, VALID_PORT, VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD,
+				EMPTY_PASSWORD_LENGTH);
 		assertNotNull(config);
 		assertEquals(new URL(HUB_URL), config.getHubUrl());
 		assertEquals(USER, config.getGlobalCredentials().getUsername());
@@ -125,8 +127,8 @@ public class HubBambooUtilsTest {
 
 	@Test
 	public void testInvalidConfig() throws Exception {
-		HubBambooUtils.getInstance().buildConfigFromStrings(null, null, null, VALID_HOST, VALID_PORT, VALID_IGNORE_HOST,
-				VALID_USERNAME, VALID_PASSWORD);
+		HubBambooUtils.getInstance().buildConfigFromStrings(null, null, null, null, VALID_HOST, VALID_PORT,
+				VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD, EMPTY_PASSWORD_LENGTH);
 	}
 
 	@Test
@@ -182,7 +184,7 @@ public class HubBambooUtilsTest {
 	public void testConfigureServiceNullProxy() throws Exception {
 		final HubIntRestService service = new HubIntRestService(HUB_URL);
 		final HubServerConfig config = HubBambooUtils.getInstance().buildConfigFromStrings(HUB_URL, USER, PASSWORD,
-				null, null, null, null, null);
+				EMPTY_PASSWORD_LENGTH, null, null, null, null, null, null);
 		HubBambooUtils.getInstance().configureProxyToService(config, service);
 	}
 

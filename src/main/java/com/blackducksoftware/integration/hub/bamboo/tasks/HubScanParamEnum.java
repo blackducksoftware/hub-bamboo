@@ -30,7 +30,16 @@ public enum HubScanParamEnum {
 	MAX_WAIT_TIME_FOR_BOM_UPDATE("maxWaitTimeForBomUpdate", "5"),
 	SCANMEMORY("hubScanMemory", "4096"),
 	TARGETS("hubTargets", ""),
-	FAIL_ON_POLICY_VIOLATION("failOnPolicyViolation", "false");
+	FAIL_ON_POLICY_VIOLATION("failOnPolicyViolation", "false"),
+	HUB_URL("hubUrl", ""),
+	HUB_USER("hubUser", ""),
+	HUB_PASS("hubPass", ""),
+	HUB_TIMEOUT("hubTimeout", ""),
+	PROXY_HOST("hubProxyHost", ""),
+	PROXY_PORT("hubProxyPort", ""),
+	PROXY_USER("hubProxyUser", ""),
+	PROXY_PASS("hubProxyPass", ""),
+	PROXY_NO_HOST("hubProxyNoHost", "");
 
 	private String key;
 	private String defaultValue;

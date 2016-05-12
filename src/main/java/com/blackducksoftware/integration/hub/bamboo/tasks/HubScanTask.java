@@ -33,8 +33,8 @@ import org.joda.time.DateTime;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
+import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
-import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.task.TaskContext;
@@ -42,7 +42,9 @@ import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
+import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.v2.build.BuildContext;
+import com.atlassian.bandana.BandanaManager;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
@@ -50,7 +52,6 @@ import com.blackducksoftware.integration.hub.ScanExecutor.Result;
 import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
 import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
@@ -81,15 +82,17 @@ public class HubScanTask implements TaskType {
 
 	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
 
-	private final ConfigManager configManager;
+	// private final PluginSettingsFactory pluginSettingsFactory;
 	private final ProcessService processService;
 	private final EnvironmentVariableAccessor environmentVariableAccessor;
+	private final BandanaManager bandanaManager;
 
-	public HubScanTask(final ConfigManager configManager, final ProcessService processService,
-			final EnvironmentVariableAccessor environmentVariableAccessor) {
-		this.configManager = configManager;
+	public HubScanTask(/* final PluginSettingsFactory pluginSettingsFactory, */ final ProcessService processService,
+			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager) {
+		// this.pluginSettingsFactory = pluginSettingsFactory;
 		this.processService = processService;
 		this.environmentVariableAccessor = environmentVariableAccessor;
+		this.bandanaManager = bandanaManager;
 	}
 
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
@@ -103,7 +106,8 @@ public class HubScanTask implements TaskType {
 		logger.setLogLevel(envVars);
 		try {
 
-			final HubServerConfig hubConfig = configManager.readConfig();
+			final ConfigurationMap taskConfigMap = taskContext.getConfigurationMap();
+			final HubServerConfig hubConfig = getHubServerConfig();
 			final HubIntRestService service = getService(hubConfig);
 			final HubScanJobConfig jobConfig = getJobConfig(taskContext.getConfigurationMap(),
 					taskContext.getWorkingDirectory(), logger);
@@ -159,7 +163,7 @@ public class HubScanTask implements TaskType {
 			final DateTime afterScanTime = new DateTime();
 			// check the policy failures
 
-			final boolean isFailOnPolicySelected = taskContext.getConfigurationMap()
+			final boolean isFailOnPolicySelected = taskConfigMap
 					.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 			if (isFailOnPolicySelected && !hubSupport.isPolicyApiSupport()) {
 				logger.error("This version of the Hub does not have support for Policies.");
@@ -187,20 +191,28 @@ public class HubScanTask implements TaskType {
 
 		} catch (final HubIntegrationException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final URISyntaxException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final BDRestException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final IOException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final InterruptedException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final BDBambooHubPluginException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final IllegalArgumentException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		} catch (final EncryptionException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
+			resultBuilder.failedWithError().build();
 		}
 
 		return resultBuilder.build();
@@ -244,7 +256,7 @@ public class HubScanTask implements TaskType {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-			final File toolsDir = new File(SystemDirectory.getApplicationHome(), CLI_FOLDER_NAME);
+			final File toolsDir = new File(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue(), CLI_FOLDER_NAME);
 
 			// make the directories for the hub scan CLI tool
 			if (!toolsDir.exists()) {
@@ -321,7 +333,7 @@ public class HubScanTask implements TaskType {
 			final IntLogger logger, final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
 		logger.info("Initializing - Hub Bamboo Plugin");
 
-		logger.info("-> Bamboo home directory: " + SystemDirectory.getApplicationHome());
+		logger.info("-> Bamboo home directory: " + SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
 		final BuildContext buildContext = taskContext.getBuildContext();
 		logger.info("-> Using Url : " + hubConfig.getHubUrl());
 		logger.info("-> Using Username : " + hubConfig.getGlobalCredentials().getUsername());
@@ -596,5 +608,31 @@ public class HubScanTask implements TaskType {
 		} else {
 			hubEventPolling.assertBomUpToDate(bomUpdateInfo);
 		}
+	}
+
+	private HubServerConfig getHubServerConfig() throws IllegalArgumentException, EncryptionException {
+
+		HubServerConfig config = null;
+
+		final String hubUrl = getPersistedValue(HubConfigKeys.CONFIG_HUB_URL);
+		final String hubUser = getPersistedValue(HubConfigKeys.CONFIG_HUB_USER);
+		final String hubPass = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS);
+		final String hubPassLength = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS_LENGTH);
+		final String hubProxyUrl = getPersistedValue(HubConfigKeys.CONFIG_PROXY_HOST);
+		final String hubProxyPort = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PORT);
+		final String hubProxyNoHost = getPersistedValue(HubConfigKeys.CONFIG_PROXY_NO_HOST);
+		final String hubProxyUser = getPersistedValue(HubConfigKeys.CONFIG_PROXY_USER);
+		final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
+		final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
+
+		config = HubBambooUtils.getInstance().buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength,
+				hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+
+		return config;
+
+	}
+
+	public String getPersistedValue(final String key) {
+		return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
 	}
 }
