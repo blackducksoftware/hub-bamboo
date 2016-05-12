@@ -42,7 +42,6 @@ import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
-import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.blackducksoftware.integration.hub.HubIntRestService;
@@ -256,7 +255,7 @@ public class HubScanTask implements TaskType {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-			final File toolsDir = new File(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue(), CLI_FOLDER_NAME);
+			final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
 
 			// make the directories for the hub scan CLI tool
 			if (!toolsDir.exists()) {
@@ -333,7 +332,7 @@ public class HubScanTask implements TaskType {
 			final IntLogger logger, final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
 		logger.info("Initializing - Hub Bamboo Plugin");
 
-		logger.info("-> Bamboo home directory: " + SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
+		logger.info("-> Bamboo home directory: " + HubBambooUtils.getInstance().getBambooHome());
 		final BuildContext buildContext = taskContext.getBuildContext();
 		logger.info("-> Using Url : " + hubConfig.getHubUrl());
 		logger.info("-> Using Username : " + hubConfig.getGlobalCredentials().getUsername());

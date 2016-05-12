@@ -26,6 +26,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.atlassian.bamboo.fileserver.SystemDirectory;
+import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
@@ -159,5 +161,14 @@ public class HubBambooUtils implements Cloneable {
 		final String value = envVars.get(variable);
 
 		return StringUtils.trimToNull(value);
+	}
+
+	public String getBambooHome() {
+		try {
+			final File bambooHome = SystemDirectory.getApplicationHome();
+			return bambooHome.getAbsolutePath();
+		} catch (final NullPointerException npe) {
+			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
+		}
 	}
 }
