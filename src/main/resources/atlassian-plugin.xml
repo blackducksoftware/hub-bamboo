@@ -103,10 +103,6 @@
 		interface="com.atlassian.sal.api.auth.LoginUriProvider" />
 	<component-import key="renderer"
 		interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
-	<component-import key="pluginSettingsFactory"
-		interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" />
-	<component-import key="transactionTemplate"
-		interface="com.atlassian.sal.api.transaction.TransactionTemplate" />
 
 	<taskType key="hubScanTask" name="Black Duck Hub Scan Task"
 		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">

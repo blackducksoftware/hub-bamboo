@@ -138,36 +138,4 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 			context.put(key, taskDefinition.getConfiguration().get(key));
 		}
 	}
-
-	// private void setGlobalConfigParameters(final Map<String, String>
-	// configMap) {
-	// final PluginSettings settings =
-	// pluginSettingsFactory.createGlobalSettings();
-	//
-	// final String hubUrl = (String)
-	// settings.get(HubConfigKeys.CONFIG_HUB_URL);
-	// final String hubUser = (String)
-	// settings.get(HubConfigKeys.CONFIG_HUB_USER);
-	// final String hubPass = (String)
-	// settings.get(HubConfigKeys.CONFIG_HUB_PASS);
-	// final String hubProxyUrl = (String)
-	// settings.get(HubConfigKeys.CONFIG_PROXY_HOST);
-	// final String hubProxyPort = (String)
-	// settings.get(HubConfigKeys.CONFIG_PROXY_PORT);
-	// final String hubProxyNoHost = (String)
-	// settings.get(HubConfigKeys.CONFIG_PROXY_NO_HOST);
-	// final String hubProxyUser = (String)
-	// settings.get(HubConfigKeys.CONFIG_PROXY_USER);
-	// final String hubProxyPass = (String)
-	// settings.get(HubConfigKeys.CONFIG_PROXY_PASS);
-	//
-	// configMap.put(HubScanParamEnum.HUB_URL.getKey(), hubUrl);
-	// configMap.put(HubScanParamEnum.HUB_USER.getKey(), hubUser);
-	// configMap.put(HubScanParamEnum.HUB_PASS.getKey(), hubPass);
-	// configMap.put(HubScanParamEnum.PROXY_HOST.getKey(), hubProxyUrl);
-	// configMap.put(HubScanParamEnum.PROXY_PORT.getKey(), hubProxyPort);
-	// configMap.put(HubScanParamEnum.PROXY_NO_HOST.getKey(), hubProxyNoHost);
-	// configMap.put(HubScanParamEnum.PROXY_USER.getKey(), hubProxyUser);
-	// configMap.put(HubScanParamEnum.PROXY_PASS.getKey(), hubProxyPass);
-	// }
 }

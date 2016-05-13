@@ -22,15 +22,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import com.blackducksoftware.integration.MyPluginComponent;
-import com.blackducksoftware.integration.MyPluginComponentImpl;
+import com.blackducksoftware.integration.BDBambooPlugin;
+import com.blackducksoftware.integration.BDBambooPluginImpl;
 
-public class MyComponentUnitTest
-{
-    @Test
-    public void testMyName()
-    {
-        MyPluginComponent component = new MyPluginComponentImpl(null);
-        assertEquals("names do not match!", "myComponent",component.getName());
-    }
+public class MyComponentUnitTest {
+	@Test
+	public void testMyName() {
+		final BDBambooPlugin component = new BDBambooPluginImpl(null);
+		assertEquals("names do not match!", "BDBambooPlugin", component.getName());
+	}
 }

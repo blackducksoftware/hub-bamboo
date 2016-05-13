@@ -25,23 +25,22 @@ import org.junit.runner.RunWith;
 
 import com.atlassian.plugins.osgi.test.AtlassianPluginsTestRunner;
 import com.atlassian.sal.api.ApplicationProperties;
-import com.blackducksoftware.integration.MyPluginComponent;
+import com.blackducksoftware.integration.BDBambooPlugin;
 
 @RunWith(AtlassianPluginsTestRunner.class)
-public class MyComponentWiredTest
-{
-    private final ApplicationProperties applicationProperties;
-    private final MyPluginComponent myPluginComponent;
+public class MyComponentWiredTest {
+	private final ApplicationProperties applicationProperties;
+	private final BDBambooPlugin myPluginComponent;
 
-    public MyComponentWiredTest(ApplicationProperties applicationProperties,MyPluginComponent myPluginComponent)
-    {
-        this.applicationProperties = applicationProperties;
-        this.myPluginComponent = myPluginComponent;
-    }
+	public MyComponentWiredTest(final ApplicationProperties applicationProperties,
+			final BDBambooPlugin myPluginComponent) {
+		this.applicationProperties = applicationProperties;
+		this.myPluginComponent = myPluginComponent;
+	}
 
-    @Test
-    public void testMyName()
-    {
-        assertEquals("names do not match!", "myComponent:" + applicationProperties.getDisplayName(),myPluginComponent.getName());
-    }
+	@Test
+	public void testMyName() {
+		assertEquals("names do not match!", "BDBambooPlugin:" + applicationProperties.getDisplayName(),
+				myPluginComponent.getName());
+	}
 }

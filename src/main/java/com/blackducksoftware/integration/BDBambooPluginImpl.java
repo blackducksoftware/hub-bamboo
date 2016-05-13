@@ -18,7 +18,20 @@
  *******************************************************************************/
 package com.blackducksoftware.integration;
 
-public interface MyPluginComponent
-{
-    String getName();
+import com.atlassian.sal.api.ApplicationProperties;
+
+public class BDBambooPluginImpl implements BDBambooPlugin {
+	private final ApplicationProperties applicationProperties;
+
+	public BDBambooPluginImpl(final ApplicationProperties applicationProperties) {
+		this.applicationProperties = applicationProperties;
+	}
+
+	public String getName() {
+		if (null != applicationProperties) {
+			return "BDBambooPlugin:" + applicationProperties.getDisplayName();
+		}
+
+		return "BDBambooPlugin";
+	}
 }

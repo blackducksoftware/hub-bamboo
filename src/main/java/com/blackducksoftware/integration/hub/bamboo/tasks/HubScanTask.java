@@ -81,14 +81,12 @@ public class HubScanTask implements TaskType {
 
 	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
 
-	// private final PluginSettingsFactory pluginSettingsFactory;
 	private final ProcessService processService;
 	private final EnvironmentVariableAccessor environmentVariableAccessor;
 	private final BandanaManager bandanaManager;
 
-	public HubScanTask(/* final PluginSettingsFactory pluginSettingsFactory, */ final ProcessService processService,
+	public HubScanTask(final ProcessService processService,
 			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager) {
-		// this.pluginSettingsFactory = pluginSettingsFactory;
 		this.processService = processService;
 		this.environmentVariableAccessor = environmentVariableAccessor;
 		this.bandanaManager = bandanaManager;
