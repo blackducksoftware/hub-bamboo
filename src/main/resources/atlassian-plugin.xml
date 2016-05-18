@@ -92,7 +92,6 @@
 		<context>int-hub-bamboo</context>
 	</web-resource>
 
-	<resource type="i18n" name="i18n-properties" location="i18n" />
 
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"
@@ -114,5 +113,21 @@
 		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
 		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
 	</taskType>
-
+	
+	<xwork key="HubRiskReport" name="Hub Risk Report">
+	   <package name="HubBambooPluginBuild" extends="buildView" namespace="/plugins/hub-bamboo/reports">  
+	       <action name="viewRiskReport" class="com.blackducksoftware.integration.hub.bamboo.reports.HubRiskReportAction">
+	           <result name="success" type="freemarker">/templates/plugins/reports/viewHubRiskReport.ftl</result>
+           </action>
+	   </package>
+	</xwork>
+    <web-item key="hubriskreport" name="hub_risk_report" section="results.subMenu/results" weight="70">
+        <description>Hub Risk Report</description>
+        <label key="blackduckhub.report.risk.tab.label"/>
+        <tooltip key="blackduckhub.report.risk.tab.tooltip"/>
+        <icon height="16" width="16">
+            <link>/images/Bdicon.gif</link>
+        </icon>
+        <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action</link>
+    </web-item>
 </atlassian-plugin>
