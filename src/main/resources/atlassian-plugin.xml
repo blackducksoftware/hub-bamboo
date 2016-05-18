@@ -78,6 +78,7 @@
 				org.xml.sax,
 				org.xml.sax.helpers
 			</Import-Package>
+			<Require-Bundle>com.blackducksoftware.integration.hub-atlassian-config</Require-Bundle>
 		</bundle-instructions>
 	</plugin-info>
 
@@ -117,7 +118,7 @@
 	<xwork key="HubRiskReport" name="Hub Risk Report">
 	   <package name="HubBambooPluginBuild" extends="buildView" namespace="/plugins/hub-bamboo/reports">  
 	       <action name="viewRiskReport" class="com.blackducksoftware.integration.hub.bamboo.reports.HubRiskReportAction">
-	           <result name="success" type="freemarker">/templates/plugins/reports/viewHubRiskReport.ftl</result>
+	           <result name="success" type="freemarker">/reports/viewHubRiskReport.ftl</result>
            </action>
 	   </package>
 	</xwork>
