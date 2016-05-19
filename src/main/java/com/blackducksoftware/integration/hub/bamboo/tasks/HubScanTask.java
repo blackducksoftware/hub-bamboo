@@ -22,6 +22,7 @@
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -37,6 +38,7 @@ import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
+import com.atlassian.bamboo.build.artifact.ArtifactManager;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
@@ -71,10 +73,13 @@ import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.polling.HubEventPolling;
 import com.blackducksoftware.integration.hub.project.api.ProjectItem;
 import com.blackducksoftware.integration.hub.report.api.HubReportGenerationInfo;
+import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
+import com.blackducksoftware.integration.hub.report.api.RiskReportGenerator;
 import com.blackducksoftware.integration.hub.util.HostnameHelper;
 import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
 import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
 import com.blackducksoftware.integration.hub.version.api.ReleaseItem;
+import com.google.gson.Gson;
 
 public class HubScanTask implements TaskType {
 
@@ -83,13 +88,15 @@ public class HubScanTask implements TaskType {
 	private static final String HUB_SCAN_TASK_ERROR = "Hub Scan Task error";
 
 	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
+	public static final String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
 
 	private final ProcessService processService;
 	private final EnvironmentVariableAccessor environmentVariableAccessor;
 	private final BandanaManager bandanaManager;
 
 	public HubScanTask(final ProcessService processService,
-			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager) {
+			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
+			final ArtifactManager artifactManager) {
 		this.processService = processService;
 		this.environmentVariableAccessor = environmentVariableAccessor;
 		this.bandanaManager = bandanaManager;
@@ -163,6 +170,28 @@ public class HubScanTask implements TaskType {
 			final DateTime afterScanTime = new DateTime();
 			// check the policy failures
 
+			final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
+			bomUpdateInfo.setService(service);
+			bomUpdateInfo.setProject(project);
+			bomUpdateInfo.setVersion(version);
+			bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
+			bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
+
+			bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
+
+			bomUpdateInfo.setBeforeScanTime(beforeScanTime);
+			bomUpdateInfo.setAfterScanTime(afterScanTime);
+
+			bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
+
+			boolean waitForBom = true;
+			final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
+
+			if (isGenRiskReport) {
+				generateRiskReport(taskContext, logger, bomUpdateInfo, hubSupport);
+				waitForBom = false;
+			}
+
 			final boolean isFailOnPolicySelected = taskConfigMap
 					.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 			if (isFailOnPolicySelected && !hubSupport.isPolicyApiSupport()) {
@@ -171,18 +200,9 @@ public class HubScanTask implements TaskType {
 				return resultBuilder.build();
 			} else if (isFailOnPolicySelected) {
 
-				final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
-				bomUpdateInfo.setService(service);
-				bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
-				bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
-
-				bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
-
-				bomUpdateInfo.setBeforeScanTime(beforeScanTime);
-				bomUpdateInfo.setAfterScanTime(afterScanTime);
-
-				bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
-
+				if (waitForBom) {
+					waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
+				}
 				final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
 						hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
 
@@ -297,7 +317,11 @@ public class HubScanTask implements TaskType {
 
 		Engine.register(false);
 		Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
-		final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl().toString());
+		String huburl = null;
+		if (hubConfig != null && hubConfig.getHubUrl() != null) {
+			huburl = hubConfig.getHubUrl().toString();
+		}
+		final HubIntRestService service = new HubIntRestService(huburl);
 		HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
 		return service;
 	}
@@ -530,59 +554,45 @@ public class HubScanTask implements TaskType {
 			final IntLogger logger, final HubIntRestService service, final HubSupportHelper hubSupport,
 			final HubReportGenerationInfo bomUpdateInfo, final String policyStatusUrl) {
 		try {
-			waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
-
-			try {
-				// We use this conditional in case there are other failure
-				// conditions in the future
-				final PolicyStatus policyStatus = service.getPolicyStatus(policyStatusUrl);
-				if (policyStatus == null) {
-					logger.error("Could not find any information about the Policy status of the bom.");
-					return resultBuilder.failed();
-				}
-				if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
-					return resultBuilder.failed();
-				}
-
-				if (policyStatus.getCountInViolation() == null) {
-					logger.error(createPolicyCountNotFound("In Violation"));
-				} else {
-					logger.info(
-							createPolicyCountMessage(policyStatus.getCountInViolation().getValue(), "In Violation"));
-				}
-				if (policyStatus.getCountInViolationOverridden() == null) {
-					logger.error(createPolicyCountNotFound("In Violation Overridden"));
-				} else {
-					logger.info(createPolicyCountMessage(policyStatus.getCountInViolationOverridden().getValue(),
-							"In Violation") + ", but they have been overridden.");
-				}
-				if (policyStatus.getCountNotInViolation() == null) {
-					logger.error(createPolicyCountNotFound("Not In Violation"));
-				} else {
-					logger.info(createPolicyCountMessage(policyStatus.getCountNotInViolation().getValue(),
-							"Not In Violation"));
-				}
-				return resultBuilder.success();
-			} catch (final MissingPolicyStatusException e) {
-				logger.warn(e.getMessage());
-				return resultBuilder.success();
+			// We use this conditional in case there are other failure
+			// conditions in the future
+			final PolicyStatus policyStatus = service.getPolicyStatus(policyStatusUrl);
+			if (policyStatus == null) {
+				logger.error("Could not find any information about the Policy status of the bom.");
+				return resultBuilder.failed();
 			}
-		} catch (final BDBambooHubPluginException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final HubIntegrationException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final URISyntaxException e) {
+			if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
+				return resultBuilder.failed();
+			}
+
+			if (policyStatus.getCountInViolation() == null) {
+				logger.error(createPolicyCountNotFound("In Violation"));
+			} else {
+				logger.info(createPolicyCountMessage(policyStatus.getCountInViolation().getValue(), "In Violation"));
+			}
+			if (policyStatus.getCountInViolationOverridden() == null) {
+				logger.error(createPolicyCountNotFound("In Violation Overridden"));
+			} else {
+				logger.info(createPolicyCountMessage(policyStatus.getCountInViolationOverridden().getValue(),
+						"In Violation") + ", but they have been overridden.");
+			}
+			if (policyStatus.getCountNotInViolation() == null) {
+				logger.error(createPolicyCountNotFound("Not In Violation"));
+			} else {
+				logger.info(
+						createPolicyCountMessage(policyStatus.getCountNotInViolation().getValue(), "Not In Violation"));
+			}
+			return resultBuilder.success();
+		} catch (final MissingPolicyStatusException e) {
+			logger.warn(e.getMessage());
+			return resultBuilder.success();
+		} catch (final IOException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
 		} catch (final BDRestException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
-		} catch (final InterruptedException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final IOException e) {
+		} catch (final URISyntaxException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
 		}
@@ -632,7 +642,27 @@ public class HubScanTask implements TaskType {
 
 	}
 
-	public String getPersistedValue(final String key) {
+	private String getPersistedValue(final String key) {
 		return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
+	}
+
+	private void generateRiskReport(final TaskContext taskContext, final IntLogger logger,
+			final HubReportGenerationInfo hubReportGenerationInfo, final HubSupportHelper hubSupport)
+			throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException {
+		logger.info("Generating Risk Report");
+
+		final RiskReportGenerator riskReportGenerator = new RiskReportGenerator(hubReportGenerationInfo, hubSupport);
+		// will wait for bom to be updated while generating the
+		// report.
+		final HubRiskReportData hubRiskReportData = riskReportGenerator.generateHubReport(logger);
+		final String reportPath = taskContext.getWorkingDirectory() + File.separator
+				+ HubBambooUtils.getInstance().getRiskReportFileName();
+
+		final Gson gson = new Gson();
+		final String contents = gson.toJson(hubRiskReportData);
+
+		final FileWriter writer = new FileWriter(reportPath);
+		writer.write(contents);
+		writer.close();
 	}
 }

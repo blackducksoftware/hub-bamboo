@@ -31,6 +31,7 @@
 				com.atlassian.bamboo.v2.build,
 				com.atlassian.spring.container,
 				com.atlassian.plugin.osgi.factory,
+				com.atlassian.plugin.web.conditions,
 				com.atlassian.sal.api,
 				com.google.gson;version="0.0",
 				com.google.gson.*;version="0.0",
@@ -130,5 +131,6 @@
             <link>/images/Bdicon.gif</link>
         </icon>
         <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action</link>
+        <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.TaskContextCondition"/>
     </web-item>
 </atlassian-plugin>

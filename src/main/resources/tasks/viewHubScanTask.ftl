@@ -25,9 +25,7 @@ under the License.
               list="{'In Planning','In Development','Released','Deprecated','Archived'}" emptyOption='false' readonly='true'/]
 [@ww.combobox labelKey='blackduckhub.task.scan.distribution.label' name='hubDistribution'
               list="{'External','SaaS','Internal','Open Source'}" emptyOption='false' readonly='true'/]
-<!--
 [@ww.label labelKey='blackduckhub.task.scan.genriskreport.label' name='generateRiskReport'/]
--->
 [@ww.checkbox labelKey='blackduckhub.task.scan.failonpolicy.label' name='failOnPolicyViolation' readonly='true'/]
 [@ww.label labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
 [@ww.label labelKey='blackduckhub.task.scan.scanmemory.label' name='hubScanMemory'/]
