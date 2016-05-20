@@ -43,7 +43,8 @@ import com.blackducksoftware.integration.hub.global.HubServerConfig;
 public class HubBambooUtils implements Cloneable {
 
 	private final static HubBambooUtils instance = new HubBambooUtils();
-	private final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
+	public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
+	public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
 
 	public static HubBambooUtils getInstance() {
 		return instance;
@@ -174,9 +175,5 @@ public class HubBambooUtils implements Cloneable {
 		} catch (final NullPointerException npe) {
 			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
 		}
-	}
-
-	public String getRiskReportFileName() {
-		return HUB_RISK_REPORT_FILENAME;
 	}
 }

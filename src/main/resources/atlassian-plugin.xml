@@ -29,6 +29,8 @@
 				com.atlassian.bamboo.ww2.aware,
 				com.atlassian.bamboo.ww2.aware.permissions,
 				com.atlassian.bamboo.v2.build,
+				com.atlassian.bamboo.v2.build.agent,
+				com.atlassian.bamboo.v2.build.agent.messages,
 				com.atlassian.spring.container,
 				com.atlassian.plugin.osgi.factory,
 				com.atlassian.plugin.web.conditions,
@@ -105,12 +107,13 @@
 	<component-import key="renderer"
 		interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
 
-	<taskType key="hubScanTask" name="Black Duck Hub Scan Task"
+    <taskType key="hubScanTask" name="Black Duck Hub Scan Task"
 		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
 		<description>Scan task to upload project data into the Hub during the
 			build.</description>
 		<configuration
 			class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator" />
+	    <runtimeTaskDataProvider class="com.blackducksoftware.integration.hub.bamboo.tasks.HubTaskDataProvider"/>
 		<resource type="download" name="icon" location="images/BlackDuckLogo.png"/>
 		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
 		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
@@ -131,6 +134,6 @@
             <link>/images/Bdicon.gif</link>
         </icon>
         <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action</link>
-        <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.TaskContextCondition"/>
+        <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.RiskReportCondition"/>
     </web-item>
 </atlassian-plugin>

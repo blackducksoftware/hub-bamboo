@@ -27,8 +27,11 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -39,9 +42,13 @@ import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.artifact.ArtifactManager;
+import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
+import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
+import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
@@ -49,6 +56,7 @@ import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
+import com.atlassian.utils.process.IOUtils;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
@@ -93,6 +101,7 @@ public class HubScanTask implements TaskType {
 	private final ProcessService processService;
 	private final EnvironmentVariableAccessor environmentVariableAccessor;
 	private final BandanaManager bandanaManager;
+	private final ArtifactManager artifactManager;
 
 	public HubScanTask(final ProcessService processService,
 			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
@@ -100,6 +109,7 @@ public class HubScanTask implements TaskType {
 		this.processService = processService;
 		this.environmentVariableAccessor = environmentVariableAccessor;
 		this.bandanaManager = bandanaManager;
+		this.artifactManager = artifactManager;
 	}
 
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
@@ -656,13 +666,40 @@ public class HubScanTask implements TaskType {
 		// report.
 		final HubRiskReportData hubRiskReportData = riskReportGenerator.generateHubReport(logger);
 		final String reportPath = taskContext.getWorkingDirectory() + File.separator
-				+ HubBambooUtils.getInstance().getRiskReportFileName();
+				+ HubBambooUtils.HUB_RISK_REPORT_FILENAME;
 
 		final Gson gson = new Gson();
 		final String contents = gson.toJson(hubRiskReportData);
 
-		final FileWriter writer = new FileWriter(reportPath);
-		writer.write(contents);
-		writer.close();
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(reportPath);
+			writer.write(contents);
+		} finally {
+			IOUtils.closeQuietly(writer);
+		}
+
+		final BuildContext buildContext = taskContext.getBuildContext();
+		final PlanResultKey planResultKey = buildContext.getPlanResultKey();
+		final BuildLogger buildLogger = taskContext.getBuildLogger();
+		final File baseDirectory = taskContext.getWorkingDirectory();
+
+		final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
+
+		final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(token);
+		artifact.setName("Hub Risk Report");
+		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+
+		final Map<String, String> config = new HashMap<String, String>();
+		final Set<String> publishers = new LinkedHashSet<String>();
+
+		final boolean published = artifactManager.publish(buildLogger, planResultKey, baseDirectory, artifact, config,
+				publishers, 1);
+
+		if (!published) {
+			logger.error("Could not publish the " + HubBambooUtils.HUB_RISK_REPORT_FILENAME
+					+ " artifact for the Risk Report");
+		}
 	}
 }
