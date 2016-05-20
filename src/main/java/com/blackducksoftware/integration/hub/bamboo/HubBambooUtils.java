@@ -45,6 +45,7 @@ public class HubBambooUtils implements Cloneable {
 	private final static HubBambooUtils instance = new HubBambooUtils();
 	public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
 	public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
+	public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
 
 	public static HubBambooUtils getInstance() {
 		return instance;

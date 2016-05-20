@@ -24,12 +24,7 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.atlassian.bamboo.collections.ActionParametersMap;
-import com.atlassian.bamboo.plan.artifact.ArtifactDefinition;
-import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionImpl;
-import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionManager;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
@@ -42,12 +37,6 @@ import com.blackducksoftware.integration.hub.job.HubScanJobFieldEnum;
 
 public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
-	private ArtifactDefinitionManager defManager;
-
-	public void setArtifactDefinitionManager(final ArtifactDefinitionManager defManager) {
-		this.defManager = defManager;
-	}
-
 	@Override
 	public Map<String, String> generateTaskConfigMap(final ActionParametersMap params,
 			final TaskDefinition previousTaskDefinition) {
@@ -57,15 +46,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 			final String key = param.getKey();
 			final String value = params.getString(key);
 			configMap.put(key, value);
-
-			// if (param == HubScanParamEnum.GENERATE_RISK_REPORT) {
-			// try {
-			// final String planKey = params.getString("planKey");
-			// setupReportArtifactDefinition(value, planKey);
-			// } catch (final Exception ex) {
-			// ex.printStackTrace();
-			// }
-			// }
 		}
 		return configMap;
 	}
@@ -157,26 +137,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
 			final String key = param.getKey();
 			context.put(key, taskDefinition.getConfiguration().get(key));
-		}
-	}
-
-	private void setupReportArtifactDefinition(final String paramValue, final String planKey) {
-		boolean generateRiskReport = false;
-		if (StringUtils.isNotBlank(paramValue)) {
-			generateRiskReport = Boolean.valueOf(paramValue);
-		}
-
-		// find old artifact definition
-		final ArtifactDefinition artifactDefinition = new ArtifactDefinitionImpl("Hub Risk Report", null,
-				"hub_risk_report.json");
-
-		try {
-			defManager.removeArtifactDefinition(artifactDefinition);
-		} catch (final Exception ex) {
-
-		}
-		if (generateRiskReport) {
-			defManager.saveArtifactDefinition(artifactDefinition);
 		}
 	}
 }

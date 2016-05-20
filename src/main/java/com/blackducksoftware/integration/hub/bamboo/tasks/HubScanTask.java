@@ -688,7 +688,7 @@ public class HubScanTask implements TaskType {
 
 		final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
 		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(token);
-		artifact.setName("Hub Risk Report");
+		artifact.setName(HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
 		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 
 		final Map<String, String> config = new HashMap<String, String>();
