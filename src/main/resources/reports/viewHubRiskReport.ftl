@@ -23,8 +23,12 @@ under the License.
     <head>
         <meta name="decorator" content="result"/>
         <meta name="tab" content="hub_risk_report"/>
+        <link href="/css/HubBomReport.css" rel="stylesheet" type="text/css" />
+        <link href="/font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+        <script type="text/javascript" src="/js/HubBomReportFunctions.js"></script>
+        <script type="text/javascript" src="/js/Sortable.js"></script>
     </head>
     <body>
-        <h1>Hello World Report!</h1>
+        <h1>Loaded resources</h1>
     </body>
 </html>
