@@ -133,7 +133,7 @@
         <icon height="16" width="16">
             <link>/images/Bdicon.gif</link>
         </icon>
-        <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action</link>
+        <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action?planKey=${planKey}&amp;buildNumber=${buildNumber}</link>
         <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.RiskReportCondition"/>
     </web-item>
 </atlassian-plugin>

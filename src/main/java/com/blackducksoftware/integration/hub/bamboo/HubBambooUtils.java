@@ -29,7 +29,10 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.atlassian.bamboo.fileserver.ArtifactStorage;
 import com.atlassian.bamboo.fileserver.SystemDirectory;
+import com.atlassian.bamboo.plan.PlanKeys;
+import com.atlassian.bamboo.plan.PlanResultKey;
 import com.atlassian.bamboo.utils.SystemProperty;
 import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
@@ -176,5 +179,17 @@ public class HubBambooUtils implements Cloneable {
 		} catch (final NullPointerException npe) {
 			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
 		}
+	}
+
+	public File getRiskReportFile(final String planKey, final int buildNumber) {
+		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
+		// TODO Have to test this on another server SystemDirectory may
+		// fail on remote Bamboo server.
+		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
+
+		final File planRoot = storage.getArtifactDirectory(resultKey);
+		final File riskReportRoot = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+		final File dataFile = new File(riskReportRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		return dataFile;
 	}
 }
