@@ -20,9 +20,12 @@ public class HubRiskReportAction extends ViewBuildResults {
 
 	@Override
 	public String doExecute() throws Exception {
-		createReportData();
-		bundle = new HubResourceBundleHelper();
-		bundle.setKeyPrefix(HubBambooUtils.HUB_I18N_KEY_PREFIX);
+		if (hubRiskReportData == null) {
+			createReportData();
+			bundle = new HubResourceBundleHelper();
+			bundle.setKeyPrefix(HubBambooUtils.HUB_I18N_KEY_PREFIX);
+
+		}
 		return SUCCESS;
 	}
 

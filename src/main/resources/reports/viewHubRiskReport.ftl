@@ -19,22 +19,16 @@ KIND, either express or implied. See the License for the
 specific language governing permissions and limitations
 under the License.
  -->
-<html>
-    <head>
+
         <#assign pluginResourcesPath="${baseUrl}/download/resources/com.blackducksoftware.integration.hub-bamboo:hub-bamboo-resources/"/>
         <meta name="decorator" content="result"/>
         <meta name="tab" content="hub_risk_report"/>
-        <script type="text/javascript">
-            function createUrl(suffix) {
-                return AJS.contextPath() + ${pluginResourcesPath} + suffix;
-            }
-        </script>
+
         <link href="${pluginResourcesPath}css/HubBomReport.css" rel="stylesheet" type="text/css" />
         <link href="${pluginResourcesPath}font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
         <script type="text/javascript" src="${pluginResourcesPath}js/HubBomReportFunctions.js"></script>
         <script type="text/javascript" src="${pluginResourcesPath}js/Sortable.js"></script>
-    </head>
-    <body>
+
         <div class="riskReportBackgroundColor">
             <div class="reportHeader">
                 <div class="h1 reportHeaderTitle">${bundle.getString("title")}</div>
@@ -292,8 +286,4 @@ under the License.
                 </tbody>
             </table>
         </div>
-    
-        <!-- load this script after the tables otherwise the tables wont exist yet when this script runs -->
-        <script type="text/javascript" src="${pluginResourcesPath}js/HubReportStartup.js"></script>
-    </body>
-</html>
+        <script type="text/javascript">reportStartup()</script>

@@ -90,12 +90,50 @@
 
 	<!-- add our web resources -->
 	<web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
-		<dependency>com.atlassian.auiplugin:ajs</dependency>
 		<resource type="download" name="css/" location="/css"/>
-		<resource type="download" name="font-awesome-4.5.0/" location="/font-awesome-4.5.0"/>
 		<resource type="download" name="images/" location="/images"/>
-		<resource type="download" name="js/" location="/js"/>
-		<context>hub-bamboo</context>
+        <resource type="download" name="js/" location="/js"/>
+		<resource type="download" name="font-awesome-4.5.0/" location="/font-awesome-4.5.0"/>
+		<!-- <resource type="download" name="font-awesome-4.5.0/css/" location="/font-awesome-4.5.0/css"/>
+		<resource type="download" name="font-awesome-4.5.0/css/font-awesome.css" location="/font-awesome-4.5.0/css/font-awesome.css"/>    
+        <resource type="download" name="font-awesome-4.5.0/css/font-awesome.min.css" location="/font-awesome-4.5.0/css/font-awesome.min.css"/> 
+        <resource type="download" name="font-awesome-4.5.0/fonts/" location="/font-awesome-4.5.0/fonts"/>
+		<resource type="download" name="font-awesome-4.5.0/fonts//fontawesome-webfont.eot" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.eot"/>
+        <resource type="download" name="font-awesome-4.5.0/fonts/fontawesome-webfont.svg" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.svg"/>
+        <resource type="download" name="font-awesome-4.5.0/fonts/fontawesome-webfont.ttf" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.ttf"/>
+        <resource type="download" name="font-awesome-4.5.0/fonts/fontawesome-webfont.woff" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.woff"/>
+        <resource type="download" name="font-awesome-4.5.0/fonts/fontawesome-webfont.woff2" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.woff2"/>
+        <resource type="download" name="font-awesome-4.5.0/fonts/fontawesome-webfont.otf" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.otf"/>
+		<resource type="download" name="font-awesome-4.5.0/less/" location="/font-awesome-4.5.0/less"/>
+		<resource type="download" name="font-awesome-4.5.0/less/animated.less" location="/font-awesome-4.5.0/less/animated.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/bordered-pulled.less" location="/font-awesome-4.5.0/less/bordered-pulled.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/core.less" location="/font-awesome-4.5.0/less/core.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/fixed-width.less" location="/font-awesome-4.5.0/less/fixed-width.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/font-awesome.less" location="/font-awesome-4.5.0/less/font-awesome.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/icons.less" location="/font-awesome-4.5.0/less/icons.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/larger.less" location="/font-awesome-4.5.0/less/larger.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/list.less" location="/font-awesome-4.5.0/less/list.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/mixins.less" location="/font-awesome-4.5.0/less/mixins.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/path.less" location="/font-awesome-4.5.0/less/path.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/rotated-flipped.less" location="/font-awesome-4.5.0/less/rotated-flipped.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/stacked.less" location="/font-awesome-4.5.0/less/stacked.less"/>
+        <resource type="download" name="font-awesome-4.5.0/less/variables.less" location="/font-awesome-4.5.0/less/variables.less"/>
+		<resource type="download" name="font-awesome-4.5.0/scss/" location="/font-awesome-4.5.0/scss"/>
+		<resource type="download" name="font-awesome-4.5.0/scss/_animated.scss" location="/font-awesome-4.5.0/scss/_animated.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_bordered-pulled.scss" location="/font-awesome-4.5.0/scss/_bordered-pulled.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_core.scss" location="/font-awesome-4.5.0/scss/_core.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_fixed-width.scss" location="/font-awesome-4.5.0/scss/_fixed-width.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_icons.scss" location="/font-awesome-4.5.0/scss/_icons.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_larger.scss" location="/font-awesome-4.5.0/scss/_larger.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_list.scss" location="/font-awesome-4.5.0/scss/_list.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_mixins.scss" location="/font-awesome-4.5.0/scss/_mixins.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_path.scss" location="/font-awesome-4.5.0/scss/_path.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_rotated-flipped.scss" location="/font-awesome-4.5.0/scss/_rotated-flipped.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_stacked.scss" location="/font-awesome-4.5.0/scss/_stacked.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/_variables.scss" location="/font-awesome-4.5.0/scss/_variables.scss"/>
+        <resource type="download" name="font-awesome-4.5.0/scss/font-awesome.scss" location="/font-awesome-4.5.0/scss/font-awesome.scss"/>
+	     -->
+	     <context>hub-bamboo</context>
 	</web-resource>
 
 	<!-- import from the product container -->
