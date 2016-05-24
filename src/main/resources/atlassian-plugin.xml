@@ -86,19 +86,17 @@
 	</plugin-info>
 
 	<!-- add our i18n resource -->
-	<resource type="i18n" name="i18n" location="int-hub-bamboo" />
+	<resource type="i18n" name="i18n" location="hub-bamboo" />
 
 	<!-- add our web resources -->
-	<web-resource key="webresources" name="int-hub-bamboo Web Resources">
+	<web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
 		<dependency>com.atlassian.auiplugin:ajs</dependency>
-
 		<resource type="download" name="css/" location="/css"/>
 		<resource type="download" name="font-awesome-4.5.0/" location="/font-awesome-4.5.0"/>
 		<resource type="download" name="images/" location="/images"/>
 		<resource type="download" name="js/" location="/js"/>
-		<context>int-hub-bamboo</context>
+		<context>hub-bamboo</context>
 	</web-resource>
-
 
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"

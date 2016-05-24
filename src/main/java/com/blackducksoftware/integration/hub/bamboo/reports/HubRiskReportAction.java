@@ -8,6 +8,7 @@ import com.atlassian.bamboo.build.ViewBuildResults;
 import com.atlassian.utils.process.IOUtils;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
+import com.blackducksoftware.integration.hub.util.HubResourceBundleHelper;
 import com.google.gson.Gson;
 
 public class HubRiskReportAction extends ViewBuildResults {
@@ -15,15 +16,22 @@ public class HubRiskReportAction extends ViewBuildResults {
 	private static final long serialVersionUID = 4076165272346339757L;
 
 	private HubRiskReportData hubRiskReportData;
+	private HubResourceBundleHelper bundle;
 
 	@Override
 	public String doExecute() throws Exception {
 		createReportData();
+		bundle = new HubResourceBundleHelper();
+		bundle.setKeyPrefix(HubBambooUtils.HUB_I18N_KEY_PREFIX);
 		return SUCCESS;
 	}
 
 	public HubRiskReportData getHubRiskReportData() {
 		return hubRiskReportData;
+	}
+
+	public HubResourceBundleHelper getBundle() {
+		return bundle;
 	}
 
 	private void createReportData() {
