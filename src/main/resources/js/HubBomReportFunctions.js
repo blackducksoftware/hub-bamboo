@@ -311,3 +311,5 @@ function reportStartup() {
 
 	adjustTable();
 }
+
+reportStartup();
