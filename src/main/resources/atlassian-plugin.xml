@@ -21,6 +21,7 @@
 				com.atlassian.bamboo.collections,
 				com.atlassian.bamboo.configuration,
 				com.atlassian.bamboo.fileserver,
+				com.atlassian.bamboo.security,
 				com.atlassian.bamboo.spring,
 				com.atlassian.bamboo.task,
 				com.atlassian.bamboo.utils,
@@ -81,7 +82,6 @@
 				org.xml.sax,
 				org.xml.sax.helpers
 			</Import-Package>
-			<Require-Bundle>com.blackducksoftware.integration.hub-atlassian-config</Require-Bundle>
 		</bundle-instructions>
 	</plugin-info>
 
