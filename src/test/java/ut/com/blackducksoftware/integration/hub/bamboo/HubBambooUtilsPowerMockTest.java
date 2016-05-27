@@ -32,18 +32,18 @@ public class HubBambooUtilsPowerMockTest {
 		SystemDirectory.getApplicationHome();
 	}
 
-	@PrepareForTest(SystemProperty.class)
+	// @PrepareForTest(SystemProperty.class)
 	@Test
 	public void testGetBambooHomeFromEnv() {
 		final File file = new File("bamboo-home/");
-		PowerMockito.mockStatic(SystemProperty.class);
-		PowerMockito.when(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue()).thenReturn(file.getAbsolutePath());
-
+		// PowerMockito.mockStatic(SystemProperty.class);
+		// PowerMockito.when(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue()).thenReturn(file.getAbsolutePath());
+		SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getAbsolutePath());
 		final String path = HubBambooUtils.getInstance().getBambooHome();
 
 		assertEquals(file.getAbsolutePath(), path);
 
-		PowerMockito.verifyStatic();
-		SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
+		// PowerMockito.verifyStatic();
+		assertEquals(file.getAbsolutePath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
 	}
 }
