@@ -25,6 +25,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -202,5 +205,13 @@ public class HubBambooLoggerTest {
 
 		logger.warn(testMessage);
 		assertFalse(buildLogger.getStringBuildLogs().isEmpty());
+	}
+
+	@Test
+	public void testSetLogLevel() {
+		final Map<String, String> envVars = new HashMap<String, String>();
+		envVars.put("bamboo_HUB_LOG_LEVEL", "TRACE");
+		logger.setLogLevel(envVars);
+		assertEquals(LogLevel.TRACE, logger.getLogLevel());
 	}
 }

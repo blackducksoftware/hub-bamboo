@@ -184,8 +184,6 @@ public class HubBambooUtils implements Cloneable {
 
 	public File getRiskReportFile(final String planKey, final int buildNumber) {
 		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
-		// TODO Have to test this on another server SystemDirectory may
-		// fail on remote Bamboo server.
 		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
 
 		final File planRoot = storage.getArtifactDirectory(resultKey);
