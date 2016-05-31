@@ -29,8 +29,8 @@ import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 
 public class RiskReportCondition extends AbstractCompositeCondition {
 
-	private static final String KEY_BUILD_NUMBER = "buildNumber";
-	private static final String KEY_PLAN_KEY = "planKey";
+	public static final String KEY_BUILD_NUMBER = "buildNumber";
+	public static final String KEY_PLAN_KEY = "planKey";
 
 	@Override
 	public boolean shouldDisplay(final Map<String, Object> buildContextMap) {

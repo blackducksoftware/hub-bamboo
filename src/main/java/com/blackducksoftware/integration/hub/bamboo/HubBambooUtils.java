@@ -45,14 +45,18 @@ import com.blackducksoftware.integration.hub.global.HubServerConfig;
 
 public class HubBambooUtils implements Cloneable {
 
-	private final static HubBambooUtils instance = new HubBambooUtils();
+	private static HubBambooUtils myInstance = null;
 	public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
 	public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
 	public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
 	public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
 
 	public static HubBambooUtils getInstance() {
-		return instance;
+
+		if (myInstance == null) {
+			myInstance = new HubBambooUtils();
+		}
+		return myInstance;
 	}
 
 	private HubBambooUtils() {
