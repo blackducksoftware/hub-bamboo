@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.blackducksoftware.integration</groupId>
 	<artifactId>hub-bamboo</artifactId>
-	<version>0.1.2</version>
+	<version>1.0.0</version>
 	<packaging>atlassian-plugin</packaging>
 	<name>Black Duck Hub Plugin for Bamboo</name>
 	<description>Open Source Governance with Black Duck Hub (TM).</description>
@@ -63,7 +63,7 @@
 		<amps.version>5.0.13</amps.version>
 		<plugin.testrunner.version>1.1.4</plugin.testrunner.version>
 		<gson.version>2.3.1</gson.version>
-		<hub.common.version>1.4.0-SNAPSHOT</hub.common.version>
+		<hub.common.version>1.4.0</hub.common.version>
 	</properties>
 	<dependencies>
 		<dependency>
