@@ -173,6 +173,18 @@
 				<artifactId>maven-bamboo-plugin</artifactId>
 				<version>${amps.version}</version>
 				<extensions>true</extensions>
+				<executions>
+				    <execution>
+					    <id>default-integration-test</id>
+					    <goals>
+					       <goal>integration-test</goal>
+					    </goals>
+					    <configuration>
+					       <skipTests>true</skipTests>
+					       <testsSkip>true</testsSkip>
+					    </configuration>
+				    </execution>
+                </executions>
 				<configuration>
 					<productVersion>${bamboo.version}</productVersion>
 					<productDataVersion>${bamboo.data.version}</productDataVersion>
