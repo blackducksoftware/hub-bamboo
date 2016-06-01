@@ -112,9 +112,11 @@ public class HubScanTask implements TaskType {
 		this.artifactManager = artifactManager;
 	}
 
+	@Override
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
 
 		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
+		TaskResult result;
 		final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
 
 		final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
@@ -134,7 +136,9 @@ public class HubScanTask implements TaskType {
 			if (jobConfig == null) {
 				// invalid job configuration fail the build.
 				logger.error("Task Configuration invalid.  Please validate configuration settings.");
-				return resultBuilder.failedWithError().build();
+				result = resultBuilder.failedWithError().build();
+				logTaskResult(logger, result);
+				return result;
 			}
 			printConfiguration(taskContext, hubConfig, logger, jobConfig);
 
@@ -150,7 +154,9 @@ public class HubScanTask implements TaskType {
 			if (installer == null || !installer.getCLIExists(logger)) {
 				logger.error("Could not find the Hub scan CLI");
 				resultBuilder.failed();
-				return resultBuilder.build();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
 			}
 
 			final File hubCLI = installer.getCLI();
@@ -207,7 +213,9 @@ public class HubScanTask implements TaskType {
 			if (isFailOnPolicySelected && !hubSupport.isPolicyApiSupport()) {
 				logger.error("This version of the Hub does not have support for Policies.");
 				resultBuilder.failed();
-				return resultBuilder.build();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
 			} else if (isFailOnPolicySelected) {
 
 				if (waitForBom) {
@@ -216,36 +224,42 @@ public class HubScanTask implements TaskType {
 				final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
 						hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
 
-				return policyResult.build();
+				result = policyResult.build();
 			}
 
 		} catch (final HubIntegrationException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final URISyntaxException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final BDRestException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final IOException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final InterruptedException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final BDBambooHubPluginException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final IllegalArgumentException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		} catch (final EncryptionException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
-			resultBuilder.failedWithError().build();
+			result = resultBuilder.failedWithError().build();
 		}
 
-		return resultBuilder.build();
+		result = resultBuilder.build();
+		logTaskResult(logger, result);
+		return result;
+	}
+
+	private void logTaskResult(final IntLogger logger, final TaskResult result) {
+		logger.info("HUB Scan Task result: " + result.getTaskState());
 	}
 
 	private HubScanJobConfig getJobConfig(final ConfigurationMap configMap, final File workingDirectory,
