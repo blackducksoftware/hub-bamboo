@@ -1,7 +1,10 @@
 <atlassian-plugin key="${project.groupId}.${project.artifactId}"
 	name="${project.name}" plugins-version="2">
 	<plugin-info>
-		<description>${project.description}</description>
+		<description>${project.description}
+	    This project depends on the hub-atlassian-config plugin in order to configure the Hub server to be used.
+        The plugin can be located at https://github.com/blackducksoftware/hub-atlassian-config/releases
+		</description>
 		<version>${project.version}</version>
 		<vendor name="${project.organization.name}" url="${project.organization.url}" />
 		<param name="plugin-icon">images/BlackDuckLogo.png</param>
