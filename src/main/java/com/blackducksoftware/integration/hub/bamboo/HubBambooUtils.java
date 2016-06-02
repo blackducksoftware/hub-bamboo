@@ -38,8 +38,10 @@ import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 
@@ -68,10 +70,10 @@ public class HubBambooUtils implements Cloneable {
 		throw new CloneNotSupportedException();
 	}
 
-	public HubServerConfig buildConfigFromStrings(final String hubUrl, final String hubUser, final String hubPass,
-			final String hubPassLength, final String hubProxyUrl, final String hubProxyPort,
-			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass,
-			final String hubProxyPassLength) {
+	public ValidationResults<GlobalFieldKey, HubServerConfig> buildConfigFromStrings(final String hubUrl,
+			final String hubUser, final String hubPass, final String hubPassLength, final String hubProxyUrl,
+			final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
+			final String hubProxyPass, final String hubProxyPassLength) {
 		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
 		configBuilder.setHubUrl(hubUrl);
 		configBuilder.setUsername(hubUser);
@@ -92,8 +94,7 @@ public class HubBambooUtils implements Cloneable {
 			length = Integer.valueOf(hubProxyPassLength);
 			configBuilder.setProxyPasswordLength(length);
 		}
-
-		return configBuilder.build().getConstructedObject();
+		return configBuilder.build();
 	}
 
 	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,

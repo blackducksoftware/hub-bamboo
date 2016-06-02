@@ -65,6 +65,8 @@ import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResultEnum;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
@@ -72,6 +74,7 @@ import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.exception.MissingPolicyStatusException;
 import com.blackducksoftware.integration.hub.exception.ProjectDoesNotExistException;
 import com.blackducksoftware.integration.hub.exception.VersionDoesNotExistException;
+import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
@@ -126,7 +129,16 @@ public class HubScanTask implements TaskType {
 		try {
 
 			final ConfigurationMap taskConfigMap = taskContext.getConfigurationMap();
-			final HubServerConfig hubConfig = getHubServerConfig();
+			final HubServerConfig hubConfig = getHubServerConfig(logger);
+
+			if (hubConfig == null) {
+				logger.error("Please verify the correct dependent Hub configuration plugin is installed");
+				logger.error("Please verify the configuration is correct if the plugin is installed.");
+				result = resultBuilder.failedWithError().build();
+				logTaskResult(logger, result);
+				return result;
+			}
+
 			final HubIntRestService service = getService(hubConfig);
 			final HubScanJobConfig jobConfig = getJobConfig(taskContext.getConfigurationMap(),
 					taskContext.getWorkingDirectory(), logger);
@@ -644,7 +656,8 @@ public class HubScanTask implements TaskType {
 		}
 	}
 
-	private HubServerConfig getHubServerConfig() throws IllegalArgumentException, EncryptionException {
+	private HubServerConfig getHubServerConfig(final IntLogger logger)
+			throws IllegalArgumentException, EncryptionException {
 
 		HubServerConfig config = null;
 
@@ -659,9 +672,26 @@ public class HubScanTask implements TaskType {
 		final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
 		final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-		config = HubBambooUtils.getInstance().buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength,
-				hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
+				.buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+						hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
 
+		if (results.isSuccess()) {
+			config = results.getConstructedObject();
+		} else {
+			logger.error("Hub Server Configuration Invalid.");
+			final Set<GlobalFieldKey> keySet = results.getResultMap().keySet();
+			for (final GlobalFieldKey key : keySet) {
+				if (results.hasErrors(key)) {
+					logger.error(results.getResultString(key, ValidationResultEnum.ERROR));
+				}
+
+				if (results.hasWarnings(key)) {
+					logger.warn(results.getResultString(key, ValidationResultEnum.ERROR));
+				}
+			}
+
+		}
 		return config;
 
 	}

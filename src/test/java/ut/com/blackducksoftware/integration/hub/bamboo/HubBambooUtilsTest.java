@@ -38,6 +38,8 @@ import org.junit.Test;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubCredentialsBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
+import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubCredentials;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
@@ -86,9 +88,10 @@ public class HubBambooUtilsTest {
 
 	@Test
 	public void testBuildConfig() throws Exception {
-		final HubServerConfig config = HubBambooUtils.getInstance().buildConfigFromStrings(HUB_URL, USER, PASSWORD,
-				EMPTY_PASSWORD_LENGTH, VALID_HOST, VALID_PORT, VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD,
-				EMPTY_PASSWORD_LENGTH);
+		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
+				.buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, VALID_HOST, VALID_PORT,
+						VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD, EMPTY_PASSWORD_LENGTH);
+		final HubServerConfig config = results.getConstructedObject();
 		assertNotNull(config);
 		assertEquals(new URL(HUB_URL), config.getHubUrl());
 		assertEquals(USER, config.getGlobalCredentials().getUsername());
@@ -186,8 +189,10 @@ public class HubBambooUtilsTest {
 	@Test
 	public void testConfigureServiceNullProxy() throws Exception {
 		final HubIntRestService service = new HubIntRestService(HUB_URL);
-		final HubServerConfig config = HubBambooUtils.getInstance().buildConfigFromStrings(HUB_URL, USER, PASSWORD,
-				EMPTY_PASSWORD_LENGTH, null, null, null, null, null, null);
+		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
+				.buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, null, null, null, null, null,
+						null);
+		final HubServerConfig config = results.getConstructedObject();
 		HubBambooUtils.getInstance().configureProxyToService(config, service);
 	}
 
