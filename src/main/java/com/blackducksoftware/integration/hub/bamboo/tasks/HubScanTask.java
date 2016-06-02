@@ -639,7 +639,7 @@ public class HubScanTask implements TaskType {
 	}
 
 	private String createPolicyCountMessage(final int count, final String type) {
-		return "Found " + count + " bom entries to be" + type + " of a defined Policy";
+		return "Found " + count + " bom entries to be " + type + " of a defined Policy";
 	}
 
 	private void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
