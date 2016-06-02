@@ -179,10 +179,22 @@ public class HubBambooUtils implements Cloneable {
 	}
 
 	public String getBambooHome() {
+
+		File bambooHome = null;
+		// On remote agents SystemDirectory.getApplicationHome may throw a NPE,
+		// because it calls another get method in SystemDirectory. On the master
+		// node the call works. When remote agents start up
+		// the Bamboo home environment variable is set. This code is needed
+		// because we observed different behavior on the master and remote
+		// nodes.
 		try {
-			final File bambooHome = SystemDirectory.getApplicationHome();
-			return bambooHome.getAbsolutePath();
+			bambooHome = SystemDirectory.getApplicationHome();
 		} catch (final NullPointerException npe) {
+		}
+
+		if (bambooHome != null) {
+			return bambooHome.getAbsolutePath();
+		} else {
 			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
 		}
 	}
@@ -192,8 +204,8 @@ public class HubBambooUtils implements Cloneable {
 		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
 
 		final File planRoot = storage.getArtifactDirectory(resultKey);
-		final File riskReportRoot = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
-		final File dataFile = new File(riskReportRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+		dataFile = new File(dataFile, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 		return dataFile;
 	}
 }
