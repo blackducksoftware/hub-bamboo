@@ -1,41 +1,64 @@
 /*******************************************************************************
  * Copyright (C) 2016 Black Duck Software, Inc.
- *
  * http://www.blackducksoftware.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 only
- * as published by the Free Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License version 2
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
-import java.net.Proxy;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.atlassian.bamboo.fileserver.ArtifactStorage;
+import com.atlassian.bamboo.fileserver.SystemDirectory;
+import com.atlassian.bamboo.plan.PlanKeys;
+import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.utils.SystemProperty;
+import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
-import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
-import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
+import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
+import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
+import com.blackducksoftware.integration.hub.exception.EncryptionException;
+import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
+import com.blackducksoftware.integration.hub.global.HubProxyInfo;
+import com.blackducksoftware.integration.hub.global.HubServerConfig;
 
 public class HubBambooUtils implements Cloneable {
 
-	private final static HubBambooUtils instance = new HubBambooUtils();
+	private static HubBambooUtils myInstance = null;
+	public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
+	public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
+	public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
+	public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
 
 	public static HubBambooUtils getInstance() {
-		return instance;
+
+		if (myInstance == null) {
+			myInstance = new HubBambooUtils();
+		}
+		return myInstance;
 	}
 
 	private HubBambooUtils() {
@@ -47,41 +70,63 @@ public class HubBambooUtils implements Cloneable {
 		throw new CloneNotSupportedException();
 	}
 
-	public HubProxyInfo createProxyInfo(final HubConfig hubConfig) {
-		final HubProxyInfo proxyInfo = new HubProxyInfo();
-		proxyInfo.setHost(hubConfig.getHubProxyUrl());
-		if (StringUtils.isNotBlank(hubConfig.getHubProxyPort())) {
-			proxyInfo.setPort(Integer.valueOf(hubConfig.getHubProxyPort()));
-		}
-		proxyInfo.setIgnoredProxyHosts(hubConfig.getHubNoProxyHost());
-		proxyInfo.setProxyUsername(hubConfig.getHubProxyUser());
-		proxyInfo.setProxyPassword(hubConfig.getHubProxyPass());
+	public ValidationResults<GlobalFieldKey, HubServerConfig> buildConfigFromStrings(final String hubUrl,
+			final String hubUser, final String hubPass, final String hubPassLength, final String hubProxyUrl,
+			final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
+			final String hubProxyPass, final String hubProxyPassLength) {
+		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
+		configBuilder.setHubUrl(hubUrl);
+		configBuilder.setUsername(hubUser);
+		configBuilder.setPassword(hubPass);
+		configBuilder.setProxyHost(hubProxyUrl);
+		configBuilder.setProxyPort(hubProxyPort);
+		configBuilder.setProxyUsername(hubProxyUser);
+		configBuilder.setProxyPassword(hubProxyPass);
 
+		configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
+		int length = 0;
+		if (StringUtils.isNotBlank(hubPassLength)) {
+			length = Integer.valueOf(hubPassLength);
+			configBuilder.setPasswordLength(length);
+		}
+
+		if (StringUtils.isNotBlank(hubProxyPassLength)) {
+			length = Integer.valueOf(hubProxyPassLength);
+			configBuilder.setProxyPasswordLength(length);
+		}
+		return configBuilder.build();
+	}
+
+	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,
+			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass)
+			throws IllegalArgumentException, EncryptionException, HubIntegrationException {
+		HubProxyInfo proxyInfo = null;
+		if (StringUtils.isNotBlank(hubProxyUrl)) {
+			final HubProxyInfoBuilder proxyBuilder = new HubProxyInfoBuilder();
+			proxyBuilder.setHost(hubProxyUrl);
+			if (StringUtils.isNotBlank(hubProxyPort)) {
+				try {
+					proxyBuilder.setPort(Integer.valueOf(hubProxyPort));
+				} catch (final NumberFormatException ex) {
+					// ignore the default value is 0.
+				}
+
+				proxyBuilder.setIgnoredProxyHosts(hubProxyNoHost);
+				proxyBuilder.setUsername(hubProxyUser);
+				proxyBuilder.setPassword(hubProxyPass);
+				proxyInfo = proxyBuilder.build().getConstructedObject();
+			}
+		}
 		return proxyInfo;
 	}
 
-	public void configureProxyToService(final HubConfig hubConfig, final HubIntRestService service) {
+	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service) {
 
-		final HubProxyInfo proxyInfo = createProxyInfo(hubConfig);
-		Proxy proxy = null;
+		final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 
-		if (StringUtils.isNotBlank(proxyInfo.getHost()) && StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
-			for (final Pattern p : proxyInfo.getNoProxyHostPatterns()) {
-				if (p.matcher(proxyInfo.getHost()).matches()) {
-					proxy = Proxy.NO_PROXY;
-				}
-			}
-		}
-
-		if (proxyInfo != null && (proxy == null || proxy != Proxy.NO_PROXY)) {
-			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-				if (StringUtils.isNotBlank(proxyInfo.getProxyUsername())
-						&& StringUtils.isNotBlank(proxyInfo.getProxyPassword())) {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null,
-							proxyInfo.getProxyUsername(), proxyInfo.getProxyPassword());
-				} else {
-					service.setProxyProperties(proxyInfo.getHost(), proxyInfo.getPort(), null, null, null);
-				}
+		if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
+			if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
+				service.setProxyProperties(proxyInfo);
 			}
 		}
 	}
@@ -105,5 +150,62 @@ public class HubBambooUtils implements Cloneable {
 		}
 
 		return scanTargets;
+	}
+
+	public Map<String, String> getEnvironmentVariablesMap(@NotNull final Map<String, String> systemVariables,
+			@NotNull final Map<String, String> taskContextVariables) {
+		final Map<String, String> allVariablesMap = new HashMap<String, String>(
+				systemVariables.size() + taskContextVariables.size());
+
+		allVariablesMap.putAll(systemVariables);
+		allVariablesMap.putAll(taskContextVariables);
+
+		return allVariablesMap;
+	}
+
+	public String getEnvironmentVariable(@NotNull final Map<String, String> envVars,
+			@NotNull final String parameterName, final boolean taskContextVariable) {
+		String variable;
+
+		if (taskContextVariable) {
+			variable = "bamboo_" + parameterName;
+		} else {
+			variable = parameterName;
+		}
+
+		final String value = envVars.get(variable);
+
+		return StringUtils.trimToNull(value);
+	}
+
+	public String getBambooHome() {
+
+		File bambooHome = null;
+		// On remote agents SystemDirectory.getApplicationHome may throw a NPE,
+		// because it calls another get method in SystemDirectory. On the master
+		// node the call works. When remote agents start up
+		// the Bamboo home environment variable is set. This code is needed
+		// because we observed different behavior on the master and remote
+		// nodes.
+		try {
+			bambooHome = SystemDirectory.getApplicationHome();
+		} catch (final NullPointerException npe) {
+		}
+
+		if (bambooHome != null) {
+			return bambooHome.getAbsolutePath();
+		} else {
+			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
+		}
+	}
+
+	public File getRiskReportFile(final String planKey, final int buildNumber) {
+		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
+		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
+
+		final File planRoot = storage.getArtifactDirectory(resultKey);
+		File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+		dataFile = new File(dataFile, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		return dataFile;
 	}
 }

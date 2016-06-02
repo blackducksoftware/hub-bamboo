@@ -1,24 +1,26 @@
 /*******************************************************************************
  * Copyright (C) 2016 Black Duck Software, Inc.
- *
  * http://www.blackducksoftware.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 only
- * as published by the Free Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License version 2
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -27,9 +29,11 @@ import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
-import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResultEnum;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
+import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
+import com.blackducksoftware.integration.hub.job.HubScanJobFieldEnum;
 
 public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
@@ -40,9 +44,9 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
 		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
 			final String key = param.getKey();
-			configMap.put(key, params.getString(key));
+			final String value = params.getString(key);
+			configMap.put(key, value);
 		}
-
 		return configMap;
 	}
 
@@ -69,7 +73,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
 		final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(scanTargetText, null);
 
-		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder();
+		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder(false);
 		hubScanJobConfigBuilder.setProjectName(project);
 		hubScanJobConfigBuilder.setVersion(version);
 		hubScanJobConfigBuilder.setPhase(phase);
@@ -79,53 +83,27 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 		hubScanJobConfigBuilder.setScanMemory(scanMemory);
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
+		final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result = hubScanJobConfigBuilder.build();
 
-		try {
-			final IntBufferedLogger bufferedLogger = new IntBufferedLogger();
+		if (!result.isSuccess()) {
 
-			if (!hubScanJobConfigBuilder.validateProjectAndVersion(bufferedLogger)) {
-
-				// clean the logs to avoid duplicate error messages
-				bufferedLogger.resetAllLogs();
-				if (!bufferedLogger.getOutputList(LogLevel.ERROR).isEmpty()) {
-					// project or version is the cause of the error
-
-					if (!hubScanJobConfigBuilder.validateProject(bufferedLogger)) {
-						checkValidationErrors(HubScanParamEnum.PROJECT, bufferedLogger, errorCollection);
-					}
-
-					if (!hubScanJobConfigBuilder.validateVersion(bufferedLogger)) {
-						checkValidationErrors(HubScanParamEnum.VERSION, bufferedLogger, errorCollection);
-					}
-				}
-			}
-
-			if (!hubScanJobConfigBuilder.validateMaxWaitTimeForBomUpdate(bufferedLogger)) {
-				checkValidationErrors(HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, bufferedLogger, errorCollection);
-			}
-
-			if (!hubScanJobConfigBuilder.validateScanMemory(bufferedLogger)) {
-				checkValidationErrors(HubScanParamEnum.SCANMEMORY, bufferedLogger, errorCollection);
-			}
-
-			if (!hubScanJobConfigBuilder.validateScanTargetPaths(bufferedLogger)) {
-				checkValidationErrors(HubScanParamEnum.TARGETS, bufferedLogger, errorCollection);
-			}
-		} catch (final IOException ex) {
-
+			checkValidationErrors(HubScanParamEnum.PROJECT, HubScanJobFieldEnum.PROJECT, result, errorCollection);
+			checkValidationErrors(HubScanParamEnum.VERSION, HubScanJobFieldEnum.VERSION, result, errorCollection);
+			checkValidationErrors(HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE,
+					HubScanJobFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, result, errorCollection);
+			checkValidationErrors(HubScanParamEnum.SCANMEMORY, HubScanJobFieldEnum.SCANMEMORY, result, errorCollection);
+			checkValidationErrors(HubScanParamEnum.TARGETS, HubScanJobFieldEnum.TARGETS, result, errorCollection);
 		}
 	}
 
-	private void checkValidationErrors(final HubScanParamEnum parameter, final IntBufferedLogger logger,
+	private void checkValidationErrors(final HubScanParamEnum parameter, final HubScanJobFieldEnum field,
+			final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result,
 			final ErrorCollection errorCollection) {
 
-		final List<String> errorList = logger.getOutputList(LogLevel.ERROR);
-
-		for (final String error : errorList) {
-			errorCollection.addError(parameter.getKey(), error);
+		if (result.hasErrors(field)) {
+			final String message = result.getResultString(field, ValidationResultEnum.ERROR);
+			errorCollection.addError(parameter.getKey(), message);
 		}
-		// finished checking for errors so reset the logger.
-		logger.resetAllLogs();
 	}
 
 	@Override

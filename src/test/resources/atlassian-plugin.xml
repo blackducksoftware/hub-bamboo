@@ -4,6 +4,79 @@
 		<description>${project.description}</description>
 		<version>${project.version}</version>
 		<vendor name="${project.organization.name}" url="${project.organization.url}" />
+		<bundle-instructions>
+            <Import-Package>
+                org.springframework.osgi.service.exporter.support;resolution:=optional,
+                org.springframework.osgi.service.importer.support;resolution:=optional,
+                org.eclipse.gemini.blueprint.service.exporter;resolution:=optional,
+                org.eclipse.gemini.blueprint.service.exporter.support;resolution:=optional,
+                org.eclipse.gemini.blueprint.service.importer.support;resolution:=optional,
+                sun.misc;resolution:=optional,
+                com.sun.net.httpserver;resolution:=optional,
+                org.joda.convert;resolution:=optional,
+                com.atlassian.bamboo.build.logger,
+                com.atlassian.bamboo.bandana,
+                com.atlassian.bamboo.collections,
+                com.atlassian.bamboo.fileserver,
+                com.atlassian.bamboo.spring,
+                com.atlassian.bamboo.task,
+                com.atlassian.bamboo.utils,
+                com.atlassian.bamboo.utils.error,
+                com.atlassian.bamboo.ww2,
+                com.atlassian.bamboo.ww2.aware,
+                com.atlassian.bamboo.ww2.aware.permissions,
+                com.atlassian.spring.container,
+                com.atlassian.plugin.osgi.factory,
+                com.atlassian.templaterenderer,
+                com.atlassian.sal.api,
+                com.blackducksoftware.integration.*,
+                com.google.gson;version="0.0",
+                com.google.gson.*;version="0.0",
+                com.thoughtworks.xstream,
+                com.thoughtworks.xstream.io,
+                com.thoughtworks.xstream.io.xml,
+                javax.annotation,
+                javax.crypto,
+                javax.inject,
+                javax.net.ssl,
+                javax.security.auth.x500,
+                javax.servlet,
+                javax.servlet.http,
+                javax.xml.bind,
+                javax.xml.namespace,
+                javax.xml.parsers,
+                javax.xml.transform,
+                javax.xml.transform.sax,
+                javax.xml.transform.stream,
+                javax.xml.xpath,
+                org.apache.commons.lang,
+                org.apache.commons.logging,
+                org.apache.log4j,
+                org.apache.maven.eventspy,
+                org.apache.maven.execution,
+                org.apache.maven.project,
+                org.codehaus.plexus.component.annotations,
+                org.osgi.framework,
+                org.osgi.util.tracker,
+                org.slf4j.impl,
+                org.sonatype.aether.artifact,
+                org.sonatype.aether.graph,
+                org.springframework.beans,
+                org.springframework.beans.factory,
+                org.springframework.beans.factory.annotation,
+                org.springframework.beans.factory.config,
+                org.springframework.beans.factory.parsing,
+                org.springframework.beans.factory.support,
+                org.springframework.beans.factory.xml,
+                org.springframework.context.annotation,
+                org.springframework.stereotype,
+                org.springframework.util,
+                org.w3c.dom,
+                org.w3c.dom.ls,
+                org.xml.sax,
+                org.xml.sax.helpers
+            </Import-Package>
+        </bundle-instructions>
 	</plugin-info>
 
 	<!-- from our base plugin -->
@@ -13,5 +86,7 @@
 	<!-- from the product container -->
 	<component-import key="applicationProperties"
 		interface="com.atlassian.sal.api.ApplicationProperties" />
+
+
 
 </atlassian-plugin>

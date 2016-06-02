@@ -1,7 +1,5 @@
 ## Overview ##
-Hub plugin for Bamboo. This plugin provides ability to run a scan using the BD Hub CLI on build input and/or output. You can scan multiple targets and fail builds based on Hub policies.  
-
-PLEASE NOTE: This is currently a proof of concept release and not a production release.  It does not contain the same feature parity of other Black Duck plugins. 
+Hub plugin for Bamboo. This plugin provides ability to run a scan using the BD Hub CLI on build input and/or output. You can scan multiple targets and fail builds based on Hub policies.  The plugin also supports generating Hub Risk Reports viewable with the build results. 
 
 ## Build ##
 
@@ -16,4 +14,4 @@ Lastly, release tab on GitHub will contain the latest artifacts.
 All documentation for hub-bamboo can be found on the base project:  https://github.com/blackducksoftware/hub-bamboo/wiki
 
 ## License ##
-GNU General Public License 2 only
+Apache License 2.0

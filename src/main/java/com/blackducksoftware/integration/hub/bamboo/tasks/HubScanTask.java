@@ -1,30 +1,37 @@
 /*******************************************************************************
  * Copyright (C) 2016 Black Duck Software, Inc.
- *
  * http://www.blackducksoftware.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 only
- * as published by the Free Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License version 2
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
@@ -33,17 +40,23 @@ import org.joda.time.DateTime;
 import org.restlet.engine.Engine;
 import org.restlet.engine.connector.HttpClientHelper;
 
+import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
+import com.atlassian.bamboo.build.artifact.ArtifactManager;
+import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
-import com.atlassian.bamboo.fileserver.SystemDirectory;
+import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
+import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
-import com.atlassian.util.concurrent.NotNull;
+import com.atlassian.bandana.BandanaManager;
+import com.atlassian.utils.process.IOUtils;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
@@ -51,58 +64,98 @@ import com.blackducksoftware.integration.hub.ScanExecutor.Result;
 import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.bamboo.config.ConfigManager;
-import com.blackducksoftware.integration.hub.bamboo.config.HubConfig;
-import com.blackducksoftware.integration.hub.bamboo.config.HubProxyInfo;
+import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
+import com.blackducksoftware.integration.hub.builder.ValidationResultEnum;
+import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
+import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.exception.MissingPolicyStatusException;
 import com.blackducksoftware.integration.hub.exception.ProjectDoesNotExistException;
 import com.blackducksoftware.integration.hub.exception.VersionDoesNotExistException;
+import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
+import com.blackducksoftware.integration.hub.global.HubProxyInfo;
+import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
-import com.blackducksoftware.integration.hub.job.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatus;
 import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.polling.HubEventPolling;
 import com.blackducksoftware.integration.hub.project.api.ProjectItem;
 import com.blackducksoftware.integration.hub.report.api.HubReportGenerationInfo;
+import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
+import com.blackducksoftware.integration.hub.report.api.RiskReportGenerator;
 import com.blackducksoftware.integration.hub.util.HostnameHelper;
 import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
 import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
 import com.blackducksoftware.integration.hub.version.api.ReleaseItem;
+import com.google.gson.Gson;
 
 public class HubScanTask implements TaskType {
 
-	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
+	private static final String ERROR_MSG_PREFIX_RESPONSE = "Response : ";
+	private static final String ERROR_MSG_PREFIX_STATUS = "Status : ";
+	private static final String HUB_SCAN_TASK_ERROR = "Hub Scan Task error";
 
-	private final ConfigManager configManager;
+	private final static String CLI_FOLDER_NAME = "tools/HubCLI";
+	public static final String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
+
 	private final ProcessService processService;
 	private final EnvironmentVariableAccessor environmentVariableAccessor;
+	private final BandanaManager bandanaManager;
+	private final ArtifactManager artifactManager;
 
-	public HubScanTask(final ConfigManager configManager, final ProcessService processService,
-			final EnvironmentVariableAccessor environmentVariableAccessor) {
-		this.configManager = configManager;
+	public HubScanTask(final ProcessService processService,
+			final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
+			final ArtifactManager artifactManager) {
 		this.processService = processService;
 		this.environmentVariableAccessor = environmentVariableAccessor;
+		this.bandanaManager = bandanaManager;
+		this.artifactManager = artifactManager;
 	}
 
+	@Override
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
 
 		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
+		TaskResult result;
 		final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
+
+		final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
+				environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
+
+		logger.setLogLevel(envVars);
 		try {
 
-			final HubConfig hubConfig = configManager.readConfig();
+			final ConfigurationMap taskConfigMap = taskContext.getConfigurationMap();
+			final HubServerConfig hubConfig = getHubServerConfig(logger);
+
+			if (hubConfig == null) {
+				logger.error("Please verify the correct dependent Hub configuration plugin is installed");
+				logger.error("Please verify the configuration is correct if the plugin is installed.");
+				result = resultBuilder.failedWithError().build();
+				logTaskResult(logger, result);
+				return result;
+			}
+
 			final HubIntRestService service = getService(hubConfig);
 			final HubScanJobConfig jobConfig = getJobConfig(taskContext.getConfigurationMap(),
 					taskContext.getWorkingDirectory(), logger);
-			final HubProxyInfo proxyInfo = HubBambooUtils.getInstance().createProxyInfo(hubConfig);
+			final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 			printGlobalConfiguration(hubConfig, proxyInfo, logger);
+
+			if (jobConfig == null) {
+				// invalid job configuration fail the build.
+				logger.error("Task Configuration invalid.  Please validate configuration settings.");
+				result = resultBuilder.failedWithError().build();
+				logTaskResult(logger, result);
+				return result;
+			}
 			printConfiguration(taskContext, hubConfig, logger, jobConfig);
 
-			service.setCookies(hubConfig.getHubUser(), hubConfig.getHubPass());
+			service.setCookies(hubConfig.getGlobalCredentials().getUsername(),
+					hubConfig.getGlobalCredentials().getDecryptedPassword());
 
 			final String localHostName = HostnameHelper.getMyHostname();
 			logger.info("Running on machine : " + localHostName);
@@ -113,7 +166,9 @@ public class HubScanTask implements TaskType {
 			if (installer == null || !installer.getCLIExists(logger)) {
 				logger.error("Could not find the Hub scan CLI");
 				resultBuilder.failed();
-				return resultBuilder.build();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
 			}
 
 			final File hubCLI = installer.getCLI();
@@ -139,51 +194,84 @@ public class HubScanTask implements TaskType {
 			// run the scan
 			final DateTime beforeScanTime = new DateTime();
 			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
-					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport);
+					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
 			final DateTime afterScanTime = new DateTime();
 			// check the policy failures
 
-			final boolean isFailOnPolicySelected = taskContext.getConfigurationMap()
+			final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
+			bomUpdateInfo.setService(service);
+			bomUpdateInfo.setProject(project);
+			bomUpdateInfo.setVersion(version);
+			bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
+			bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
+
+			bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
+
+			bomUpdateInfo.setBeforeScanTime(beforeScanTime);
+			bomUpdateInfo.setAfterScanTime(afterScanTime);
+
+			bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
+
+			boolean waitForBom = true;
+			final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
+
+			if (isGenRiskReport) {
+				generateRiskReport(taskContext, logger, bomUpdateInfo, hubSupport);
+				waitForBom = false;
+			}
+
+			final boolean isFailOnPolicySelected = taskConfigMap
 					.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 			if (isFailOnPolicySelected && !hubSupport.isPolicyApiSupport()) {
 				logger.error("This version of the Hub does not have support for Policies.");
 				resultBuilder.failed();
-				return resultBuilder.build();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
 			} else if (isFailOnPolicySelected) {
 
-				final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
-				bomUpdateInfo.setService(service);
-				bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
-				bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
-
-				bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
-
-				bomUpdateInfo.setBeforeScanTime(beforeScanTime);
-				bomUpdateInfo.setAfterScanTime(afterScanTime);
-
-				bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
-
+				if (waitForBom) {
+					waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
+				}
 				final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
 						hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
 
-				return policyResult.build();
+				result = policyResult.build();
 			}
 
 		} catch (final HubIntegrationException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		} catch (final URISyntaxException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		} catch (final BDRestException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		} catch (final IOException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		} catch (final InterruptedException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		} catch (final BDBambooHubPluginException e) {
-			logger.error("Hub Scan Task error", e);
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
+		} catch (final IllegalArgumentException e) {
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
+		} catch (final EncryptionException e) {
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		}
 
-		return resultBuilder.build();
+		result = resultBuilder.build();
+		logTaskResult(logger, result);
+		return result;
+	}
+
+	private void logTaskResult(final IntLogger logger, final TaskResult result) {
+		logger.info("HUB Scan Task result: " + result.getTaskState());
 	}
 
 	private HubScanJobConfig getJobConfig(final ConfigurationMap configMap, final File workingDirectory,
@@ -204,7 +292,7 @@ public class HubScanTask implements TaskType {
 			scanTargets.add(workingDirectory.getAbsolutePath());
 		}
 
-		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder();
+		final HubScanJobConfigBuilder hubScanJobConfigBuilder = new HubScanJobConfigBuilder(false);
 		hubScanJobConfigBuilder.setProjectName(project);
 		hubScanJobConfigBuilder.setVersion(version);
 		hubScanJobConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
@@ -216,7 +304,7 @@ public class HubScanTask implements TaskType {
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
 
-		return hubScanJobConfigBuilder.build(logger);
+		return hubScanJobConfigBuilder.build().getConstructedObject();
 	}
 
 	private CLIInstaller installCLI(final IntLogger logger, final HubIntRestService restService,
@@ -224,7 +312,7 @@ public class HubScanTask implements TaskType {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-			final File toolsDir = new File(SystemDirectory.getApplicationHome(), CLI_FOLDER_NAME);
+			final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
 
 			// make the directories for the hub scan CLI tool
 			if (!toolsDir.exists()) {
@@ -251,7 +339,7 @@ public class HubScanTask implements TaskType {
 		return null;
 	}
 
-	private HubIntRestService getService(final HubConfig hubConfig) {
+	private HubIntRestService getService(final HubServerConfig hubConfig) throws MalformedURLException {
 		// configure the Restlet engine so that the HTTPHandle and classes
 		// from the com.sun.net.httpserver package
 		// do not need to be used at runtime to make client calls.
@@ -265,46 +353,50 @@ public class HubScanTask implements TaskType {
 
 		Engine.register(false);
 		Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
-		final HubIntRestService service = new HubIntRestService(hubConfig.getHubUrl());
+		String huburl = null;
+		if (hubConfig != null && hubConfig.getHubUrl() != null) {
+			huburl = hubConfig.getHubUrl().toString();
+		}
+		final HubIntRestService service = new HubIntRestService(huburl);
 		HubBambooUtils.getInstance().configureProxyToService(hubConfig, service);
 		return service;
 	}
 
-	public void printGlobalConfiguration(final HubConfig hubConfig, final HubProxyInfo proxyInfo,
+	public void printGlobalConfiguration(final HubServerConfig hubConfig, final HubProxyInfo proxyInfo,
 			final IntLogger logger) {
 		if (hubConfig == null) {
 			return;
 		}
 
 		logger.info("--> Hub Server Url : " + hubConfig.getHubUrl());
-		if (StringUtils.isNotBlank(hubConfig.getHubUser())) {
-			logger.info("--> Hub User : " + hubConfig.getHubUser());
+		if (StringUtils.isNotBlank(hubConfig.getGlobalCredentials().getUsername())) {
+			logger.info("--> Hub User : " + hubConfig.getGlobalCredentials().getUsername());
 		}
 
 		if (proxyInfo != null) {
 			if (StringUtils.isNotBlank(proxyInfo.getHost())) {
 				logger.info("--> Proxy Host : " + proxyInfo.getHost());
 			}
-			if (proxyInfo.getPort() != null) {
+			if (proxyInfo.getPort() > 0) {
 				logger.info("--> Proxy Port : " + proxyInfo.getPort());
 			}
 			if (StringUtils.isNotBlank(proxyInfo.getIgnoredProxyHosts())) {
 				logger.info("--> No Proxy Hosts : " + proxyInfo.getIgnoredProxyHosts());
 			}
-			if (StringUtils.isNotBlank(proxyInfo.getProxyUsername())) {
-				logger.info("--> Proxy Username : " + proxyInfo.getProxyUsername());
+			if (StringUtils.isNotBlank(proxyInfo.getUsername())) {
+				logger.info("--> Proxy Username : " + proxyInfo.getUsername());
 			}
 		}
 	}
 
-	public void printConfiguration(final TaskContext taskContext, final HubConfig hubConfig, final IntLogger logger,
-			final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
+	public void printConfiguration(final TaskContext taskContext, final HubServerConfig hubConfig,
+			final IntLogger logger, final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
 		logger.info("Initializing - Hub Bamboo Plugin");
 
-		logger.info("-> Bamboo home directory: " + SystemDirectory.getApplicationHome());
+		logger.info("-> Bamboo home directory: " + HubBambooUtils.getInstance().getBambooHome());
 		final BuildContext buildContext = taskContext.getBuildContext();
 		logger.info("-> Using Url : " + hubConfig.getHubUrl());
-		logger.info("-> Using Username : " + hubConfig.getHubUser());
+		logger.info("-> Using Username : " + hubConfig.getGlobalCredentials().getUsername());
 		logger.info("-> Using Build Full Name : " + buildContext.getDisplayName());
 		logger.info("-> Using Build Number : " + buildContext.getBuildNumber());
 		logger.info("-> Using Build Workspace Path : " + taskContext.getWorkingDirectory().getAbsolutePath());
@@ -316,7 +408,6 @@ public class HubScanTask implements TaskType {
 		for (final String target : jobConfig.getScanTargetPaths()) {
 			logger.info("-> " + target);
 		}
-
 		// logger.info("-> Generate Hub report : " +
 		// jobConfig.isShouldGenerateRiskReport());
 		final String formattedTime = String.format("%d minutes",
@@ -324,22 +415,23 @@ public class HubScanTask implements TaskType {
 		logger.info("-> Maximum wait time for the BOM Update : " + formattedTime);
 	}
 
-	public ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
+	private ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
 			final IntLogger logger, final HubIntRestService service, final File oneJarFile, final File scanExec,
-			File javaExec, final HubConfig hubConfig, final HubScanJobConfig jobConfig, final HubProxyInfo proxyInfo,
-			final HubSupportHelper supportHelper)
-			throws HubIntegrationException, MalformedURLException, URISyntaxException {
-		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl(), hubConfig.getHubUser(),
-				hubConfig.getHubPass(), jobConfig.getScanTargetPaths(), taskContext.getBuildContext().getBuildNumber(),
-				supportHelper);
+			File javaExec, final HubServerConfig hubConfig, final HubScanJobConfig jobConfig,
+			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper, final Map<String, String> envVars)
+			throws HubIntegrationException, MalformedURLException, URISyntaxException, IllegalArgumentException,
+			EncryptionException {
+		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl().toString(),
+				hubConfig.getGlobalCredentials().getUsername(), hubConfig.getGlobalCredentials().getDecryptedPassword(),
+				jobConfig.getScanTargetPaths(), taskContext.getBuildContext().getBuildNumber(), supportHelper);
 		scan.setLogger(logger);
 		scan.setTaskContext(taskContext);
 		scan.setProcessService(processService);
 		scan.setEnvironmentVariableAccessor(environmentVariableAccessor);
 
 		if (proxyInfo != null) {
-			final URL hubUrl = new URL(hubConfig.getHubUrl());
-			if (!HubProxyInfo.checkMatchingNoProxyHostPatterns(hubUrl.getHost(), proxyInfo.getNoProxyHostPatterns())) {
+			final URL hubUrl = hubConfig.getHubUrl();
+			if (!proxyInfo.shouldUseProxyForUrl(hubUrl)) {
 				addProxySettingsToScanner(logger, scan, proxyInfo);
 			}
 		}
@@ -354,7 +446,7 @@ public class HubScanTask implements TaskType {
 		}
 
 		if (javaExec == null) {
-			String javaHome = getEnvironmentVariable("JAVA_HOME", logger);
+			String javaHome = HubBambooUtils.getInstance().getEnvironmentVariable(envVars, "JAVA_HOME", false);
 			if (StringUtils.isBlank(javaHome)) {
 				// We couldn't get the JAVA_HOME variable so lets try to get the
 				// home
@@ -383,16 +475,17 @@ public class HubScanTask implements TaskType {
 		return scan;
 	}
 
-	public void addProxySettingsToScanner(final IntLogger logger, final BambooScanExecutor scan,
-			final HubProxyInfo proxyInfo) throws HubIntegrationException, URISyntaxException, MalformedURLException {
+	private void addProxySettingsToScanner(final IntLogger logger, final BambooScanExecutor scan,
+			final HubProxyInfo proxyInfo) throws HubIntegrationException, URISyntaxException, MalformedURLException,
+			IllegalArgumentException, EncryptionException {
 		if (proxyInfo != null) {
 			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-				if (StringUtils.isNotBlank(proxyInfo.getProxyUsername())
-						&& StringUtils.isNotBlank(proxyInfo.getProxyPassword())) {
+				if (StringUtils.isNotBlank(proxyInfo.getUsername())
+						&& StringUtils.isNotBlank(proxyInfo.getDecryptedPassword())) {
 					scan.setProxyHost(proxyInfo.getHost());
 					scan.setProxyPort(proxyInfo.getPort());
-					scan.setProxyUsername(proxyInfo.getProxyUsername());
-					scan.setProxyPassword(proxyInfo.getProxyPassword());
+					scan.setProxyUsername(proxyInfo.getUsername());
+					scan.setProxyPassword(proxyInfo.getDecryptedPassword());
 				} else {
 					scan.setProxyHost(proxyInfo.getHost());
 					scan.setProxyPort(proxyInfo.getPort());
@@ -417,8 +510,8 @@ public class HubScanTask implements TaskType {
 		} catch (final BDRestException e) {
 			if (e.getResource() != null) {
 				if (e.getResource() != null) {
-					logger.error("Status : " + e.getResource().getStatus().getCode());
-					logger.error("Response : " + e.getResource().getResponse().getEntityAsText());
+					logger.error(ERROR_MSG_PREFIX_STATUS + e.getResource().getStatus().getCode());
+					logger.error(ERROR_MSG_PREFIX_RESPONSE + e.getResource().getResponse().getEntityAsText());
 				}
 				throw new BDBambooHubPluginException("Problem getting the Project. ", e);
 			}
@@ -436,8 +529,8 @@ public class HubScanTask implements TaskType {
 			project = service.getProject(projectUrl);
 		} catch (final BDRestException e1) {
 			if (e1.getResource() != null) {
-				logger.error("Status : " + e1.getResource().getStatus().getCode());
-				logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+				logger.error(ERROR_MSG_PREFIX_STATUS + e1.getResource().getStatus().getCode());
+				logger.error(ERROR_MSG_PREFIX_RESPONSE + e1.getResource().getResponse().getEntityAsText());
 			}
 			throw new BDBambooHubPluginException("Problem creating the Project. ", e1);
 		}
@@ -484,8 +577,8 @@ public class HubScanTask implements TaskType {
 			version = service.getProjectVersion(versionURL);
 		} catch (final BDRestException e1) {
 			if (e1.getResource() != null) {
-				logger.error("Status : " + e1.getResource().getStatus().getCode());
-				logger.error("Response : " + e1.getResource().getResponse().getEntityAsText());
+				logger.error(ERROR_MSG_PREFIX_STATUS + e1.getResource().getStatus().getCode());
+				logger.error(ERROR_MSG_PREFIX_RESPONSE + e1.getResource().getResponse().getEntityAsText());
 			}
 			throw new BDBambooHubPluginException("Problem creating the Version. ", e1);
 		}
@@ -493,80 +586,63 @@ public class HubScanTask implements TaskType {
 		return version;
 	}
 
-	private String getEnvironmentVariable(@NotNull final String parameterName, final IntLogger logger) {
-		final Map<String, String> envVars = environmentVariableAccessor.getEnvironment();
-		final String value = envVars.get(parameterName);
-
-		if (value == null || value.trim().length() == 0) {
-			return null;
-		}
-		final String result = value.trim();
-		return result;
-	}
-
 	private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
 			final IntLogger logger, final HubIntRestService service, final HubSupportHelper hubSupport,
 			final HubReportGenerationInfo bomUpdateInfo, final String policyStatusUrl) {
 		try {
-			waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
-
-			try {
-				// We use this conditional in case there are other failure
-				// conditions in the future
-				final PolicyStatus policyStatus = service.getPolicyStatus(policyStatusUrl);
-				if (policyStatus == null) {
-					logger.error("Could not find any information about the Policy status of the bom.");
-					return resultBuilder.failed();
-				}
-				if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
-					return resultBuilder.failed();
-				}
-
-				if (policyStatus.getCountInViolation() == null) {
-					logger.error("Could not find the number of bom entries In Violation of a Policy.");
-				} else {
-					logger.info("Found " + policyStatus.getCountInViolation().getValue()
-							+ " bom entries to be In Violation of a defined Policy.");
-				}
-				if (policyStatus.getCountInViolationOverridden() == null) {
-					logger.error("Could not find the number of bom entries In Violation Overridden of a Policy.");
-				} else {
-					logger.info("Found " + policyStatus.getCountInViolationOverridden().getValue()
-							+ " bom entries to be In Violation of a defined Policy, but they have been overridden.");
-				}
-				if (policyStatus.getCountNotInViolation() == null) {
-					logger.error("Could not find the number of bom entries Not In Violation of a Policy.");
-				} else {
-					logger.info("Found " + policyStatus.getCountNotInViolation().getValue()
-							+ " bom entries to be Not In Violation of a defined Policy.");
-				}
-				return resultBuilder.success();
-			} catch (final MissingPolicyStatusException e) {
-				logger.warn(e.getMessage());
-				return resultBuilder.success();
+			// We use this conditional in case there are other failure
+			// conditions in the future
+			final PolicyStatus policyStatus = service.getPolicyStatus(policyStatusUrl);
+			if (policyStatus == null) {
+				logger.error("Could not find any information about the Policy status of the bom.");
+				return resultBuilder.failed();
 			}
-		} catch (final BDBambooHubPluginException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final HubIntegrationException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final URISyntaxException e) {
+			if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
+				return resultBuilder.failed();
+			}
+
+			if (policyStatus.getCountInViolation() == null) {
+				logger.error(createPolicyCountNotFound("In Violation"));
+			} else {
+				logger.info(createPolicyCountMessage(policyStatus.getCountInViolation().getValue(), "In Violation"));
+			}
+			if (policyStatus.getCountInViolationOverridden() == null) {
+				logger.error(createPolicyCountNotFound("In Violation Overridden"));
+			} else {
+				logger.info(createPolicyCountMessage(policyStatus.getCountInViolationOverridden().getValue(),
+						"In Violation") + ", but they have been overridden.");
+			}
+			if (policyStatus.getCountNotInViolation() == null) {
+				logger.error(createPolicyCountNotFound("Not In Violation"));
+			} else {
+				logger.info(
+						createPolicyCountMessage(policyStatus.getCountNotInViolation().getValue(), "Not In Violation"));
+			}
+			return resultBuilder.success();
+		} catch (final MissingPolicyStatusException e) {
+			logger.warn(e.getMessage());
+			return resultBuilder.success();
+		} catch (final IOException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
 		} catch (final BDRestException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
-		} catch (final InterruptedException e) {
-			logger.error(e.getMessage(), e);
-			return resultBuilder.failed();
-		} catch (final IOException e) {
+		} catch (final URISyntaxException e) {
 			logger.error(e.getMessage(), e);
 			return resultBuilder.failed();
 		}
 	}
 
-	public void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
+	private String createPolicyCountNotFound(final String type) {
+		return "Could not find the number of bom entries " + type + " of a Policy.";
+	}
+
+	private String createPolicyCountMessage(final int count, final String type) {
+		return "Found " + count + " bom entries to be " + type + " of a defined Policy";
+	}
+
+	private void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
 			final HubSupportHelper supportHelper, final HubReportGenerationInfo bomUpdateInfo,
 			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
 			HubIntegrationException, URISyntaxException, IOException {
@@ -577,6 +653,97 @@ public class HubScanTask implements TaskType {
 			hubEventPolling.assertBomUpToDate(bomUpdateInfo, logger);
 		} else {
 			hubEventPolling.assertBomUpToDate(bomUpdateInfo);
+		}
+	}
+
+	private HubServerConfig getHubServerConfig(final IntLogger logger)
+			throws IllegalArgumentException, EncryptionException {
+
+		HubServerConfig config = null;
+
+		final String hubUrl = getPersistedValue(HubConfigKeys.CONFIG_HUB_URL);
+		final String hubUser = getPersistedValue(HubConfigKeys.CONFIG_HUB_USER);
+		final String hubPass = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS);
+		final String hubPassLength = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS_LENGTH);
+		final String hubProxyUrl = getPersistedValue(HubConfigKeys.CONFIG_PROXY_HOST);
+		final String hubProxyPort = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PORT);
+		final String hubProxyNoHost = getPersistedValue(HubConfigKeys.CONFIG_PROXY_NO_HOST);
+		final String hubProxyUser = getPersistedValue(HubConfigKeys.CONFIG_PROXY_USER);
+		final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
+		final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
+
+		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
+				.buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+						hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+
+		if (results.isSuccess()) {
+			config = results.getConstructedObject();
+		} else {
+			logger.error("Hub Server Configuration Invalid.");
+			final Set<GlobalFieldKey> keySet = results.getResultMap().keySet();
+			for (final GlobalFieldKey key : keySet) {
+				if (results.hasErrors(key)) {
+					logger.error(results.getResultString(key, ValidationResultEnum.ERROR));
+				}
+
+				if (results.hasWarnings(key)) {
+					logger.warn(results.getResultString(key, ValidationResultEnum.ERROR));
+				}
+			}
+
+		}
+		return config;
+
+	}
+
+	private String getPersistedValue(final String key) {
+		return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
+	}
+
+	private void generateRiskReport(final TaskContext taskContext, final IntLogger logger,
+			final HubReportGenerationInfo hubReportGenerationInfo, final HubSupportHelper hubSupport)
+			throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException {
+		logger.info("Generating Risk Report");
+
+		final RiskReportGenerator riskReportGenerator = new RiskReportGenerator(hubReportGenerationInfo, hubSupport);
+		// will wait for bom to be updated while generating the
+		// report.
+		final HubRiskReportData hubRiskReportData = riskReportGenerator.generateHubReport(logger);
+		final String reportPath = taskContext.getWorkingDirectory() + File.separator
+				+ HubBambooUtils.HUB_RISK_REPORT_FILENAME;
+
+		final Gson gson = new Gson();
+		final String contents = gson.toJson(hubRiskReportData);
+
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(reportPath);
+			writer.write(contents);
+		} finally {
+			IOUtils.closeQuietly(writer);
+		}
+
+		final BuildContext buildContext = taskContext.getBuildContext();
+		final PlanResultKey planResultKey = buildContext.getPlanResultKey();
+		final BuildLogger buildLogger = taskContext.getBuildLogger();
+		final File baseDirectory = taskContext.getWorkingDirectory();
+
+		final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
+
+		final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(token);
+		artifact.setName(HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+
+		final Map<String, String> config = new HashMap<String, String>();
+		final Set<String> publishers = new LinkedHashSet<String>();
+
+		final boolean published = artifactManager.publish(buildLogger, planResultKey, baseDirectory, artifact, config,
+				publishers, 1);
+
+		if (!published) {
+			logger.error("Could not publish the " + HubBambooUtils.HUB_RISK_REPORT_FILENAME
+					+ " artifact for the Risk Report");
 		}
 	}
 }

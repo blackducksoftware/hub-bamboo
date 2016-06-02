@@ -1,20 +1,23 @@
 /*******************************************************************************
  * Copyright (C) 2016 Black Duck Software, Inc.
- *
  * http://www.blackducksoftware.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2 only
- * as published by the Free Software Foundation.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements. See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership. The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * You should have received a copy of the GNU General Public License version 2
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
@@ -40,6 +43,8 @@ import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 
 public class BambooScanExecutor extends ScanExecutor {
 
+	private static final String CLI_PARAM_PASSWORD = "--password";
+	private static final String CLI_PARAM_LOG_DIR = "--logDir";
 	private ProcessService processService;
 	private TaskContext taskContext;
 	private EnvironmentVariableAccessor environmentVariableAccessor;
@@ -99,113 +104,112 @@ public class BambooScanExecutor extends ScanExecutor {
 			final FileOutputStream outputFileStream = new FileOutputStream(standardOutFile);
 
 			String outputString = "";
-			ScannerSplitStream splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream);
+			int returnCode;
+			try (ScannerSplitStream splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream)) {
 
-			// we should use Bamboo's ExternalProcessBuilder and ExternalProcess
-			// but it logs all the output from the scan CLI to the screen which
-			// is not what we want to do So use Java's default process builder
-			// since a task is invoking this and tasks run on agents.
-			Process hubCliProcess = new ProcessBuilder(cmd).redirectError(Redirect.PIPE).redirectOutput(Redirect.PIPE)
-					.start();
+				// we should use Bamboo's ExternalProcessBuilder and
+				// ExternalProcess
+				// but it logs all the output from the scan CLI to the screen
+				// which
+				// is not what we want to do So use Java's default process
+				// builder
+				// since a task is invoking this and tasks run on agents.
+				final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+				final Process hubCliProcess = procBuilder.start();
 
-			// The Cli logs go the error stream for some reason
-			StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
-					splitOutputStream);
-			redirectThread.start();
+				// The Cli logs go the error stream for some reason
+				final StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
+						splitOutputStream);
+				redirectThread.start();
 
-			int returnCode = hubCliProcess.waitFor();
+				// Would like to encapsulate the common code however the
+				// waitFor() blocks indefinitely if the the process is started
+				// in another method.
+				returnCode = hubCliProcess.waitFor();
 
-			// the join method on the redirect thread will wait until the thread
-			// is dead
-			// the thread will die when it reaches the end of stream and the run
-			// method is finished
-			redirectThread.join();
+				// the join method on the redirect thread will wait until the
+				// thread is dead. The thread will die when it reaches the end
+				// of stream and the run method is finished
+				redirectThread.join();
 
-			splitOutputStream.flush();
-			splitOutputStream.close();
-
-			if (splitOutputStream.hasOutput()) {
-				outputString = splitOutputStream.getOutput();
+				if (splitOutputStream.hasOutput()) {
+					outputString = splitOutputStream.getOutput();
+				}
+				getLogger().info(readStream(hubCliProcess.getInputStream()));
 			}
-			getLogger().info(readStream(hubCliProcess.getInputStream()));
-
-			if (outputString.contains("Illegal character in path")
-					&& (outputString.contains("Finished in") && outputString.contains("with status FAILURE"))) {
+			if (returnCode != 0 && outputString.contains("Illegal character in path")) {
 				standardOutFile.delete();
 				standardOutFile.createNewFile();
 
-				splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream);
+				try (ScannerSplitStream splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream)) {
 
-				// This version of the CLI can not handle spaces in the log
-				// directory
-				// Not sure which version of the CLI this issue was fixed
+					// This version of the CLI can not handle spaces in the log
+					// directory
+					// Not sure which version of the CLI this issue was fixed
 
-				final int indexOfLogOption = cmd.indexOf("--logDir") + 1;
+					final int indexOfLogOption = cmd.indexOf(CLI_PARAM_LOG_DIR) + 1;
 
-				String logPath = cmd.get(indexOfLogOption);
-				logPath = logPath.replace(" ", "%20");
-				cmd.remove(indexOfLogOption);
-				cmd.add(indexOfLogOption, logPath);
+					String logPath = cmd.get(indexOfLogOption);
+					logPath = logPath.replace(" ", "%20");
+					cmd.remove(indexOfLogOption);
+					cmd.add(indexOfLogOption, logPath);
+					final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+					final Process hubCliProcess = procBuilder.start();
+					// The Cli logs go the error stream for some reason
+					final StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
+							splitOutputStream);
+					redirectThread.start();
 
-				hubCliProcess = new ProcessBuilder(cmd).redirectError(Redirect.PIPE).redirectOutput(Redirect.PIPE)
-						.start();
-				// The Cli logs go the error stream for some reason
-				redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(), splitOutputStream);
-				redirectThread.start();
+					returnCode = hubCliProcess.waitFor();
 
-				returnCode = hubCliProcess.waitFor();
+					// the join method on the redirect thread will wait until
+					// the thread is dead. The thread will die when it reaches
+					// the end of stream and the run method is finished
+					redirectThread.join();
 
-				// the join method on the redirect thread will wait until the
-				// thread is dead
-				// the thread will die when it reaches the end of stream and the
-				// run method is finished
-				redirectThread.join();
-
-				splitOutputStream.flush();
-				splitOutputStream.close();
-
-				if (splitOutputStream.hasOutput()) {
-					outputString = splitOutputStream.getOutput();
+					if (splitOutputStream.hasOutput()) {
+						outputString = splitOutputStream.getOutput();
+					}
+					getLogger().info(readStream(hubCliProcess.getInputStream()));
 				}
-				getLogger().info(readStream(hubCliProcess.getInputStream()));
-			} else if (outputString.contains("Illegal character in opaque")
-					&& (outputString.contains("Finished in") && outputString.contains("with status FAILURE"))) {
+			} else if (returnCode != 0 && outputString.contains("Illegal character in opaque")) {
 				standardOutFile.delete();
 				standardOutFile.createNewFile();
 
-				splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream);
+				try (ScannerSplitStream splitOutputStream = new ScannerSplitStream(getLogger(), outputFileStream)) {
 
-				final int indexOfLogOption = cmd.indexOf("--logDir") + 1;
+					final int indexOfLogOption = cmd.indexOf(CLI_PARAM_LOG_DIR) + 1;
 
-				String logPath = cmd.get(indexOfLogOption);
+					String logPath = cmd.get(indexOfLogOption);
 
-				final File logFile = new File(logPath);
+					final File logFile = new File(logPath);
 
-				logPath = logFile.toURI().toString();
-				cmd.remove(indexOfLogOption);
-				cmd.add(indexOfLogOption, logPath);
+					logPath = logFile.toURI().toString();
+					cmd.remove(indexOfLogOption);
+					cmd.add(indexOfLogOption, logPath);
 
-				hubCliProcess = new ProcessBuilder(cmd).redirectError(Redirect.PIPE).redirectOutput(Redirect.PIPE)
-						.start();
-				// The Cli logs go the error stream for some reason
-				redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(), splitOutputStream);
-				redirectThread.start();
+					final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+					final Process hubCliProcess = procBuilder.start();
+					// The Cli logs go the error stream for some reason
+					final StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
+							splitOutputStream);
+					redirectThread.start();
 
-				returnCode = hubCliProcess.waitFor();
+					returnCode = hubCliProcess.waitFor();
 
-				// the join method on the redirect thread will wait until the
-				// thread is dead
-				// the thread will die when it reaches the end of stream and the
-				// run method is finished
-				redirectThread.join();
+					// the join method on the redirect thread will wait until
+					// the thread is dead. The thread will die when it reaches
+					// the end of stream and the run method is finished
+					redirectThread.join();
 
-				splitOutputStream.flush();
-				splitOutputStream.close();
+					splitOutputStream.flush();
+					splitOutputStream.close();
 
-				if (splitOutputStream.hasOutput()) {
-					outputString = splitOutputStream.getOutput();
+					if (splitOutputStream.hasOutput()) {
+						outputString = splitOutputStream.getOutput();
+					}
+					getLogger().info(readStream(hubCliProcess.getInputStream()));
 				}
-				getLogger().info(readStream(hubCliProcess.getInputStream()));
 			}
 
 			getLogger().info("Hub CLI return code : " + returnCode);
@@ -219,7 +223,7 @@ public class BambooScanExecutor extends ScanExecutor {
 				}
 			}
 
-			if (outputString.contains("Finished in") && outputString.contains("with status SUCCESS")) {
+			if (returnCode == 0) {
 				return Result.SUCCESS;
 			} else {
 				return Result.FAILURE;
@@ -233,14 +237,26 @@ public class BambooScanExecutor extends ScanExecutor {
 		}
 	}
 
+	private ProcessBuilder createProcessBuilder(final List<String> cmd) {
+		final ProcessBuilder builder = new ProcessBuilder(cmd).redirectError(Redirect.PIPE)
+				.redirectOutput(Redirect.PIPE);
+		builder.environment().put("BD_HUB_PASSWORD", getHubPassword());
+
+		return builder;
+	}
+
 	private void printCommand(final List<String> cmd) {
 		// ////////////////////// Code to mask the password in the logs
 		final List<String> cmdToOutput = new ArrayList<String>();
 		cmdToOutput.addAll(cmd);
 
 		final ArrayList<Integer> indexToMask = new ArrayList<Integer>();
-		// The User's password will be at the next index
-		indexToMask.add(cmdToOutput.indexOf("--password") + 1);
+		final int passParamIndex = cmdToOutput.indexOf(CLI_PARAM_PASSWORD);
+
+		if (passParamIndex > -1) {
+			// The User's password will be at the next index
+			indexToMask.add(passParamIndex + 1);
+		}
 
 		for (int i = 0; i < cmdToOutput.size(); i++) {
 			if (cmdToOutput.get(i).contains("-Dhttp") && cmdToOutput.get(i).contains("proxyPassword")) {

@@ -1,7 +1,10 @@
 <atlassian-plugin key="${project.groupId}.${project.artifactId}"
 	name="${project.name}" plugins-version="2">
 	<plugin-info>
-		<description>${project.description}</description>
+		<description>${project.description}
+	    This project depends on the hub-atlassian-config plugin in order to configure the Hub server to be used.
+        The plugin can be located at https://github.com/blackducksoftware/hub-atlassian-config/releases
+		</description>
 		<version>${project.version}</version>
 		<vendor name="${project.organization.name}" url="${project.organization.url}" />
 		<param name="plugin-icon">images/BlackDuckLogo.png</param>
@@ -19,7 +22,9 @@
 				com.atlassian.bamboo.build.logger,
 				com.atlassian.bamboo.bandana,
 				com.atlassian.bamboo.collections,
+				com.atlassian.bamboo.configuration,
 				com.atlassian.bamboo.fileserver,
+				com.atlassian.bamboo.security,
 				com.atlassian.bamboo.spring,
 				com.atlassian.bamboo.task,
 				com.atlassian.bamboo.utils,
@@ -27,9 +32,12 @@
 				com.atlassian.bamboo.ww2,
 				com.atlassian.bamboo.ww2.aware,
 				com.atlassian.bamboo.ww2.aware.permissions,
+				com.atlassian.bamboo.v2.build,
+				com.atlassian.bamboo.v2.build.agent,
+				com.atlassian.bamboo.v2.build.agent.messages,
 				com.atlassian.spring.container,
 				com.atlassian.plugin.osgi.factory,
-				com.atlassian.templaterenderer,
+				com.atlassian.plugin.web.conditions,
 				com.atlassian.sal.api,
 				com.google.gson;version="0.0",
 				com.google.gson.*;version="0.0",
@@ -37,6 +45,7 @@
 				com.thoughtworks.xstream.io,
 				com.thoughtworks.xstream.io.xml,
 				javax.annotation,
+				javax.crypto,
 				javax.inject,
 				javax.net.ssl,
 				javax.security.auth.x500,
@@ -80,23 +89,16 @@
 	</plugin-info>
 
 	<!-- add our i18n resource -->
-	<resource type="i18n" name="i18n" location="int-hub-bamboo" />
+	<resource type="i18n" name="i18n" location="com.blackducksoftware.integration.hub.bamboo.i18n" />
 
 	<!-- add our web resources -->
-	<web-resource key="webresources" name="int-hub-bamboo Web Resources">
-		<dependency>com.atlassian.auiplugin:ajs</dependency>
-
-		<resource type="download" name="images/" location="/images" />
-
-		<context>int-hub-bamboo</context>
+	<web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
+		<resource type="download" name="css/" location="/css"/>
+		<resource type="download" name="images/" location="/images"/>
+        <resource type="download" name="js/" location="/js"/>
+		<resource type="download" name="font-awesome-4.5.0/" location="/font-awesome-4.5.0"/>
+	     <context>hub-bamboo</context>
 	</web-resource>
-
-	<resource type="i18n" name="i18n-properties" location="i18n" />
-
-	<!-- publish our component -->
-	<component name="BlackDuck Hub Server Configuration Management Component"
-		key="hubServerConfigManager"
-		class="com.blackducksoftware.integration.hub.bamboo.config.ConfigManager" />
 
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"
@@ -107,48 +109,34 @@
 		interface="com.atlassian.sal.api.auth.LoginUriProvider" />
 	<component-import key="renderer"
 		interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
-	<component-import key="pluginSettingsFactory"
-		interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" />
-	<component-import key="transactionTemplate"
-		interface="com.atlassian.sal.api.transaction.TransactionTemplate" />
 
-	<xwork key="BlackDuckHubAdmin" name="Black Duck Hub Plugin">
-		<package name="configHubPlugin" extends="admin">
-			<action name="configHubServer"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction">
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-			<action name="configServerDetails"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
-				method="save">
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-			<action name="testConnection"
-				class="com.blackducksoftware.integration.hub.bamboo.config.actions.ConfigHubServerAction"
-				method="testConnection">
-				<result name="input" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-				<result name="success" type="freemarker">/admin/ConfigHubServerEdit.ftl</result>
-			</action>
-		</package>
-	</xwork>
-
-	<web-item key="bamboo-menu-item" name="Black Duck Hub Admin"
-		section="system.admin/plugins" weight="10" application="bamboo">
-		<description>Link to Black Duck Hub Plugin Administration page.</description>
-		<label key="Black Duck Hub Admin" />
-		<link linkId="blackduckhub-admin-link">/admin/configHubServer.action</link>
-	</web-item>
-
-	<taskType key="hubScanTask" name="Black Duck Hub Scan Task"
+    <taskType key="hubScanTask" name="Black Duck Hub Scan Task"
 		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
 		<description>Scan task to upload project data into the Hub during the
 			build.</description>
 		<configuration
 			class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator" />
+	    <runtimeTaskDataProvider class="com.blackducksoftware.integration.hub.bamboo.tasks.HubTaskDataProvider"/>
+		<resource type="download" name="icon" location="images/BlackDuckLogo.png"/>
 		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
 		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
 	</taskType>
-
+	
+	<xwork key="HubRiskReport" name="Hub Risk Report">
+	   <package name="HubBambooPluginBuild" extends="buildView" namespace="/plugins/hub-bamboo/reports">  
+	       <action name="viewRiskReport" class="com.blackducksoftware.integration.hub.bamboo.reports.HubRiskReportAction">
+	           <result name="success" type="freemarker">/reports/viewHubRiskReport.ftl</result>
+           </action>
+	   </package>
+	</xwork>
+    <web-item key="hubriskreport" name="hub_risk_report" section="results.subMenu/results" weight="70">
+        <description>Hub Risk Report</description>
+        <label key="blackduckhub.report.risk.tab.label"/>
+        <tooltip key="blackduckhub.report.risk.tab.tooltip"/>
+        <icon height="16" width="16">
+            <link>/plugins/hub-bamboo/images/Bdicon.gif</link>
+        </icon>
+        <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action?planKey=${planKey}&amp;buildNumber=${buildNumber}</link>
+        <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.RiskReportCondition"/>
+    </web-item>
 </atlassian-plugin>
