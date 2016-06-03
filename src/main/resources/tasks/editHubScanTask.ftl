@@ -27,6 +27,5 @@ under the License.
               list="{'External','SaaS','Internal','Open Source'}" emptyOption='false' value='External'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.genriskreport.label' name='generateRiskReport'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.failonpolicy.label' name='failOnPolicyViolation'/]
-[@ww.textfield labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
 [@ww.textfield labelKey='blackduckhub.task.scan.scanmemory.label' name='hubScanMemory' required='true'/]
 [@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets'/]
