@@ -64,24 +64,30 @@ public class RiskReportConditionTest {
 	}
 
 	@Test
-	public void testConditionPlanKeyMissing() {
+	public void testConditionPlanKeyMissing() throws Exception {
 		final RiskReportCondition condition = new RiskReportCondition();
 		final Map<String, Object> buildContextMap = new HashMap<String, Object>();
 		buildContextMap.put(RiskReportCondition.KEY_BUILD_NUMBER, BUILD_NUMBER);
-
+		final HubBambooUtils original = HubBambooUtils.getInstance();
 		final HubBambooUtils utilClass = Mockito.mock(HubBambooUtils.class);
+		final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
+		field.setAccessible(true);
+		field.set(original, utilClass);
 		final File file = new File(INVALID_FILE_PATH);
 		Mockito.when(utilClass.getRiskReportFile(Mockito.anyString(), Mockito.anyInt())).thenReturn(file);
 		assertFalse(condition.shouldDisplay(buildContextMap));
 	}
 
 	@Test
-	public void testConditionBuildNumberMissing() {
+	public void testConditionBuildNumberMissing() throws Exception {
 		final RiskReportCondition condition = new RiskReportCondition();
 		final Map<String, Object> buildContextMap = new HashMap<String, Object>();
 		buildContextMap.put(RiskReportCondition.KEY_PLAN_KEY, PLAN_KEY);
-
+		final HubBambooUtils original = HubBambooUtils.getInstance();
 		final HubBambooUtils utilClass = Mockito.mock(HubBambooUtils.class);
+		final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
+		field.setAccessible(true);
+		field.set(original, utilClass);
 		final File file = new File(INVALID_FILE_PATH);
 		Mockito.when(utilClass.getRiskReportFile(Mockito.anyString(), Mockito.anyInt())).thenReturn(file);
 		assertFalse(condition.shouldDisplay(buildContextMap));
