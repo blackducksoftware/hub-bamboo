@@ -204,9 +204,7 @@ public class HubScanTask implements TaskType {
 			bomUpdateInfo.setVersion(version);
 			bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
 			bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
-			// needs to be in milliseconds and the user just enters an integer
-			// for seconds.
-			bomUpdateInfo.setMaximumWaitTime(hubConfig.getTimeout() * 1000);
+			bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
 
 			bomUpdateInfo.setBeforeScanTime(beforeScanTime);
 			bomUpdateInfo.setAfterScanTime(afterScanTime);

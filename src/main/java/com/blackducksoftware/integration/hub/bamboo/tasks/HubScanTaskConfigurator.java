@@ -64,6 +64,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 		final String distribution = params.getString(key);
 		key = HubScanParamEnum.GENERATE_RISK_REPORT.getKey();
 		final String generateRiskReport = params.getString(key);
+		key = HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey();
+		final String maxWaitTime = params.getString(key);
 		key = HubScanParamEnum.SCANMEMORY.getKey();
 		final String scanMemory = params.getString(key);
 		key = HubScanParamEnum.TARGETS.getKey();
@@ -77,10 +79,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 		hubScanJobConfigBuilder.setPhase(phase);
 		hubScanJobConfigBuilder.setDistribution(distribution);
 		hubScanJobConfigBuilder.setShouldGenerateRiskReport(generateRiskReport);
-		// use default here because the global config value will be used
-		// instead.
-		hubScanJobConfigBuilder
-				.setMaxWaitTimeForBomUpdate(HubScanJobConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES);
+		hubScanJobConfigBuilder.setMaxWaitTimeForBomUpdate(maxWaitTime);
 		hubScanJobConfigBuilder.setScanMemory(scanMemory);
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
