@@ -53,6 +53,7 @@ import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
+import com.atlassian.bamboo.task.TaskState;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
@@ -196,6 +197,14 @@ public class HubScanTask implements TaskType {
 			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
 					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
 			final DateTime afterScanTime = new DateTime();
+
+			if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
+				logger.error("Hub Scan Failed");
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
+			}
+
 			// check the policy failures
 
 			final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
