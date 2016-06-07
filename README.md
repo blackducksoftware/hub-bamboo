@@ -6,9 +6,7 @@ Hub plugin for Bamboo. This plugin provides ability to run a scan using the BD H
 ## Where can I get the latest release? ##
 You can download the latest source from GitHub: https://github.com/blackducksoftware/hub-bamboo. 
 
-You can download the latest artifact through your preferred dependency management system from BinTray: https://bintray.com/bds/integration/hub-bamboo/view
-
-Lastly, release tab on GitHub will contain the latest artifacts.
+You can download the latest release artifacts from GitHub: https://github.com/blackducksoftware/hub-bamboo/releases
 
 ## Documentation ##
 All documentation for hub-bamboo can be found on the base project:  https://github.com/blackducksoftware/hub-bamboo/wiki
