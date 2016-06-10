@@ -44,7 +44,7 @@ import com.atlassian.bamboo.build.artifact.ArtifactManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
 import com.atlassian.bamboo.plan.PlanResultKey;
-import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactPublishingResult;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
@@ -739,9 +739,8 @@ public class HubScanTask implements TaskType {
 		final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
 
 		final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
-		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
-				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
-		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		final ArtifactDefinitionContext artifact = HubBambooUtils.getInstance()
+				.getRiskReportArtifactDefinitionContext(token);
 
 		final Map<String, String> config = new HashMap<String, String>();
 

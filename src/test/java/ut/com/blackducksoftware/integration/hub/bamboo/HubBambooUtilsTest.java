@@ -35,6 +35,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
+import com.atlassian.bamboo.security.SecureToken;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubCredentialsBuilder;
@@ -271,5 +273,17 @@ public class HubBambooUtilsTest {
 
 		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", false));
 		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", true));
+	}
+
+	@Test
+	public void testGetRiskReportArtifactDefinition() {
+		final SecureToken token = SecureToken.createFromString("01234546789");
+		final ArtifactDefinitionContext definition = HubBambooUtils.getInstance()
+				.getRiskReportArtifactDefinitionContext(token);
+
+		assertEquals(HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, definition.getName());
+		assertEquals(HubBambooUtils.HUB_RISK_REPORT_FILENAME, definition.getCopyPattern());
+		assertFalse(definition.isSharedArtifact());
+		assertEquals(token, definition.getSecureToken());
 	}
 }

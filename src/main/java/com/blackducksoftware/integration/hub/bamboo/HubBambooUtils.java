@@ -34,8 +34,10 @@ import org.apache.commons.lang3.StringUtils;
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.plan.artifact.ImmutableArtifactDefinitionBase;
+import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.utils.SystemProperty;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
@@ -206,34 +208,41 @@ public class HubBambooUtils implements Cloneable {
 		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
 		File planRoot = null;
 
-		try {
-			planRoot = getArtifactRootPre5_11(resultKey);
-		} catch (final Throwable t) {
-			planRoot = getArtifactRootPost5_11(resultKey);
+		try { // pre-bamboo 5.11 servers
+			planRoot = getArtifactRootDirectory(resultKey);
+		} catch (final Throwable t) { // bamboo 5.11 servers and higher
+			planRoot = getArtifactRootDirectoryPost5_11(resultKey);
 		}
 
 		final File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 		return dataFile;
 	}
 
-	private File getArtifactRootPre5_11(final PlanResultKey resultKey) throws IllegalAccessException,
+	private File getArtifactRootDirectory(final PlanResultKey resultKey) throws IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-
+		// From Bamboo 5.4.2 up to 5.10 SystemDirectory contained a
+		// getArtifactStorage method
 		final Class<?>[] rootFileMethodTypes = { PlanResultKey.class };
 		final Object[] artifactStorageParams = { resultKey };
-		return getArtifactStorageRoot(resultKey, "getArtifactStorage", "getArtifactDirectory", rootFileMethodTypes,
-				artifactStorageParams);
+		// SystemDirectory method: getArtifactStorage returns: ArtifactStorage
+		// ArtifactStorage method: getArtifactDirectory returns: File
+		final File planRoot = getArtifactStorageRoot(resultKey, "getArtifactStorage", "getArtifactDirectory",
+				rootFileMethodTypes, artifactStorageParams);
+		return new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
 	}
 
-	private File getArtifactRootPost5_11(final PlanResultKey resultKey) throws NoSuchMethodException, SecurityException,
-			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
-				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, null);
-		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
-
+	private File getArtifactRootDirectoryPost5_11(final PlanResultKey resultKey) throws NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		final ArtifactDefinitionContext artifact = getRiskReportArtifactDefinitionContext(null);
+		// From Bamboo 5.11 SystemDirectory.getArtifactStorage was removed.
 		final Class<?>[] rootFileMethodTypes = { PlanResultKey.class, ImmutableArtifactDefinitionBase.class };
 		final Object[] artifactStorageParams = { resultKey, artifact };
-
+		// SystemDirectory method: getArtifactDirectoryBuilder returns:
+		// ArtifactDirectoryBuilder
+		// ArtifactDirectoryBuilder method: getPlanOrientedArtifactDirectory
+		// returns: File
+		// Note the directory for the Artifact Name is included in the path
+		// since the definition is passed to the method.
 		return getArtifactStorageRoot(resultKey, "getArtifactDirectoryBuilder", "getPlanOrientedArtifactDirectory",
 				rootFileMethodTypes, artifactStorageParams);
 
@@ -243,19 +252,38 @@ public class HubBambooUtils implements Cloneable {
 			final String rootFileGetMethodName, final Class<?>[] rootFileGetMethodTypes,
 			final Object[] getMethodParameters) throws NoSuchMethodException, SecurityException, IllegalAccessException,
 			IllegalArgumentException, InvocationTargetException {
+		// use reflection to find and invoke the correct method to get the
+		// artifact storage directory for the plan. Different versions of the
+		// Bamboo servers have breaking changes in the API calls to get the
+		// directory are different. Using reflection here, although not ideal by
+		// any means, allows support for Bamboo 5.10 and higher without
+		// additional code changes.
 		File planRoot = null;
 		try {
 			final Class<SystemDirectory> sysDirectoryClass = SystemDirectory.class;
 			final Class<?>[] sysDirParamTypes = new Class<?>[0];
 			Method method = sysDirectoryClass.getMethod(storageGetMethodName, sysDirParamTypes);
+			// call the method on the SystemDirectory class to get the object
+			// that contains the method to access the file object.
 			final Object[] sysDirMethodParamTypes = null;
 			final Object storageObject = method.invoke(null, sysDirMethodParamTypes);
-			method = storageObject.getClass().getMethod(rootFileGetMethodName, rootFileGetMethodTypes);
 
+			// find the method on the object returned from the invoked method
+			// on SystemDirectory
+			method = storageObject.getClass().getMethod(rootFileGetMethodName, rootFileGetMethodTypes);
+			// invoke the method to get the file object representing the root
+			// directory where artifacts are stored with the build.
 			planRoot = (File) method.invoke(storageObject, getMethodParameters);
 		} catch (final Throwable t) {
 			throw t;
 		}
 		return planRoot;
+	}
+
+	public ArtifactDefinitionContext getRiskReportArtifactDefinitionContext(final SecureToken token) {
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
+		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		return artifact;
 	}
 }
