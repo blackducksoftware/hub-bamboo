@@ -26,8 +26,10 @@ import java.util.Map;
 
 import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.security.SecureTokenService;
+import com.atlassian.bamboo.serialization.WhitelistedSerializable;
 import com.atlassian.bamboo.task.RuntimeTaskDataProvider;
 import com.atlassian.bamboo.task.TaskDefinition;
+import com.atlassian.bamboo.task.runtime.RuntimeTaskDefinition;
 import com.atlassian.bamboo.v2.build.CommonContext;
 import com.atlassian.bamboo.v2.build.agent.messages.AuthenticableMessage;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
@@ -36,6 +38,7 @@ public class HubTaskDataProvider implements RuntimeTaskDataProvider {
 
 	private SecureTokenService tokenService;
 
+	@Override
 	public Map<String, String> populateRuntimeTaskData(final TaskDefinition taskDef, final CommonContext context) {
 		final Map<String, String> map = new HashMap<String, String>();
 		final SecureToken token = tokenService
@@ -45,10 +48,24 @@ public class HubTaskDataProvider implements RuntimeTaskDataProvider {
 		return map;
 	}
 
+	@Override
 	public void processRuntimeTaskData(final TaskDefinition taskDef, final CommonContext context) {
+		tokenService.invalidate(context.getResultKey());
+
+	}
+
+	@Override
+	public Map<String, WhitelistedSerializable> createRuntimeTaskData(final RuntimeTaskDefinition taskDef,
+			final CommonContext context) {
+		return new HashMap<>();
 	}
 
 	public void setSecureTokenService(final SecureTokenService tokenService) {
 		this.tokenService = tokenService;
+	}
+
+	@Override
+	public void processRuntimeTaskData(final RuntimeTaskDefinition taskDef, final CommonContext context) {
+		tokenService.invalidate(context.getResultKey());
 	}
 }

@@ -26,6 +26,7 @@ import java.util.List;
 import com.atlassian.bamboo.build.LogEntry;
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.build.logger.LogInterceptorStack;
+import com.atlassian.bamboo.build.logger.LogMutatorStack;
 import com.atlassian.bamboo.plan.PlanResultKey;
 import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
 import com.blackducksoftware.integration.hub.logging.LogLevel;
@@ -34,52 +35,64 @@ public class TestBuildLogger implements BuildLogger {
 
 	private final IntBufferedLogger logger = new IntBufferedLogger();
 
+	@Override
 	public String addBuildLogEntry(final LogEntry arg0) {
 		return null;
 	}
 
+	@Override
 	public String addBuildLogEntry(final String arg0) {
 		logger.info(arg0);
 		return null;
 	}
 
+	@Override
 	public String addBuildLogHeader(final String arg0, final boolean arg1) {
 		return null;
 	}
 
+	@Override
 	public String addErrorLogEntry(final LogEntry arg0) {
 		return null;
 	}
 
+	@Override
 	public String addErrorLogEntry(final String arg0) {
 		logger.error(arg0);
 		return null;
 	}
 
+	@Override
 	public void addErrorLogEntry(final String arg0, final Throwable arg1) {
 		logger.error(arg0, arg1);
 	}
 
+	@Override
 	public void clearBuildLog() {
 		logger.resetAllLogs();
 	}
 
+	@Override
 	public void close() {
 		logger.resetAllLogs();
 	}
 
+	@Override
 	public List<LogEntry> getBuildLog() {
 		return null;
 	}
 
+	@Override
 	public List<LogEntry> getErrorLog() {
 		return null;
 	}
 
+	@Override
 	public LogInterceptorStack getInterceptorStack() {
 		return null;
 	}
 
+	@Override
 	public List<LogEntry> getLastNLogEntries(final int arg0) {
 		return null;
 	}
@@ -88,10 +101,12 @@ public class TestBuildLogger implements BuildLogger {
 		return logger.getOutputList(LogLevel.INFO);
 	}
 
+	@Override
 	public List<String> getStringErrorLogs() {
 		return logger.getOutputList(LogLevel.ERROR);
 	}
 
+	@Override
 	public long getTimeOfLastLog() {
 		return 0;
 	}
@@ -100,7 +115,13 @@ public class TestBuildLogger implements BuildLogger {
 
 	}
 
+	@Override
 	public void stopStreamingBuildLogs() {
 
+	}
+
+	@Override
+	public LogMutatorStack getMutatorStack() {
+		return new LogMutatorStack();
 	}
 }

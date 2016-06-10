@@ -28,7 +28,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +45,7 @@ import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
 import com.atlassian.bamboo.plan.PlanResultKey;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
+import com.atlassian.bamboo.plan.artifact.ArtifactPublishingResult;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.security.SecureToken;
@@ -739,17 +739,16 @@ public class HubScanTask implements TaskType {
 		final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
 
 		final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
-		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(token);
-		artifact.setName(HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
 		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 
 		final Map<String, String> config = new HashMap<String, String>();
-		final Set<String> publishers = new LinkedHashSet<String>();
 
-		final boolean published = artifactManager.publish(buildLogger, planResultKey, baseDirectory, artifact, config,
-				publishers, 1);
+		final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey,
+				baseDirectory, artifact, config, 1);
 
-		if (!published) {
+		if (!publishResult.shouldContinueBuild()) {
 			logger.error("Could not publish the " + HubBambooUtils.HUB_RISK_REPORT_FILENAME
 					+ " artifact for the Risk Report");
 		}

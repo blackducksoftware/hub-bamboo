@@ -22,6 +22,8 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,12 +31,12 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.atlassian.bamboo.fileserver.ArtifactStorage;
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
+import com.atlassian.bamboo.plan.artifact.ImmutableArtifactDefinitionBase;
 import com.atlassian.bamboo.utils.SystemProperty;
-import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
@@ -152,8 +154,8 @@ public class HubBambooUtils implements Cloneable {
 		return scanTargets;
 	}
 
-	public Map<String, String> getEnvironmentVariablesMap(@NotNull final Map<String, String> systemVariables,
-			@NotNull final Map<String, String> taskContextVariables) {
+	public Map<String, String> getEnvironmentVariablesMap(final Map<String, String> systemVariables,
+			final Map<String, String> taskContextVariables) {
 		final Map<String, String> allVariablesMap = new HashMap<String, String>(
 				systemVariables.size() + taskContextVariables.size());
 
@@ -163,8 +165,8 @@ public class HubBambooUtils implements Cloneable {
 		return allVariablesMap;
 	}
 
-	public String getEnvironmentVariable(@NotNull final Map<String, String> envVars,
-			@NotNull final String parameterName, final boolean taskContextVariable) {
+	public String getEnvironmentVariable(final Map<String, String> envVars, final String parameterName,
+			final boolean taskContextVariable) {
 		String variable;
 
 		if (taskContextVariable) {
@@ -199,13 +201,61 @@ public class HubBambooUtils implements Cloneable {
 		}
 	}
 
-	public File getRiskReportFile(final String planKey, final int buildNumber) {
+	public File getRiskReportFile(final String planKey, final int buildNumber) throws NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
-		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
+		File planRoot = null;
 
-		final File planRoot = storage.getArtifactDirectory(resultKey);
-		File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
-		dataFile = new File(dataFile, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		try {
+			planRoot = getArtifactRootPre5_11(resultKey);
+		} catch (final Throwable t) {
+			planRoot = getArtifactRootPost5_11(resultKey);
+		}
+
+		final File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 		return dataFile;
+	}
+
+	private File getArtifactRootPre5_11(final PlanResultKey resultKey) throws IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+
+		final Class<?>[] rootFileMethodTypes = { PlanResultKey.class };
+		final Object[] artifactStorageParams = { resultKey };
+		return getArtifactStorageRoot(resultKey, "getArtifactStorage", "getArtifactDirectory", rootFileMethodTypes,
+				artifactStorageParams);
+	}
+
+	private File getArtifactRootPost5_11(final PlanResultKey resultKey) throws NoSuchMethodException, SecurityException,
+			IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, null);
+		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+
+		final Class<?>[] rootFileMethodTypes = { PlanResultKey.class, ImmutableArtifactDefinitionBase.class };
+		final Object[] artifactStorageParams = { resultKey, artifact };
+
+		return getArtifactStorageRoot(resultKey, "getArtifactDirectoryBuilder", "getPlanOrientedArtifactDirectory",
+				rootFileMethodTypes, artifactStorageParams);
+
+	}
+
+	private File getArtifactStorageRoot(final PlanResultKey resultKey, final String storageGetMethodName,
+			final String rootFileGetMethodName, final Class<?>[] rootFileGetMethodTypes,
+			final Object[] getMethodParameters) throws NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException {
+		File planRoot = null;
+		try {
+			final Class<SystemDirectory> sysDirectoryClass = SystemDirectory.class;
+			final Class<?>[] sysDirParamTypes = new Class<?>[0];
+			Method method = sysDirectoryClass.getMethod(storageGetMethodName, sysDirParamTypes);
+			final Object[] sysDirMethodParamTypes = null;
+			final Object storageObject = method.invoke(null, sysDirMethodParamTypes);
+			method = storageObject.getClass().getMethod(rootFileGetMethodName, rootFileGetMethodTypes);
+
+			planRoot = (File) method.invoke(storageObject, getMethodParameters);
+		} catch (final Throwable t) {
+			throw t;
+		}
+		return planRoot;
 	}
 }

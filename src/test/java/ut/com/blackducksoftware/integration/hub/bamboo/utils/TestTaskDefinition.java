@@ -28,55 +28,68 @@ import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.task.TaskRootDirectorySelector;
 
 public class TestTaskDefinition implements TaskDefinition {
+
 	private static final long serialVersionUID = 6572977600672994755L;
 
 	private Map<String, String> configMap = new HashMap<String, String>();
 
+	@Override
 	public long getId() {
 		return 1;
 	}
 
+	@Override
 	public String getPluginKey() {
 
 		return null;
 	}
 
+	@Override
 	public String getUserDescription() {
 		return null;
 	}
 
+	@Override
 	public boolean isEnabled() {
 		return true;
 	}
 
+	@Override
 	public boolean isFinalising() {
 		return false;
 	}
 
+	@Override
 	public Map<String, String> getConfiguration() {
 		return configMap;
 	}
 
+	@Override
 	public TaskRootDirectorySelector getRootDirectorySelector() {
 		return null;
 	}
 
+	@Override
 	public void setConfiguration(final Map<String, String> configMap) {
 		this.configMap = configMap;
 	}
 
+	@Override
 	public void setEnabled(final boolean arg0) {
 
 	}
 
+	@Override
 	public void setFinalising(final boolean arg0) {
 
 	}
 
+	@Override
 	public void setRootDirectorySelector(final TaskRootDirectorySelector arg0) {
 
 	}
 
+	@Override
 	public void setUserDescription(final String arg0) {
 
 	}
