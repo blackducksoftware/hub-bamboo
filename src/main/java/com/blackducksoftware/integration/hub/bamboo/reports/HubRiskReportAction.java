@@ -24,6 +24,7 @@ package com.blackducksoftware.integration.hub.bamboo.reports;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.lang.reflect.InvocationTargetException;
 
 import com.atlassian.bamboo.build.ViewBuildResults;
 import com.atlassian.utils.process.IOUtils;
@@ -69,7 +70,8 @@ public class HubRiskReportAction extends ViewBuildResults {
 			final Gson gson = new Gson();
 			hubRiskReportData = gson.fromJson(reader, HubRiskReportData.class);
 
-		} catch (final FileNotFoundException e) {
+		} catch (final FileNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
 		} finally {
 			IOUtils.closeQuietly(reader);
 		}

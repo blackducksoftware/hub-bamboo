@@ -27,11 +27,14 @@ import java.io.File;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import com.atlassian.bamboo.fileserver.ArtifactStorage;
 import com.atlassian.bamboo.fileserver.SystemDirectory;
+import com.atlassian.bamboo.plan.PlanResultKey;
 import com.atlassian.bamboo.utils.SystemProperty;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 
@@ -53,18 +56,28 @@ public class HubBambooUtilsPowerMockTest {
 		SystemDirectory.getApplicationHome();
 	}
 
-	// @PrepareForTest(SystemProperty.class)
 	@Test
 	public void testGetBambooHomeFromEnv() {
 		final File file = new File("bamboo-home/");
-		// PowerMockito.mockStatic(SystemProperty.class);
-		// PowerMockito.when(SystemProperty.BAMBOO_HOME_FROM_ENV.getValue()).thenReturn(file.getAbsolutePath());
 		SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getAbsolutePath());
 		final String path = HubBambooUtils.getInstance().getBambooHome();
 
 		assertEquals(file.getAbsolutePath(), path);
-
-		// PowerMockito.verifyStatic();
 		assertEquals(file.getAbsolutePath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
+	}
+
+	@PrepareForTest(SystemDirectory.class)
+	@Test
+	public void testGetRiskReport() throws Exception {
+		final File file = new File("bamboo-artifacts/");
+		final ArtifactStorage storage = PowerMockito.mock(ArtifactStorage.class);
+		PowerMockito.mockStatic(SystemDirectory.class);
+		PowerMockito.when(SystemDirectory.getArtifactStorage()).thenReturn(storage);
+		PowerMockito.when(storage.getArtifactDirectory(Mockito.any(PlanResultKey.class))).thenReturn(file);
+
+		final File reportFile = HubBambooUtils.getInstance().getRiskReportFile("TEST-PLAN-JOB1", 1);
+		final String path = file.getAbsolutePath() + "/Hub_Risk_Report/hub_risk_report.json";
+		final String reportFilePath = reportFile.getAbsolutePath();
+		assertEquals(path, reportFilePath);
 	}
 }

@@ -22,6 +22,7 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,12 +30,13 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.atlassian.bamboo.fileserver.ArtifactStorage;
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
 import com.atlassian.bamboo.plan.PlanResultKey;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
+import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.utils.SystemProperty;
-import com.atlassian.util.concurrent.NotNull;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
@@ -152,8 +154,8 @@ public class HubBambooUtils implements Cloneable {
 		return scanTargets;
 	}
 
-	public Map<String, String> getEnvironmentVariablesMap(@NotNull final Map<String, String> systemVariables,
-			@NotNull final Map<String, String> taskContextVariables) {
+	public Map<String, String> getEnvironmentVariablesMap(final Map<String, String> systemVariables,
+			final Map<String, String> taskContextVariables) {
 		final Map<String, String> allVariablesMap = new HashMap<String, String>(
 				systemVariables.size() + taskContextVariables.size());
 
@@ -163,8 +165,8 @@ public class HubBambooUtils implements Cloneable {
 		return allVariablesMap;
 	}
 
-	public String getEnvironmentVariable(@NotNull final Map<String, String> envVars,
-			@NotNull final String parameterName, final boolean taskContextVariable) {
+	public String getEnvironmentVariable(final Map<String, String> envVars, final String parameterName,
+			final boolean taskContextVariable) {
 		String variable;
 
 		if (taskContextVariable) {
@@ -199,13 +201,22 @@ public class HubBambooUtils implements Cloneable {
 		}
 	}
 
-	public File getRiskReportFile(final String planKey, final int buildNumber) {
+	public File getRiskReportFile(final String planKey, final int buildNumber) throws NoSuchMethodException,
+			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
-		final ArtifactStorage storage = SystemDirectory.getArtifactStorage();
-
-		final File planRoot = storage.getArtifactDirectory(resultKey);
-		File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
-		dataFile = new File(dataFile, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		final ArtifactDefinitionContext artifact = getRiskReportArtifactDefinitionContext(null);
+		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+		storageHelper.setResultKey(resultKey);
+		storageHelper.setArtifactDefinition(artifact);
+		final File planRoot = storageHelper.buildArtifactRootDirectory();
+		final File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
 		return dataFile;
+	}
+
+	public ArtifactDefinitionContext getRiskReportArtifactDefinitionContext(final SecureToken token) {
+		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
+		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+		return artifact;
 	}
 }
