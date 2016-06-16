@@ -605,14 +605,17 @@ public class HubScanTask implements TaskType {
 				logger.error("Could not find any information about the Policy status of the bom.");
 				return resultBuilder.failed();
 			}
-			if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
-				return resultBuilder.failed();
-			}
 
 			if (policyStatus.getCountInViolation() == null) {
 				logger.error(createPolicyCountNotFound("In Violation"));
 			} else {
-				logger.info(createPolicyCountMessage(policyStatus.getCountInViolation().getValue(), "In Violation"));
+				final String inViolationMsg = createPolicyCountMessage(policyStatus.getCountInViolation().getValue(),
+						"In Violation");
+				if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
+					logger.error(inViolationMsg);
+				} else {
+					logger.info(inViolationMsg);
+				}
 			}
 			if (policyStatus.getCountInViolationOverridden() == null) {
 				logger.error(createPolicyCountNotFound("In Violation Overridden"));
@@ -625,6 +628,10 @@ public class HubScanTask implements TaskType {
 			} else {
 				logger.info(
 						createPolicyCountMessage(policyStatus.getCountNotInViolation().getValue(), "Not In Violation"));
+			}
+
+			if (policyStatus.getOverallStatusEnum() == PolicyStatusEnum.IN_VIOLATION) {
+				return resultBuilder.failedWithError();
 			}
 			return resultBuilder.success();
 		} catch (final MissingPolicyStatusException e) {
