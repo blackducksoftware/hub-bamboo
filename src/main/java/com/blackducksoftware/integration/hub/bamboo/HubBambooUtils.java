@@ -83,7 +83,6 @@ public class HubBambooUtils implements Cloneable {
 		configBuilder.setProxyHost(hubProxyUrl);
 		configBuilder.setProxyPort(hubProxyPort);
 		configBuilder.setProxyUsername(hubProxyUser);
-		configBuilder.setProxyPassword(hubProxyPass);
 
 		configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
 		int length = 0;
@@ -92,9 +91,12 @@ public class HubBambooUtils implements Cloneable {
 			configBuilder.setPasswordLength(length);
 		}
 
-		if (StringUtils.isNotBlank(hubProxyPassLength)) {
-			length = Integer.valueOf(hubProxyPassLength);
-			configBuilder.setProxyPasswordLength(length);
+		if (StringUtils.isNotBlank(hubProxyUser)) {
+			configBuilder.setProxyPassword(hubProxyPass);
+			if (StringUtils.isNotBlank(hubProxyPassLength)) {
+				length = Integer.valueOf(hubProxyPassLength);
+				configBuilder.setProxyPasswordLength(length);
+			}
 		}
 		return configBuilder.build();
 	}
