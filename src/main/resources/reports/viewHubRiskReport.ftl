@@ -25,7 +25,6 @@ under the License.
 
 <link href="${pluginResourcesPath}css/HubBomReport.css" rel="stylesheet" type="text/css" />
 <link href="${pluginResourcesPath}font-awesome-4.5.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-<script type="text/javascript" src="${pluginResourcesPath}js/Sortable.js"></script>
 
 <div class="riskReportBackgroundColor">
     <div class="reportHeader">
@@ -284,4 +283,17 @@ under the License.
         </tbody>
     </table>
 </div>
-<script type="text/javascript" src="${pluginResourcesPath}js/HubBomReportFunctions.js"></script>       
+<script type="text/javascript">
+
+    ['${pluginResourcesPath}js/Sortable.js',
+     '${pluginResourcesPath}js/HubBomReportFunctions.js',
+     '${pluginResourcesPath}js/HubReportStartup.js'
+    ].forEach(function (src) {
+       var script = document.createElement('script');
+       script.type="text/javascript";
+       script.src = src; 
+       script.async = false;
+       document.head.appendChild(script);
+    });
+
+</script>  
