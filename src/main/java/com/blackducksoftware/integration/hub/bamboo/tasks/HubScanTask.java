@@ -58,6 +58,7 @@ import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.utils.process.IOUtils;
+import com.blackducksoftware.integration.hub.CIEnvironmentVariables;
 import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
@@ -69,11 +70,13 @@ import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.builder.ValidationResultEnum;
 import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.cli.CLIInstaller;
+import com.blackducksoftware.integration.hub.cli.CLILocation;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.exception.MissingPolicyStatusException;
 import com.blackducksoftware.integration.hub.exception.ProjectDoesNotExistException;
+import com.blackducksoftware.integration.hub.exception.UnexpectedHubResponseException;
 import com.blackducksoftware.integration.hub.exception.VersionDoesNotExistException;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
@@ -161,10 +164,12 @@ public class HubScanTask implements TaskType {
 			final String localHostName = HostnameHelper.getMyHostname();
 			logger.info("Running on machine : " + localHostName);
 
-			// install the CLI
-			final CLIInstaller installer = installCLI(logger, service, localHostName);
+			final CLILocation cliLocation = createCLILocation(logger);
 
-			if (installer == null || !installer.getCLIExists(logger)) {
+			// install the CLI
+			final CLIInstaller installer = installCLI(logger, service, localHostName, cliLocation, envVars);
+
+			if (cliLocation == null || !cliLocation.getCLIExists(logger)) {
 				logger.error("Could not find the Hub scan CLI");
 				resultBuilder.failed();
 				result = resultBuilder.build();
@@ -172,11 +177,11 @@ public class HubScanTask implements TaskType {
 				return result;
 			}
 
-			final File hubCLI = installer.getCLI();
+			final File hubCLI = cliLocation.getCLI(logger);
 
-			final File oneJarFile = installer.getOneJarFile();
+			final File oneJarFile = cliLocation.getOneJarFile();
 
-			final File javaExec = installer.getProvidedJavaExec();
+			final File javaExec = cliLocation.getProvidedJavaExec();
 
 			final HubSupportHelper hubSupport = new HubSupportHelper();
 			hubSupport.checkHubSupport(service, logger);
@@ -271,6 +276,9 @@ public class HubScanTask implements TaskType {
 		} catch (final EncryptionException e) {
 			logger.error(HUB_SCAN_TASK_ERROR, e);
 			result = resultBuilder.failedWithError().build();
+		} catch (final UnexpectedHubResponseException e) {
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
 		}
 
 		result = resultBuilder.build();
@@ -315,19 +323,26 @@ public class HubScanTask implements TaskType {
 		return hubScanJobConfigBuilder.build().getConstructedObject();
 	}
 
+	private CLILocation createCLILocation(final IntLogger logger) {
+		logger.info("Checking Hub CLI location.");
+		final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
+
+		// make the directories for the hub scan CLI tool
+		if (!toolsDir.exists()) {
+			toolsDir.mkdirs();
+		}
+		return new CLILocation(toolsDir);
+	}
+
 	private CLIInstaller installCLI(final IntLogger logger, final HubIntRestService restService,
-			final String localHostName) {
+			final String localHostName, final CLILocation cliLocation, final Map<String, String> envVars) {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-			final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
 
-			// make the directories for the hub scan CLI tool
-			if (!toolsDir.exists()) {
-				toolsDir.mkdirs();
-			}
-
-			final CLIInstaller installer = new CLIInstaller(toolsDir);
+			final CIEnvironmentVariables ciEnvironmentVariables = new CIEnvironmentVariables();
+			ciEnvironmentVariables.putAll(envVars);
+			final CLIInstaller installer = new CLIInstaller(cliLocation, ciEnvironmentVariables);
 			installer.performInstallation(logger, restService, localHostName);
 			return installer;
 		} catch (final IOException e) {
@@ -347,7 +362,8 @@ public class HubScanTask implements TaskType {
 		return null;
 	}
 
-	private HubIntRestService getService(final HubServerConfig hubConfig) throws MalformedURLException {
+	private HubIntRestService getService(final HubServerConfig hubConfig)
+			throws MalformedURLException, URISyntaxException {
 		// configure the Restlet engine so that the HTTPHandle and classes
 		// from the com.sun.net.httpserver package
 		// do not need to be used at runtime to make client calls.
@@ -548,10 +564,12 @@ public class HubScanTask implements TaskType {
 
 	/**
 	 * Ensures the Version exists. Returns the version URL
+	 *
+	 * @throws UnexpectedHubResponseException
 	 */
 	private ReleaseItem ensureVersionExists(final HubIntRestService service, final IntLogger logger,
 			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
-			throws IOException, URISyntaxException, BDBambooHubPluginException {
+			throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
 		ReleaseItem version = null;
 
 		try {
@@ -576,7 +594,7 @@ public class HubScanTask implements TaskType {
 
 	private ReleaseItem createVersion(final HubIntRestService service, final IntLogger logger,
 			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
-			throws IOException, URISyntaxException, BDBambooHubPluginException {
+			throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
 		ReleaseItem version = null;
 
 		try {
@@ -717,7 +735,8 @@ public class HubScanTask implements TaskType {
 
 	private void generateRiskReport(final TaskContext taskContext, final IntLogger logger,
 			final HubReportGenerationInfo hubReportGenerationInfo, final HubSupportHelper hubSupport)
-			throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException {
+			throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException,
+			UnexpectedHubResponseException {
 		logger.info("Generating Risk Report");
 
 		final RiskReportGenerator riskReportGenerator = new RiskReportGenerator(hubReportGenerationInfo, hubSupport);
