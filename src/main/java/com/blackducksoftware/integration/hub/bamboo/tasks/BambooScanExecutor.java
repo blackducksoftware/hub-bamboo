@@ -50,8 +50,8 @@ public class BambooScanExecutor extends ScanExecutor {
 	private EnvironmentVariableAccessor environmentVariableAccessor;
 
 	protected BambooScanExecutor(final String hubUrl, final String hubUsername, final String hubPassword,
-			final List<String> scanTargets, final Integer buildNumber, final HubSupportHelper supportHelper) {
-		super(hubUrl, hubUsername, hubPassword, scanTargets, buildNumber, supportHelper);
+			final List<String> scanTargets, final String buildIdentifier, final HubSupportHelper supportHelper) {
+		super(hubUrl, hubUsername, hubPassword, scanTargets, buildIdentifier, supportHelper);
 	}
 
 	public ProcessService getProcessService() {
@@ -82,7 +82,7 @@ public class BambooScanExecutor extends ScanExecutor {
 	protected String getLogDirectoryPath() throws IOException {
 		File logDirectory = new File(getWorkingDirectory());
 		logDirectory = new File(logDirectory, "HubScanLogs");
-		logDirectory = new File(logDirectory, String.valueOf(getBuildNumber()));
+		logDirectory = new File(logDirectory, String.valueOf(getBuildIdentifier()));
 		logDirectory.mkdirs();
 
 		return logDirectory.getAbsolutePath();

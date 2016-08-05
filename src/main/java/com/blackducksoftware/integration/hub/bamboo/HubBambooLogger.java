@@ -23,15 +23,12 @@ package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 import com.blackducksoftware.integration.hub.logging.LogLevel;
 
-public class HubBambooLogger implements IntLogger {
+public class HubBambooLogger extends IntLogger {
 
 	private final BuildLogger buildLogger;
 	private LogLevel level = LogLevel.INFO;
@@ -44,75 +41,73 @@ public class HubBambooLogger implements IntLogger {
 		return buildLogger;
 	}
 
+	@Override
 	public LogLevel getLogLevel() {
 		return level;
 	}
 
+	@Override
 	public void setLogLevel(final LogLevel level) {
 		this.level = level;
 	}
 
-	public void setLogLevel(final Map<String, String> envVars) {
-		final String logLevel = HubBambooUtils.getInstance().getEnvironmentVariable(envVars, "HUB_LOG_LEVEL", true);
-		try {
-			if (StringUtils.isNotBlank(logLevel)) {
-				setLogLevel(LogLevel.valueOf(logLevel.toUpperCase()));
-			} else {
-				setLogLevel(LogLevel.INFO);
-			}
-		} catch (final IllegalArgumentException e) {
-			setLogLevel(LogLevel.INFO);
-		}
-	}
-
+	@Override
 	public void debug(final String txt, final Throwable throwable) {
 		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
 			logThrowable(txt, throwable);
 		}
 	}
 
+	@Override
 	public void debug(final String txt) {
 		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
 			logMessage(txt);
 		}
 	}
 
+	@Override
 	public void error(final String txt, final Throwable throwable) {
 		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logThrowable(txt, throwable);
 		}
 	}
 
+	@Override
 	public void error(final String txt) {
 		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logErrorMessage(txt);
 		}
 	}
 
+	@Override
 	public void error(final Throwable throwable) {
 		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
 			logThrowable(throwable);
 		}
 	}
 
+	@Override
 	public void info(final String txt) {
 		if (LogLevel.isLoggable(level, LogLevel.INFO)) {
 			logMessage(txt);
 		}
 	}
 
+	@Override
 	public void trace(final String txt, final Throwable throwable) {
 		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
 			logThrowable(txt, throwable);
 		}
 	}
 
+	@Override
 	public void trace(final String txt) {
 		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
 			logMessage(txt);
 		}
 	}
 
+	@Override
 	public void warn(final String txt) {
 		if (LogLevel.isLoggable(level, LogLevel.WARN)) {
 			logMessage(txt);

@@ -31,7 +31,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
 import com.blackducksoftware.integration.hub.logging.LogLevel;
 
-public class TestLogger implements IntLogger {
+public class TestLogger extends IntLogger {
 	private ArrayList<String> outputList = new ArrayList<String>();
 
 	private ArrayList<Throwable> errorList = new ArrayList<Throwable>();
