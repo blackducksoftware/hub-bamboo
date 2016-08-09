@@ -28,8 +28,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.atlassian.bamboo.build.ViewBuildResults;
 import com.atlassian.utils.process.IOUtils;
+import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
 import com.blackducksoftware.integration.hub.util.HubResourceBundleHelper;
 import com.google.gson.Gson;
 

@@ -33,9 +33,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.reports.HubRiskReportAction;
-import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

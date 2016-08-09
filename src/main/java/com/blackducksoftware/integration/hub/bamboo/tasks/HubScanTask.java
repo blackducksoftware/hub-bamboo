@@ -63,6 +63,15 @@ import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
 import com.blackducksoftware.integration.hub.ScanExecutor.Result;
+import com.blackducksoftware.integration.hub.api.policy.PolicyStatus;
+import com.blackducksoftware.integration.hub.api.policy.PolicyStatusEnum;
+import com.blackducksoftware.integration.hub.api.project.ProjectItem;
+import com.blackducksoftware.integration.hub.api.report.HubReportGenerationInfo;
+import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
+import com.blackducksoftware.integration.hub.api.report.RiskReportGenerator;
+import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
+import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
+import com.blackducksoftware.integration.hub.api.version.ReleaseItem;
 import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
@@ -83,17 +92,8 @@ import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
 import com.blackducksoftware.integration.hub.logging.IntLogger;
-import com.blackducksoftware.integration.hub.policy.api.PolicyStatus;
-import com.blackducksoftware.integration.hub.policy.api.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.polling.HubEventPolling;
-import com.blackducksoftware.integration.hub.project.api.ProjectItem;
-import com.blackducksoftware.integration.hub.report.api.HubReportGenerationInfo;
-import com.blackducksoftware.integration.hub.report.api.HubRiskReportData;
-import com.blackducksoftware.integration.hub.report.api.RiskReportGenerator;
 import com.blackducksoftware.integration.hub.util.HostnameHelper;
-import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
-import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
-import com.blackducksoftware.integration.hub.version.api.ReleaseItem;
 import com.google.gson.Gson;
 
 public class HubScanTask implements TaskType {
@@ -428,7 +428,7 @@ public class HubScanTask implements TaskType {
 		logger.info("-> Using Build Workspace Path : " + taskContext.getWorkingDirectory().getAbsolutePath());
 		logger.info(
 				"-> Using Hub Project Name : " + jobConfig.getProjectName() + ", Version : " + jobConfig.getVersion()
-				+ ", Phase : " + jobConfig.getPhase() + ", Distribution : " + jobConfig.getDistribution());
+						+ ", Phase : " + jobConfig.getPhase() + ", Distribution : " + jobConfig.getDistribution());
 
 		logger.info("-> Scanning the following targets  : ");
 		for (final String target : jobConfig.getScanTargetPaths()) {
@@ -445,8 +445,8 @@ public class HubScanTask implements TaskType {
 			final IntLogger logger, final HubIntRestService service, final File oneJarFile, final File scanExec,
 			File javaExec, final HubServerConfig hubConfig, final HubScanJobConfig jobConfig,
 			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper, final Map<String, String> envVars)
-					throws HubIntegrationException, MalformedURLException, URISyntaxException, IllegalArgumentException,
-					EncryptionException {
+			throws HubIntegrationException, MalformedURLException, URISyntaxException, IllegalArgumentException,
+			EncryptionException {
 		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl().toString(),
 				hubConfig.getGlobalCredentials().getUsername(), hubConfig.getGlobalCredentials().getDecryptedPassword(),
 				jobConfig.getScanTargetPaths(), String.valueOf(taskContext.getBuildContext().getBuildNumber()),
@@ -504,7 +504,7 @@ public class HubScanTask implements TaskType {
 
 	private void addProxySettingsToScanner(final IntLogger logger, final BambooScanExecutor scan,
 			final HubProxyInfo proxyInfo) throws HubIntegrationException, URISyntaxException, MalformedURLException,
-	IllegalArgumentException, EncryptionException {
+			IllegalArgumentException, EncryptionException {
 		if (proxyInfo != null) {
 			if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
 				if (StringUtils.isNotBlank(proxyInfo.getUsername())
@@ -572,7 +572,7 @@ public class HubScanTask implements TaskType {
 	 */
 	private ReleaseItem ensureVersionExists(final HubIntRestService service, final IntLogger logger,
 			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
-					throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
+			throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
 		ReleaseItem version = null;
 
 		try {
@@ -597,7 +597,7 @@ public class HubScanTask implements TaskType {
 
 	private ReleaseItem createVersion(final HubIntRestService service, final IntLogger logger,
 			final String projectVersion, final ProjectItem project, final HubScanJobConfig jobConfig)
-					throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
+			throws IOException, URISyntaxException, BDBambooHubPluginException, UnexpectedHubResponseException {
 		ReleaseItem version = null;
 
 		try {
@@ -681,7 +681,7 @@ public class HubScanTask implements TaskType {
 	private void waitForBomToBeUpdated(final IntLogger logger, final HubIntRestService service,
 			final HubSupportHelper supportHelper, final HubReportGenerationInfo bomUpdateInfo,
 			final TaskContext taskContext) throws BDBambooHubPluginException, InterruptedException, BDRestException,
-	HubIntegrationException, URISyntaxException, IOException {
+			HubIntegrationException, URISyntaxException, IOException {
 
 		final HubEventPolling hubEventPolling = new HubEventPolling(service);
 
@@ -738,8 +738,8 @@ public class HubScanTask implements TaskType {
 
 	private void generateRiskReport(final TaskContext taskContext, final IntLogger logger,
 			final HubReportGenerationInfo hubReportGenerationInfo, final HubSupportHelper hubSupport)
-					throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException,
-					UnexpectedHubResponseException {
+			throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException,
+			UnexpectedHubResponseException {
 		logger.info("Generating Risk Report");
 
 		final RiskReportGenerator riskReportGenerator = new RiskReportGenerator(hubReportGenerationInfo, hubSupport);

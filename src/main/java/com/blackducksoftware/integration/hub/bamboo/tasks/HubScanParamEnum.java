@@ -21,8 +21,8 @@
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
-import com.blackducksoftware.integration.hub.version.api.DistributionEnum;
-import com.blackducksoftware.integration.hub.version.api.PhaseEnum;
+import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
+import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 
 public enum HubScanParamEnum {
 	PROJECT("hubProject", ""),
