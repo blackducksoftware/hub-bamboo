@@ -15,4 +15,4 @@ You can download the latest release artifacts from GitHub: https://github.com/bl
 All documentation for hub-bamboo can be found on the base project:  https://github.com/blackducksoftware/hub-bamboo/wiki
 
 ## License ##
-Apache License 2.0
+Apache License 2.0 
