@@ -3,6 +3,9 @@ Hub plugin for Bamboo. This plugin provides ability to run a scan using the BD H
 
 ## Build ##
 
+[![Build Status](https://travis-ci.org/blackducksoftware/hub-bamboo.svg?branch=master)](https://travis-ci.org/blackducksoftware/hub-bamboo)
+[![Coverage Status](https://coveralls.io/repos/github/blackducksoftware/hub-bamboo/badge.svg?branch=master)](https://coveralls.io/github/blackducksoftware/hub-bamboo?branch=master)
+
 ## Where can I get the latest release? ##
 You can download the latest source from GitHub: https://github.com/blackducksoftware/hub-bamboo. 
 
