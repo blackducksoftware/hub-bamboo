@@ -116,7 +116,7 @@ public class BambooFileStorageHelperPowerMockTest {
 		storageHelper.setArtifactDefinition(artifact);
 
 		final File reportFile = storageHelper.buildArtifactRootDirectory();
-		final String path = file.getAbsolutePath() + "/Hub_Risk_Report";
+		final String path = file.getAbsolutePath() + File.separator + "Hub_Risk_Report";
 		final String reportFilePath = reportFile.getAbsolutePath();
 		assertEquals(key, storageHelper.getResultKey());
 		assertEquals(artifact, storageHelper.getArtifactDefinition());

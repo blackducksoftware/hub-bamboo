@@ -76,7 +76,7 @@ public class HubBambooUtilsPowerMockTest {
 		PowerMockito.when(storage.getArtifactDirectory(Mockito.any(PlanResultKey.class))).thenReturn(file);
 
 		final File reportFile = HubBambooUtils.getInstance().getRiskReportFile("TEST-PLAN-JOB1", 1);
-		final String path = file.getAbsolutePath() + "/Hub_Risk_Report/hub_risk_report.json";
+		final String path = file.getAbsolutePath() +  File.separator + "Hub_Risk_Report" + File.separator + "hub_risk_report.json";
 		final String reportFilePath = reportFile.getAbsolutePath();
 		assertEquals(path, reportFilePath);
 	}
