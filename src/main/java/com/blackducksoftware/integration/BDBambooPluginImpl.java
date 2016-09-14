@@ -30,8 +30,9 @@ public class BDBambooPluginImpl implements BDBambooPlugin {
 		this.applicationProperties = applicationProperties;
 	}
 
+	@Override
 	public String getName() {
-		if (null != applicationProperties) {
+		if (applicationProperties != null) {
 			return "BDBambooPlugin:" + applicationProperties.getDisplayName();
 		}
 
