@@ -30,7 +30,6 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -143,11 +142,6 @@ public class HubScanTask implements TaskType {
 
 		final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
 				environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
-
-		for(final Entry<String,String> entry: envVars.entrySet()){
-			logger.alwaysLog("Variable key : " + entry.getKey() + ", value : " + entry.getValue());
-		}
-
 
 		final CIEnvironmentVariables commonEnvVars = new CIEnvironmentVariables();
 		commonEnvVars.putAll(envVars);
@@ -518,7 +512,7 @@ public class HubScanTask implements TaskType {
 		}
 
 		if (javaExec == null) {
-			String javaHome = HubBambooUtils.getInstance().getEnvironmentVariable(envVars, "JAVA_HOME", false);
+			String javaHome = envVars.get("JAVA_HOME");
 			if (StringUtils.isBlank(javaHome)) {
 				// We couldn't get the JAVA_HOME variable so lets try to get the
 				// home

@@ -24,7 +24,6 @@ package ut.com.blackducksoftware.integration.hub.bamboo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -181,27 +180,6 @@ public class HubBambooUtilsTest {
 		assertFalse(result.containsKey("anunknownkey"));
 	}
 
-	@Test
-	public void testGetVariable() {
-		final Map<String, String> result = createVarMap();
-		result.put("bamboo_" + key_1, value_1);
-		result.put("bamboo_" + key_2, value_2);
-		result.put("bamboo_" + key_3, value_3);
-		result.put("bamboo_" + key_4, value_4);
-
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_1, false), value_1);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_2, false), value_2);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_3, false), value_3);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_4, false), value_4);
-
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_1, true), value_1);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_2, true), value_2);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_3, true), value_3);
-		assertEquals(HubBambooUtils.getInstance().getEnvironmentVariable(result, key_4, true), value_4);
-
-		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", false));
-		assertNull(HubBambooUtils.getInstance().getEnvironmentVariable(result, "anunknownkey", true));
-	}
 
 	@Test
 	public void testGetRiskReportArtifactDefinition() {

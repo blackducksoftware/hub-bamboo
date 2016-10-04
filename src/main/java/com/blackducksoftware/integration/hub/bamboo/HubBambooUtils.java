@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -136,30 +137,21 @@ public class HubBambooUtils implements Cloneable {
 		final Map<String, String> allVariablesMap = new HashMap<>(
 				systemVariables.size() + taskContextVariables.size());
 
-		allVariablesMap.putAll(systemVariables);
-		allVariablesMap.putAll(taskContextVariables);
-
+		trimBambooEnvironmentVariables(allVariablesMap, systemVariables);
+		trimBambooEnvironmentVariables(allVariablesMap, taskContextVariables);
 		return allVariablesMap;
 	}
 
 	private void trimBambooEnvironmentVariables(final Map<String, String> newEnvMap,
 			final Map<String, String> envVars) {
-
-	}
-
-	public String getEnvironmentVariable(final Map<String, String> envVars, final String parameterName,
-			final boolean taskContextVariable) {
-		String variable;
-
-		if (taskContextVariable) {
-			variable = "bamboo_" + parameterName;
-		} else {
-			variable = parameterName;
+		for (final Entry<String, String> entry : envVars.entrySet()) {
+			String key = entry.getKey();
+			final String value = entry.getValue();
+			if (key.startsWith("bamboo_")) {
+				key = key.replace("bamboo_", "");
+			}
+			newEnvMap.put(key, value);
 		}
-
-		final String value = envVars.get(variable);
-
-		return StringUtils.trimToNull(value);
 	}
 
 	public String getBambooHome() {
