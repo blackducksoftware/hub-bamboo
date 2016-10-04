@@ -33,18 +33,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.security.SecureToken;
-import com.blackducksoftware.integration.hub.HubIntRestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.builder.HubCredentialsBuilder;
 import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
-import com.blackducksoftware.integration.hub.global.HubCredentials;
-import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtilsTest {
 
@@ -61,8 +60,8 @@ public class HubBambooUtilsTest {
 	private static final String INVALID_IGNORE_HOST = "[^-z!";
 	private static final String EMPTY_PASSWORD_LENGTH = "";
 
-	private final Map<String, String> map1 = new HashMap<String, String>();
-	private final Map<String, String> map2 = new HashMap<String, String>();
+	private final Map<String, String> map1 = new HashMap<>();
+	private final Map<String, String> map2 = new HashMap<>();
 
 	private static final String key_1 = "key1";
 	private static final String key_2 = "key2";
@@ -72,6 +71,9 @@ public class HubBambooUtilsTest {
 	private static final String value_2 = "value2";
 	private static final String value_3 = "value3";
 	private static final String value_4 = "value4";
+
+	@Rule
+	public ExpectedException exception = ExpectedException.none();
 
 	private Map<String, String> createVarMap() {
 		map1.put(key_1, value_1);
@@ -100,38 +102,6 @@ public class HubBambooUtilsTest {
 		assertEquals(PASSWORD, config.getGlobalCredentials().getDecryptedPassword());
 	}
 
-	@Test
-	public void testBuildProxyInfo() throws Exception {
-		HubProxyInfo info = HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT,
-				VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD);
-		assertNotNull(info);
-		assertEquals(VALID_HOST, info.getHost());
-		assertEquals(Integer.valueOf(VALID_PORT).intValue(), info.getPort());
-		assertEquals(VALID_IGNORE_HOST, info.getIgnoredProxyHosts());
-		assertEquals(VALID_USERNAME, info.getUsername());
-		assertEquals(VALID_PASSWORD, info.getDecryptedPassword());
-
-		info = HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT, VALID_IGNORE_HOST_LIST,
-				VALID_USERNAME, VALID_PASSWORD);
-		assertNotNull(info);
-		assertEquals(VALID_HOST, info.getHost());
-		assertEquals(Integer.valueOf(VALID_PORT).intValue(), info.getPort());
-		assertEquals(VALID_IGNORE_HOST_LIST, info.getIgnoredProxyHosts());
-		assertEquals(VALID_USERNAME, info.getUsername());
-		assertEquals(VALID_PASSWORD, info.getDecryptedPassword());
-	}
-
-	@Test
-	public void testInvalidBuildProxyInfo() throws Exception {
-		HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT, INVALID_IGNORE_HOST,
-				VALID_USERNAME, VALID_PASSWORD);
-	}
-
-	@Test
-	public void testInvalidBuildProxyInfoIgnoreList() throws Exception {
-		HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT, INVALID_IGNORE_HOST_LIST,
-				VALID_USERNAME, VALID_PASSWORD);
-	}
 
 	@Test
 	public void testInvalidConfig() throws Exception {
@@ -190,56 +160,14 @@ public class HubBambooUtilsTest {
 
 	@Test
 	public void testConfigureServiceNullProxy() throws Exception {
-		final HubIntRestService service = new HubIntRestService(HUB_URL);
+		final RestConnection restConnection = new RestConnection(HUB_URL);
 		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
 				.buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, null, null, null, null, null,
 						null);
 		final HubServerConfig config = results.getConstructedObject();
-		HubBambooUtils.getInstance().configureProxyToService(config, service);
+		HubBambooUtils.getInstance().configureProxyToService(config, restConnection);
 	}
 
-	@Test
-	public void testConfigureServiceProxyForUrl() throws Exception {
-		final HubIntRestService service = new HubIntRestService(HUB_URL);
-
-		final HubProxyInfo proxyInfo = HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT,
-				VALID_IGNORE_HOST, null, null);
-		final HubCredentialsBuilder credBuilder = new HubCredentialsBuilder();
-		credBuilder.setUsername(VALID_USERNAME);
-		credBuilder.setPassword(VALID_PASSWORD);
-		final HubCredentials creds = credBuilder.build().getConstructedObject();
-		final HubServerConfig config = new HubServerConfig(new URL(VALID_HOST), 5, creds, proxyInfo);
-
-		HubBambooUtils.getInstance().configureProxyToService(config, service);
-	}
-
-	@Test
-	public void testConfigureServiceProxyConfig() throws Exception {
-		final HubIntRestService service = new HubIntRestService(HUB_URL);
-		final HubProxyInfo proxyInfo = HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT,
-				VALID_IGNORE_HOST, null, null);
-		final HubCredentialsBuilder credBuilder = new HubCredentialsBuilder();
-		credBuilder.setUsername(VALID_USERNAME);
-		credBuilder.setPassword(VALID_PASSWORD);
-		final HubCredentials creds = credBuilder.build().getConstructedObject();
-		final HubServerConfig config = new HubServerConfig(new URL(VALID_HOST), 5, creds, proxyInfo);
-
-		HubBambooUtils.getInstance().configureProxyToService(config, service);
-	}
-
-	@Test
-	public void testConfigureServiceAuthenticatedProxyConfig() throws Exception {
-		final HubIntRestService service = new HubIntRestService(HUB_URL);
-		final HubProxyInfo proxyInfo = HubBambooUtils.getInstance().buildProxyInfoFromString(VALID_HOST, VALID_PORT,
-				VALID_IGNORE_HOST, VALID_USERNAME, VALID_PORT);
-		final HubCredentialsBuilder credBuilder = new HubCredentialsBuilder();
-		credBuilder.setUsername(VALID_USERNAME);
-		credBuilder.setPassword(VALID_PASSWORD);
-		final HubCredentials creds = credBuilder.build().getConstructedObject();
-		final HubServerConfig config = new HubServerConfig(new URL(VALID_HOST), 5, creds, proxyInfo);
-
-		HubBambooUtils.getInstance().configureProxyToService(config, service);
-	}
 
 	@Test
 	public void testCreateEnvVarMap() {

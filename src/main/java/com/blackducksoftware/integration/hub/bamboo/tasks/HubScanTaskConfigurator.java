@@ -83,7 +83,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 		hubScanJobConfigBuilder.setScanMemory(scanMemory);
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
-		final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result = hubScanJobConfigBuilder.build();
+		final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result = hubScanJobConfigBuilder.buildResults();
 
 		if (!result.isSuccess()) {
 

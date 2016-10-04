@@ -51,6 +51,14 @@ public class HubBambooLogger extends IntLogger {
 		this.level = level;
 	}
 
+	public void alwaysLog(final String txt) {
+		logMessage(txt);
+	}
+
+	public void alwaysLog(final String txt, final Throwable throwable) {
+		logThrowable(txt, throwable);
+	}
+
 	@Override
 	public void debug(final String txt, final Throwable throwable) {
 		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
