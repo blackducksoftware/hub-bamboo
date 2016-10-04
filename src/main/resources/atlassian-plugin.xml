@@ -41,7 +41,7 @@
 				com.atlassian.plugin.web.conditions,
 				com.atlassian.sal.api,
 				com.google.gson;version="0.0",
-				com.google.gson.*;version="0.0",
+				com.google.gson.internal.bind;version="0.0",
 				com.thoughtworks.xstream,
 				com.thoughtworks.xstream.io,
 				com.thoughtworks.xstream.io.xml,
@@ -85,7 +85,8 @@
 				org.w3c.dom,
 				org.w3c.dom.ls,
 				org.xml.sax,
-				org.xml.sax.helpers
+				org.xml.sax.helpers,
+			    *;resolution:=optional
 			</Import-Package>
 		</bundle-instructions>
 	</plugin-info>

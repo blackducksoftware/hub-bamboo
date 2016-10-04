@@ -107,6 +107,7 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName;
 import com.blackducksoftware.integration.phone.home.exception.PhoneHomeException;
 import com.blackducksoftware.integration.phone.home.exception.PropertiesLoaderException;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 public class HubScanTask implements TaskType {
 
@@ -199,6 +200,8 @@ public class HubScanTask implements TaskType {
 
 			final HubSupportHelper hubSupport = new HubSupportHelper();
 			hubSupport.checkHubSupport(service, logger);
+
+			logger.alwaysLog("Gson source : " + Gson.class.getProtectionDomain().getCodeSource().getLocation().toURI());
 
 			// Phone-Home
 			try {
@@ -787,7 +790,7 @@ public class HubScanTask implements TaskType {
 		final String reportPath = taskContext.getWorkingDirectory() + File.separator
 				+ HubBambooUtils.HUB_RISK_REPORT_FILENAME;
 
-		final Gson gson = new Gson();
+		final Gson gson = new GsonBuilder().create();
 		final String contents = gson.toJson(hubRiskReportData);
 
 		FileWriter writer = null;
