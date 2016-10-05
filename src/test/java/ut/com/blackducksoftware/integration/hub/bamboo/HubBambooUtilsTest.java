@@ -38,8 +38,8 @@ import org.junit.rules.ExpectedException;
 
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.security.SecureToken;
+import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.rest.RestConnection;

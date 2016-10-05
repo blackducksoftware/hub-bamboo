@@ -25,8 +25,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
-import com.blackducksoftware.integration.hub.logging.IntLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.log.LogLevel;
 
 public class HubBambooLogger extends IntLogger {
 
