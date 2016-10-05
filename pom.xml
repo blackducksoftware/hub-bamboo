@@ -58,7 +58,7 @@
   </pluginRepositories>
 
   <dependencies>
-  	<dependency>
+    <dependency>
       <groupId>com.blackducksoftware.integration</groupId>
       <artifactId>integration-common</artifactId>
       <version>1.0.1</version>
