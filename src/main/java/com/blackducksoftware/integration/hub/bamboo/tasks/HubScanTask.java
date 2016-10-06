@@ -37,8 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.joda.time.DateTime;
 import org.json.JSONException;
-import org.restlet.engine.Engine;
-import org.restlet.engine.connector.HttpClientHelper;
 import org.restlet.resource.ResourceException;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
@@ -137,197 +135,165 @@ public class HubScanTask implements TaskType {
 	@Override
 	public TaskResult execute(final TaskContext taskContext) throws TaskException {
 
-			final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
-			TaskResult result;
-			final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
+		final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
+		TaskResult result;
+		final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
 
-			final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
-					environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
+		final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
+				environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
 
-			final CIEnvironmentVariables commonEnvVars = new CIEnvironmentVariables();
-			commonEnvVars.putAll(envVars);
-			logger.setLogLevel(commonEnvVars);
-			try {
+		final CIEnvironmentVariables commonEnvVars = new CIEnvironmentVariables();
+		commonEnvVars.putAll(envVars);
+		logger.setLogLevel(commonEnvVars);
+		try {
 
-				final ConfigurationMap taskConfigMap = taskContext.getConfigurationMap();
-				final HubServerConfig hubConfig = getHubServerConfig(logger);
+			final ConfigurationMap taskConfigMap = taskContext.getConfigurationMap();
+			final HubServerConfig hubConfig = getHubServerConfig(logger);
 
-				if (hubConfig == null) {
-					logger.error("Please verify the correct dependent Hub configuration plugin is installed");
-					logger.error("Please verify the configuration is correct if the plugin is installed.");
-					result = resultBuilder.failedWithError().build();
-					logTaskResult(logger, result);
-					return result;
-				}
-				final RestConnection restConnection = getRestConnection(hubConfig);
-				final HubScanJobConfig jobConfig = getJobConfig(taskContext.getConfigurationMap(),
-						taskContext.getWorkingDirectory(), logger);
-				final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
-				printGlobalConfiguration(hubConfig, proxyInfo, logger);
-
-				if (jobConfig == null) {
-					// invalid job configuration fail the build.
-					logger.error("Task Configuration invalid.  Please validate configuration settings.");
-					result = resultBuilder.failedWithError().build();
-					logTaskResult(logger, result);
-					return result;
-				}
-				printConfiguration(taskContext, hubConfig, logger, jobConfig);
-				restConnection.setCookies(hubConfig.getGlobalCredentials().getUsername(),
-						hubConfig.getGlobalCredentials().getDecryptedPassword());
-				final HubIntRestService service = new HubIntRestService(restConnection);
-				final String localHostName = HostnameHelper.getMyHostname();
-				logger.info("Running on machine : " + localHostName);
-
-				final CLILocation cliLocation = createCLILocation(logger);
-
-				// install the CLI
-				final CLIInstaller installer = installCLI(logger, service, localHostName, cliLocation, envVars);
-
-				if (cliLocation == null || !cliLocation.getCLIExists(logger)) {
-					logger.error("Could not find the Hub scan CLI");
-					resultBuilder.failed();
-					result = resultBuilder.build();
-					logTaskResult(logger, result);
-					return result;
-				}
-
-				final File hubCLI = cliLocation.getCLI(logger);
-
-				final File oneJarFile = cliLocation.getOneJarFile();
-
-				final File javaExec = cliLocation.getProvidedJavaExec();
-
-				final HubSupportHelper hubSupport = new HubSupportHelper();
-				hubSupport.checkHubSupport(service, logger);
-
-				logger.alwaysLog("Gson source : " + Gson.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-
-				// Phone-Home
-				try {
-					final String hubVersion = hubSupport.getHubVersion(service);
-					String regId = null;
-					String hubHostName = null;
-					try {
-						regId = service.getRegistrationId();
-					} catch (final Exception e) {
-						logger.debug("Could not get the Hub registration Id.");
-					}
-					try {
-						final URL url = hubConfig.getHubUrl();
-						hubHostName = url.getHost();
-					} catch (final Exception e) {
-						logger.debug("Could not get the Hub Host name.");
-					}
-					bdPhoneHome(hubVersion, regId, hubHostName);
-				} catch (final Exception e) {
-					logger.debug("Unable to phone-home", e);
-				}
-
-				ProjectItem project = null;
-				ReleaseItem version = null;
-				final String projectName = jobConfig.getProjectName();
-				final String projectVersion = jobConfig.getVersion();
-				if (StringUtils.isNotBlank(projectName) && StringUtils.isNotBlank(projectVersion)) {
-					project = ensureProjectExists(service, logger, projectName);
-					version = ensureVersionExists(service, logger, projectVersion, project, jobConfig);
-					logger.debug("Found Project : " + projectName);
-					logger.debug("Found Version : " + projectVersion);
-				}
-
-				// run the scan
-				final DateTime beforeScanTime = new DateTime();
-				final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
-						javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
-				final DateTime afterScanTime = new DateTime();
-
-				if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
-					logger.error("Hub Scan Failed");
-					result = resultBuilder.build();
-					logTaskResult(logger, result);
-					return result;
-				}
-
-				// check the policy failures
-
-				final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
-				bomUpdateInfo.setService(service);
-				bomUpdateInfo.setProject(project);
-				bomUpdateInfo.setVersion(version);
-				bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
-				bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
-				bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
-
-				bomUpdateInfo.setBeforeScanTime(beforeScanTime);
-				bomUpdateInfo.setAfterScanTime(afterScanTime);
-
-				bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
-
-				boolean waitForBom = true;
-				final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
-
-				if (isGenRiskReport) {
-					generateRiskReport(taskContext, logger, bomUpdateInfo, hubSupport);
-					waitForBom = false;
-				}
-
-				final boolean isFailOnPolicySelected = taskConfigMap
-						.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
-				if (isFailOnPolicySelected && !hubSupport.hasCapability(HubCapabilitiesEnum.POLICY_API)) {
-					logger.error("This version of the Hub does not have support for Policies.");
-					resultBuilder.failed();
-					result = resultBuilder.build();
-					logTaskResult(logger, result);
-					return result;
-				} else if (isFailOnPolicySelected) {
-
-					if (waitForBom) {
-						waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
-					}
-					final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
-							hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
-
-					result = policyResult.build();
-				}
-
-			} catch (final HubIntegrationException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
+			if (hubConfig == null) {
+				logger.error("Please verify the correct dependent Hub configuration plugin is installed");
+				logger.error("Please verify the configuration is correct if the plugin is installed.");
 				result = resultBuilder.failedWithError().build();
-			} catch (final URISyntaxException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
+				logTaskResult(logger, result);
+				return result;
+			}
+			final RestConnection restConnection = getRestConnection(hubConfig);
+			final HubScanJobConfig jobConfig = getJobConfig(taskContext.getConfigurationMap(),
+					taskContext.getWorkingDirectory(), logger);
+			final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
+			printGlobalConfiguration(hubConfig, proxyInfo, logger);
+
+			if (jobConfig == null) {
+				// invalid job configuration fail the build.
+				logger.error("Task Configuration invalid.  Please validate configuration settings.");
 				result = resultBuilder.failedWithError().build();
-			} catch (final BDRestException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final IOException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final InterruptedException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final BDBambooHubPluginException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final IllegalArgumentException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final EncryptionException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final UnexpectedHubResponseException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final ProjectDoesNotExistException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
-			} catch (final MissingUUIDException e) {
-				logger.error(HUB_SCAN_TASK_ERROR, e);
-				result = resultBuilder.failedWithError().build();
+				logTaskResult(logger, result);
+				return result;
+			}
+			printConfiguration(taskContext, hubConfig, logger, jobConfig);
+			restConnection.setCookies(hubConfig.getGlobalCredentials().getUsername(),
+					hubConfig.getGlobalCredentials().getDecryptedPassword());
+			final HubIntRestService service = new HubIntRestService(restConnection);
+			final String localHostName = HostnameHelper.getMyHostname();
+			logger.info("Running on machine : " + localHostName);
+
+			final CLILocation cliLocation = createCLILocation(logger);
+
+			// install the CLI
+			final CLIInstaller installer = installCLI(logger, service, localHostName, cliLocation, envVars);
+
+			if (cliLocation == null || !cliLocation.getCLIExists(logger)) {
+				logger.error("Could not find the Hub scan CLI");
+				resultBuilder.failed();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
 			}
 
-			result = resultBuilder.build();
-			logTaskResult(logger, result);
-			return result;
+			final File hubCLI = cliLocation.getCLI(logger);
+
+			final File oneJarFile = cliLocation.getOneJarFile();
+
+			final File javaExec = cliLocation.getProvidedJavaExec();
+
+			final HubSupportHelper hubSupport = new HubSupportHelper();
+			hubSupport.checkHubSupport(service, logger);
+
+			// Phone-Home
+			try {
+				final String hubVersion = hubSupport.getHubVersion(service);
+				String regId = null;
+				String hubHostName = null;
+				try {
+					regId = service.getRegistrationId();
+				} catch (final Exception e) {
+					logger.debug("Could not get the Hub registration Id.");
+				}
+				try {
+					final URL url = hubConfig.getHubUrl();
+					hubHostName = url.getHost();
+				} catch (final Exception e) {
+					logger.debug("Could not get the Hub Host name.");
+				}
+				bdPhoneHome(logger, hubVersion, regId, hubHostName);
+			} catch (final Exception e) {
+				logger.debug("Unable to phone-home", e);
+			}
+
+			ProjectItem project = null;
+			ReleaseItem version = null;
+			final String projectName = jobConfig.getProjectName();
+			final String projectVersion = jobConfig.getVersion();
+			if (StringUtils.isNotBlank(projectName) && StringUtils.isNotBlank(projectVersion)) {
+				project = ensureProjectExists(service, logger, projectName);
+				version = ensureVersionExists(service, logger, projectVersion, project, jobConfig);
+				logger.debug("Found Project : " + projectName);
+				logger.debug("Found Version : " + projectVersion);
+			}
+
+			// run the scan
+			final DateTime beforeScanTime = new DateTime();
+			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
+					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
+			final DateTime afterScanTime = new DateTime();
+
+			if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
+				logger.error("Hub Scan Failed");
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
+			}
+
+			// check the policy failures
+
+			final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
+			bomUpdateInfo.setService(service);
+			bomUpdateInfo.setProject(project);
+			bomUpdateInfo.setVersion(version);
+			bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
+			bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
+			bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
+
+			bomUpdateInfo.setBeforeScanTime(beforeScanTime);
+			bomUpdateInfo.setAfterScanTime(afterScanTime);
+
+			bomUpdateInfo.setScanStatusDirectory(scan.getScanStatusDirectoryPath());
+
+			boolean waitForBom = true;
+			final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
+
+			if (isGenRiskReport) {
+				generateRiskReport(taskContext, logger, bomUpdateInfo, hubSupport);
+				waitForBom = false;
+			}
+
+			final boolean isFailOnPolicySelected = taskConfigMap
+					.getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
+			if (isFailOnPolicySelected && !hubSupport.hasCapability(HubCapabilitiesEnum.POLICY_API)) {
+				logger.error("This version of the Hub does not have support for Policies.");
+				resultBuilder.failed();
+				result = resultBuilder.build();
+				logTaskResult(logger, result);
+				return result;
+			} else if (isFailOnPolicySelected) {
+
+				if (waitForBom) {
+					waitForBomToBeUpdated(logger, service, hubSupport, bomUpdateInfo, taskContext);
+				}
+				final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, service,
+						hubSupport, bomUpdateInfo, version.getLink(ReleaseItem.POLICY_STATUS_LINK));
+
+				result = policyResult.build();
+			}
+
+		} catch (final Exception e) {
+			logger.error(HUB_SCAN_TASK_ERROR, e);
+			result = resultBuilder.failedWithError().build();
+		}
+
+		result = resultBuilder.build();
+		logTaskResult(logger, result);
+		return result;
 	}
 
 	private void logTaskResult(final IntLogger logger, final TaskResult result) {
@@ -408,19 +374,6 @@ public class HubScanTask implements TaskType {
 
 	private RestConnection getRestConnection(final HubServerConfig hubConfig)
 			throws MalformedURLException, URISyntaxException {
-		// configure the Restlet engine so that the HTTPHandle and classes
-		// from the com.sun.net.httpserver package
-		// do not need to be used at runtime to make client calls.
-		// DO NOT REMOVE THIS or the OSGI bundle will throw a
-		// ClassNotFoundException for com.sun.net.httpserver.HttpHandler.
-		// Since we are acting as a client we do not need the httpserver
-		// components.
-
-		// This workaround found here:
-		// http://stackoverflow.com/questions/25179243/com-sun-net-httpserver-httphandler-classnotfound-exception-on-java-embedded-runt
-
-		Engine.register(false);
-		Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
 		String huburl = null;
 		if (hubConfig != null && hubConfig.getHubUrl() != null) {
 			huburl = hubConfig.getHubUrl().toString();
@@ -834,8 +787,9 @@ public class HubScanTask implements TaskType {
 	 *            This method "phones-home" to the internal BlackDuck
 	 *            Integrations server.
 	 */
-	public void bdPhoneHome(final String blackDuckVersion, final String regId, final String hubHostName)
-			throws IOException, PhoneHomeException, PropertiesLoaderException, ResourceException, JSONException {
+	public void bdPhoneHome(final HubBambooLogger logger, final String blackDuckVersion, final String regId,
+			final String hubHostName)
+					throws IOException, PhoneHomeException, PropertiesLoaderException, ResourceException, JSONException {
 
 		final String thirdPartyVersion = BuildUtils.getCurrentVersion();
 		final String pluginVersion = getPluginVersion();
