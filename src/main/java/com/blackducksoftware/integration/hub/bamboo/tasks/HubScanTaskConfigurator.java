@@ -28,10 +28,10 @@ import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
+import com.blackducksoftware.integration.builder.ValidationResultEnum;
+import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
-import com.blackducksoftware.integration.hub.builder.ValidationResultEnum;
-import com.blackducksoftware.integration.hub.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.job.HubScanJobConfig;
 import com.blackducksoftware.integration.hub.job.HubScanJobFieldEnum;
 
@@ -83,7 +83,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 		hubScanJobConfigBuilder.setScanMemory(scanMemory);
 		hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
 		hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
-		final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result = hubScanJobConfigBuilder.build();
+		final ValidationResults<HubScanJobFieldEnum, HubScanJobConfig> result = hubScanJobConfigBuilder.buildResults();
 
 		if (!result.isSuccess()) {
 

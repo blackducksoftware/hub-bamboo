@@ -28,13 +28,14 @@ import java.util.ArrayList;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.blackducksoftware.integration.hub.logging.IntLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.log.LogLevel;
+
 
 public class TestLogger extends IntLogger {
-	private ArrayList<String> outputList = new ArrayList<String>();
+	private ArrayList<String> outputList = new ArrayList<>();
 
-	private ArrayList<Throwable> errorList = new ArrayList<Throwable>();
+	private ArrayList<Throwable> errorList = new ArrayList<>();
 
 	public ArrayList<String> getOutputList() {
 		return outputList;
@@ -45,11 +46,11 @@ public class TestLogger extends IntLogger {
 	}
 
 	public void resetOutputList() {
-		outputList = new ArrayList<String>();
+		outputList = new ArrayList<>();
 	}
 
 	public void resetErrorList() {
-		errorList = new ArrayList<Throwable>();
+		errorList = new ArrayList<>();
 	}
 
 	public void resetAllOutput() {

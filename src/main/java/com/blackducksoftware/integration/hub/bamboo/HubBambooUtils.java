@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,15 +38,12 @@ import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.utils.SystemProperty;
-import com.blackducksoftware.integration.hub.HubIntRestService;
-import com.blackducksoftware.integration.hub.builder.HubProxyInfoBuilder;
+import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
-import com.blackducksoftware.integration.hub.builder.ValidationResults;
-import com.blackducksoftware.integration.hub.exception.EncryptionException;
-import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtils implements Cloneable {
 
@@ -98,46 +96,24 @@ public class HubBambooUtils implements Cloneable {
 				configBuilder.setProxyPasswordLength(length);
 			}
 		}
-		return configBuilder.build();
+		return configBuilder.buildResults();
 	}
 
-	public HubProxyInfo buildProxyInfoFromString(final String hubProxyUrl, final String hubProxyPort,
-			final String hubProxyNoHost, final String hubProxyUser, final String hubProxyPass)
-			throws IllegalArgumentException, EncryptionException, HubIntegrationException {
-		HubProxyInfo proxyInfo = null;
-		if (StringUtils.isNotBlank(hubProxyUrl)) {
-			final HubProxyInfoBuilder proxyBuilder = new HubProxyInfoBuilder();
-			proxyBuilder.setHost(hubProxyUrl);
-			if (StringUtils.isNotBlank(hubProxyPort)) {
-				try {
-					proxyBuilder.setPort(Integer.valueOf(hubProxyPort));
-				} catch (final NumberFormatException ex) {
-					// ignore the default value is 0.
-				}
 
-				proxyBuilder.setIgnoredProxyHosts(hubProxyNoHost);
-				proxyBuilder.setUsername(hubProxyUser);
-				proxyBuilder.setPassword(hubProxyPass);
-				proxyInfo = proxyBuilder.build().getConstructedObject();
-			}
-		}
-		return proxyInfo;
-	}
-
-	public void configureProxyToService(final HubServerConfig hubConfig, final HubIntRestService service) {
+	public void configureProxyToService(final HubServerConfig hubConfig, final RestConnection restConnection) {
 
 		final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 
 		if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
 			if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
-				service.setProxyProperties(proxyInfo);
+				restConnection.setProxyProperties(proxyInfo);
 			}
 		}
 	}
 
 	public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
 
-		final List<String> scanTargets = new ArrayList<String>();
+		final List<String> scanTargets = new ArrayList<>();
 
 		if (StringUtils.isNotBlank(targetPathText)) {
 			final String[] scanTargetPathsArray = targetPathText.split("\\r?\\n");
@@ -158,28 +134,24 @@ public class HubBambooUtils implements Cloneable {
 
 	public Map<String, String> getEnvironmentVariablesMap(final Map<String, String> systemVariables,
 			final Map<String, String> taskContextVariables) {
-		final Map<String, String> allVariablesMap = new HashMap<String, String>(
+		final Map<String, String> allVariablesMap = new HashMap<>(
 				systemVariables.size() + taskContextVariables.size());
 
-		allVariablesMap.putAll(systemVariables);
-		allVariablesMap.putAll(taskContextVariables);
-
+		trimBambooEnvironmentVariables(allVariablesMap, systemVariables);
+		trimBambooEnvironmentVariables(allVariablesMap, taskContextVariables);
 		return allVariablesMap;
 	}
 
-	public String getEnvironmentVariable(final Map<String, String> envVars, final String parameterName,
-			final boolean taskContextVariable) {
-		String variable;
-
-		if (taskContextVariable) {
-			variable = "bamboo_" + parameterName;
-		} else {
-			variable = parameterName;
+	private void trimBambooEnvironmentVariables(final Map<String, String> newEnvMap,
+			final Map<String, String> envVars) {
+		for (final Entry<String, String> entry : envVars.entrySet()) {
+			String key = entry.getKey();
+			final String value = entry.getValue();
+			if (key.startsWith("bamboo_")) {
+				key = key.replace("bamboo_", "");
+			}
+			newEnvMap.put(key, value);
 		}
-
-		final String value = envVars.get(variable);
-
-		return StringUtils.trimToNull(value);
 	}
 
 	public String getBambooHome() {
@@ -204,7 +176,7 @@ public class HubBambooUtils implements Cloneable {
 	}
 
 	public File getRiskReportFile(final String planKey, final int buildNumber) throws NoSuchMethodException,
-			SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
 		final ArtifactDefinitionContext artifact = getRiskReportArtifactDefinitionContext(null);
 		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
