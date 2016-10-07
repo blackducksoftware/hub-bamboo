@@ -33,13 +33,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
+import org.apache.commons.lang3.StringUtils;
+
 import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.task.TaskContext;
 import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor;
 import com.blackducksoftware.integration.hub.ScannerSplitStream;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
+import com.blackducksoftware.integration.util.CIEnvironmentVariables;
 
 public class BambooScanExecutor extends ScanExecutor {
 
@@ -47,7 +49,7 @@ public class BambooScanExecutor extends ScanExecutor {
 	private static final String CLI_PARAM_LOG_DIR = "--logDir";
 	private ProcessService processService;
 	private TaskContext taskContext;
-	private EnvironmentVariableAccessor environmentVariableAccessor;
+	private CIEnvironmentVariables commonEnvVars;
 
 	protected BambooScanExecutor(final String hubUrl, final String hubUsername, final String hubPassword,
 			final List<String> scanTargets, final String buildIdentifier, final HubSupportHelper supportHelper) {
@@ -70,12 +72,12 @@ public class BambooScanExecutor extends ScanExecutor {
 		this.taskContext = taskContext;
 	}
 
-	public EnvironmentVariableAccessor getEnvironmentVariableAccessor() {
-		return environmentVariableAccessor;
+	public CIEnvironmentVariables getCommonEnvVars() {
+		return commonEnvVars;
 	}
 
-	public void setEnvironmentVariableAccessor(final EnvironmentVariableAccessor environmentVariableAccessor) {
-		this.environmentVariableAccessor = environmentVariableAccessor;
+	public void setCommonEnvVars(final CIEnvironmentVariables commonEnvVars) {
+		this.commonEnvVars = commonEnvVars;
 	}
 
 	@Override
@@ -114,7 +116,7 @@ public class BambooScanExecutor extends ScanExecutor {
 				// is not what we want to do So use Java's default process
 				// builder
 				// since a task is invoking this and tasks run on agents.
-				final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+				final ProcessBuilder procBuilder = createProcessBuilder(cmd, getCommonEnvVars());
 				final Process hubCliProcess = procBuilder.start();
 
 				// The Cli logs go the error stream for some reason
@@ -153,7 +155,7 @@ public class BambooScanExecutor extends ScanExecutor {
 					logPath = logPath.replace(" ", "%20");
 					cmd.remove(indexOfLogOption);
 					cmd.add(indexOfLogOption, logPath);
-					final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+					final ProcessBuilder procBuilder = createProcessBuilder(cmd, getCommonEnvVars());
 					final Process hubCliProcess = procBuilder.start();
 					// The Cli logs go the error stream for some reason
 					final StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
@@ -188,7 +190,7 @@ public class BambooScanExecutor extends ScanExecutor {
 					cmd.remove(indexOfLogOption);
 					cmd.add(indexOfLogOption, logPath);
 
-					final ProcessBuilder procBuilder = createProcessBuilder(cmd);
+					final ProcessBuilder procBuilder = createProcessBuilder(cmd, getCommonEnvVars());
 					final Process hubCliProcess = procBuilder.start();
 					// The Cli logs go the error stream for some reason
 					final StreamRedirectThread redirectThread = new StreamRedirectThread(hubCliProcess.getErrorStream(),
@@ -237,20 +239,24 @@ public class BambooScanExecutor extends ScanExecutor {
 		}
 	}
 
-	private ProcessBuilder createProcessBuilder(final List<String> cmd) {
+	private ProcessBuilder createProcessBuilder(final List<String> cmd, final CIEnvironmentVariables commonEnvVars) {
 		final ProcessBuilder builder = new ProcessBuilder(cmd).redirectError(Redirect.PIPE)
 				.redirectOutput(Redirect.PIPE);
 		builder.environment().put("BD_HUB_PASSWORD", getHubPassword());
 
+		final String bdioEnvVar = commonEnvVars.getValue("BD_HUB_DECLARED_COMPONENTS");
+		if (StringUtils.isNotBlank(bdioEnvVar)) {
+			builder.environment().put("BD_HUB_DECLARED_COMPONENTS", bdioEnvVar);
+		}
 		return builder;
 	}
 
 	private void printCommand(final List<String> cmd) {
 		// ////////////////////// Code to mask the password in the logs
-		final List<String> cmdToOutput = new ArrayList<String>();
+		final List<String> cmdToOutput = new ArrayList<>();
 		cmdToOutput.addAll(cmd);
 
-		final ArrayList<Integer> indexToMask = new ArrayList<Integer>();
+		final ArrayList<Integer> indexToMask = new ArrayList<>();
 		final int passParamIndex = cmdToOutput.indexOf(CLI_PARAM_PASSWORD);
 
 		if (passParamIndex > -1) {

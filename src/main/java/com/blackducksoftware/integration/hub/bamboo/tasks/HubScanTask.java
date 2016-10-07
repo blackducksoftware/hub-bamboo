@@ -237,7 +237,7 @@ public class HubScanTask implements TaskType {
 			// run the scan
 			final DateTime beforeScanTime = new DateTime();
 			final ScanExecutor scan = performScan(taskContext, resultBuilder, logger, service, oneJarFile, hubCLI,
-					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, envVars);
+					javaExec, hubConfig, jobConfig, proxyInfo, hubSupport, commonEnvVars);
 			final DateTime afterScanTime = new DateTime();
 
 			if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
@@ -441,7 +441,8 @@ public class HubScanTask implements TaskType {
 	private ScanExecutor performScan(final TaskContext taskContext, final TaskResultBuilder resultBuilder,
 			final IntLogger logger, final HubIntRestService service, final File oneJarFile, final File scanExec,
 			File javaExec, final HubServerConfig hubConfig, final HubScanJobConfig jobConfig,
-			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper, final Map<String, String> envVars)
+			final HubProxyInfo proxyInfo, final HubSupportHelper supportHelper,
+			final CIEnvironmentVariables commonEnvVars)
 					throws HubIntegrationException, MalformedURLException, URISyntaxException, IllegalArgumentException,
 					EncryptionException {
 		final BambooScanExecutor scan = new BambooScanExecutor(hubConfig.getHubUrl().toString(),
@@ -451,7 +452,7 @@ public class HubScanTask implements TaskType {
 		scan.setLogger(logger);
 		scan.setTaskContext(taskContext);
 		scan.setProcessService(processService);
-		scan.setEnvironmentVariableAccessor(environmentVariableAccessor);
+		scan.setCommonEnvVars(commonEnvVars);
 
 		if (proxyInfo != null) {
 			final URL hubUrl = hubConfig.getHubUrl();
@@ -470,7 +471,7 @@ public class HubScanTask implements TaskType {
 		}
 
 		if (javaExec == null) {
-			String javaHome = envVars.get("JAVA_HOME");
+			String javaHome = commonEnvVars.getValue("JAVA_HOME");
 			if (StringUtils.isBlank(javaHome)) {
 				// We couldn't get the JAVA_HOME variable so lets try to get the
 				// home
