@@ -183,7 +183,7 @@ public class HubScanTask implements TaskType {
 			final CLILocation cliLocation = createCLILocation(logger);
 
 			// install the CLI
-			final CLIInstaller installer = installCLI(logger, service, localHostName, cliLocation, envVars);
+			final CLIInstaller installer = installCLI(logger, service, localHostName, cliLocation, commonEnvVars);
 
 			if (cliLocation == null || !cliLocation.getCLIExists(logger)) {
 				logger.error("Could not find the Hub scan CLI");
@@ -348,13 +348,11 @@ public class HubScanTask implements TaskType {
 	}
 
 	private CLIInstaller installCLI(final IntLogger logger, final HubIntRestService restService,
-			final String localHostName, final CLILocation cliLocation, final Map<String, String> envVars) {
+			final String localHostName, final CLILocation cliLocation,
+			final CIEnvironmentVariables ciEnvironmentVariables) {
 
 		logger.info("Checking Hub CLI installation");
 		try {
-
-			final CIEnvironmentVariables ciEnvironmentVariables = new CIEnvironmentVariables();
-			ciEnvironmentVariables.putAll(envVars);
 			final CLIInstaller installer = new CLIInstaller(cliLocation, ciEnvironmentVariables);
 			installer.performInstallation(logger, restService, localHostName);
 			return installer;
