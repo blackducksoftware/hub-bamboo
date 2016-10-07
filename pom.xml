@@ -12,7 +12,7 @@
   <version>2.0.1-SNAPSHOT</version>
   <packaging>atlassian-plugin</packaging>
 
-  <!-- If the group or artifact changes then you must update HubScanTask.bdPhoneHome() -->
+  <!-- If the group or artifact changes then you must update HubBambooPluginHelper -->
   <name>Black Duck Hub Plugin for Bamboo</name>
   <description>Open Source Governance with Black Duck Hub (TM).</description>
 

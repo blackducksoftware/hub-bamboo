@@ -1,6 +1,6 @@
 <atlassian-plugin key="${project.groupId}.${project.artifactId}"
 	name="${project.name}" plugins-version="2">
-	<!-- If the plugin key changes then you must update HubScanTask.bdPhoneHome() -->
+	<!-- If the plugin key changes then you must update HubBambooPluginHelper -->
 	<plugin-info>
 		<description>${project.description}
 	    This project depends on the hub-atlassian-config plugin in order to configure the Hub server to be used.

@@ -79,6 +79,7 @@ import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.api.version.ReleaseItem;
 import com.blackducksoftware.integration.hub.bamboo.BDBambooHubPluginException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
+import com.blackducksoftware.integration.hub.bamboo.HubBambooPluginHelper;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.capabilities.HubCapabilitiesEnum;
@@ -170,7 +171,9 @@ public class HubScanTask implements TaskType {
 				logTaskResult(logger, result);
 				return result;
 			}
-			printConfiguration(taskContext, hubConfig, logger, jobConfig);
+			final HubBambooPluginHelper pluginHelper = new HubBambooPluginHelper(pluginAccessor);
+
+			printConfiguration(taskContext, hubConfig, logger, jobConfig, pluginHelper);
 			restConnection.setCookies(hubConfig.getGlobalCredentials().getUsername(),
 					hubConfig.getGlobalCredentials().getDecryptedPassword());
 			final HubIntRestService service = new HubIntRestService(restConnection);
@@ -215,7 +218,7 @@ public class HubScanTask implements TaskType {
 				} catch (final Exception e) {
 					logger.debug("Could not get the Hub Host name.");
 				}
-				bdPhoneHome(logger, hubVersion, regId, hubHostName);
+				bdPhoneHome(logger, hubVersion, regId, hubHostName, pluginHelper);
 			} catch (final Exception e) {
 				logger.debug("Unable to phone-home", e);
 			}
@@ -411,8 +414,9 @@ public class HubScanTask implements TaskType {
 	}
 
 	public void printConfiguration(final TaskContext taskContext, final HubServerConfig hubConfig,
-			final HubBambooLogger logger, final HubScanJobConfig jobConfig) throws IOException, InterruptedException {
-		logger.alwaysLog("Initializing - Hub Bamboo Plugin : " + getPluginVersion());
+			final HubBambooLogger logger, final HubScanJobConfig jobConfig, final HubBambooPluginHelper pluginHelper)
+					throws IOException, InterruptedException {
+		logger.alwaysLog("Initializing - Hub Bamboo Plugin : " + pluginHelper.getPluginVersion());
 		logger.alwaysLog("Log Level : " + logger.getLogLevel().name());
 		logger.alwaysLog("-> Bamboo home directory: " + HubBambooUtils.getInstance().getBambooHome());
 		final BuildContext buildContext = taskContext.getBuildContext();
@@ -788,19 +792,15 @@ public class HubScanTask implements TaskType {
 	 *            Integrations server.
 	 */
 	public void bdPhoneHome(final HubBambooLogger logger, final String blackDuckVersion, final String regId,
-			final String hubHostName)
+			final String hubHostName, final HubBambooPluginHelper pluginHelper)
 					throws IOException, PhoneHomeException, PropertiesLoaderException, ResourceException, JSONException {
 
 		final String thirdPartyVersion = BuildUtils.getCurrentVersion();
-		final String pluginVersion = getPluginVersion();
+		final String pluginVersion = pluginHelper.getPluginVersion();
 
 		final PhoneHomeClient phClient = new PhoneHomeClient();
 		phClient.callHomeIntegrations(regId, hubHostName, BlackDuckName.HUB, blackDuckVersion, ThirdPartyName.BAMBOO,
 				thirdPartyVersion, pluginVersion);
 	}
 
-	private String getPluginVersion() {
-		return pluginAccessor.getPlugin("com.blackducksoftware.integration.hub-bamboo").getPluginInformation()
-				.getVersion();
-	}
 }
