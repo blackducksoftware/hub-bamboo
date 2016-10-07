@@ -244,9 +244,11 @@ public class BambooScanExecutor extends ScanExecutor {
 				.redirectOutput(Redirect.PIPE);
 		builder.environment().put("BD_HUB_PASSWORD", getHubPassword());
 
-		final String bdioEnvVar = commonEnvVars.getValue("BD_HUB_DECLARED_COMPONENTS");
-		if (StringUtils.isNotBlank(bdioEnvVar)) {
-			builder.environment().put("BD_HUB_DECLARED_COMPONENTS", bdioEnvVar);
+		if (commonEnvVars != null) {
+			final String bdioEnvVar = commonEnvVars.getValue("BD_HUB_DECLARED_COMPONENTS");
+			if (StringUtils.isNotBlank(bdioEnvVar)) {
+				builder.environment().put("BD_HUB_DECLARED_COMPONENTS", bdioEnvVar);
+			}
 		}
 		return builder;
 	}
