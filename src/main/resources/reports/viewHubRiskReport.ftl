@@ -245,6 +245,7 @@ under the License.
     <table id="hubBomReport" class="table sortable">
         <thead>
             <tr>
+            	<th/>
                 <th class="clickable componentColumn columnLabel evenPadding">${bundle.getString("component")}</th>
                 <th class="clickable componentColumn columnLabel evenPadding">${bundle.getString("version")}</th>
                 <th class="clickable columnLabel evenPadding">${bundle.getString("license")}</th>
@@ -260,6 +261,7 @@ under the License.
         <tbody>
             <#list hubRiskReportData.bomEntries as entry>
                 <tr>
+                	<td class="evenPadding violation"><i class="fa fa-ban"></i><div>${entry.getPolicyApprovalStatus()}</div></td>
                     <td class="clickable componentColumn evenPadding"
                         onclick="window.open('${hubRiskReportData.report.getComponentUrl(entry)}', '_blank');">
                         ${hubRiskReportData.htmlEscape(entry.producerProject.name)}</td>
