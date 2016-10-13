@@ -37,8 +37,10 @@
 }
 
 .reportHeaderIcon{
-	width: 140px;
+	width: 285px;
+	height: 50px;
 	padding: 5px;
+	background-image: url(Hub_BD_logo.png);
 }
 
 .versionSummaryTable{
