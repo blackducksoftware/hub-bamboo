@@ -229,6 +229,14 @@ public class HubScanTask implements TaskType {
 			final String projectVersion = jobConfig.getVersion();
 			if (StringUtils.isNotBlank(projectName) && StringUtils.isNotBlank(projectVersion)) {
 				project = ensureProjectExists(service, logger, projectName);
+
+				if (!project.getMeta().isAccessible()) {
+					logger.error("This Project exists but this User does not have access to it.");
+					result = resultBuilder.build();
+					logTaskResult(logger, result);
+					return result;
+				}
+
 				version = ensureVersionExists(service, logger, projectVersion, project, jobConfig);
 				logger.debug("Found Project : " + projectName);
 				logger.debug("Found Version : " + projectVersion);
