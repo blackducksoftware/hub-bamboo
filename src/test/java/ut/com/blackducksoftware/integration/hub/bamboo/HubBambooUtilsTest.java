@@ -42,13 +42,12 @@ import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtilsTest {
 
 	private static final String PASSWORD = "password";
 	private static final String USER = "user";
-	private static final String HUB_URL = "https://google.com";
+	private static final String HUB_URL = "https://integration-hub.blackducksoftware.com:8443";
 	private static final String VALID_PORT = "2303";
 	private static final String VALID_HOST = "http://yahoo.com";
 	private static final String VALID_PASSWORD = "itsasecret";
@@ -100,7 +99,6 @@ public class HubBambooUtilsTest {
 		assertEquals(USER, config.getGlobalCredentials().getUsername());
 		assertEquals(PASSWORD, config.getGlobalCredentials().getDecryptedPassword());
 	}
-
 
 	@Test
 	public void testInvalidConfig() throws Exception {
@@ -158,17 +156,6 @@ public class HubBambooUtilsTest {
 	}
 
 	@Test
-	public void testConfigureServiceNullProxy() throws Exception {
-		final RestConnection restConnection = new RestConnection(HUB_URL);
-		final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
-				.buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, null, null, null, null, null,
-						null);
-		final HubServerConfig config = results.getConstructedObject();
-		HubBambooUtils.getInstance().configureProxyToService(config, restConnection);
-	}
-
-
-	@Test
 	public void testCreateEnvVarMap() {
 
 		final Map<String, String> result = createVarMap();
@@ -179,7 +166,6 @@ public class HubBambooUtilsTest {
 		assertEquals(result.get(key_4), value_4);
 		assertFalse(result.containsKey("anunknownkey"));
 	}
-
 
 	@Test
 	public void testGetRiskReportArtifactDefinition() {
