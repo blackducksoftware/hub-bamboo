@@ -24,6 +24,12 @@ under the License.
 		<meta name="decorator" content="result"/>
 		<meta name="tab" content="hub_risk_report"/>
 		${webResourceManager.requireResource("com.blackducksoftware.integration.hub-bamboo:hub-bamboo-resources")}
+		
+		<script type="text/javascript">
+			AJS.toInit(function($) {
+    			startup();
+			});
+		</script>
 	</head>
 	
 	<div class="riskReportBackgroundColor">
@@ -284,7 +290,4 @@ under the License.
 	        </tbody>
 	    </table>
 	</div>
-	<script type="text/javascript">
-		startup();
-	</script>
 </html>
