@@ -25,7 +25,7 @@ if (pageBody) {
 	pageBody.className += " pageBody";
 }
 
-function startup(){
+function initStyle() {
 	adjustWidth(document.getElementById("highVulnerabilityRiskBar"));
 	adjustWidth(document.getElementById("mediumVulnerabilityRiskBar"));
 	adjustWidth(document.getElementById("lowVulnerabilityRiskBar"));
@@ -42,5 +42,30 @@ function startup(){
 	adjustWidth(document.getElementById("noOperationalRiskBar"));
 	
 	adjustTable();
-sorttable.init();
+	sorttable.init();
 }
+
+function startup() {
+    var reportTable = document.getElementById("hubBomReport");
+    if(typeof reportTable == 'undefined' || reportTable == null) {
+        setTimeout(startup, 100);
+    } else {
+        // report table populated
+        var reportTableBody = document.getElementById("hubBomReportBody");
+        if(typeof reportTableBody == 'undefined' || reportTableBody == null) {
+            setTimeout(startup, 100);
+        } else {
+            var tableRowLength = reportTableBody.childNodes.length
+            if(tableRowLength < 1) {
+                setTimeout(startup, 100);
+            } else {
+                if(typeof initStyle === 'function') {
+                    initStyle();
+                } else {
+                    setTimeout(startup,100);
+                } 
+            }
+        }
+    }
+}
+

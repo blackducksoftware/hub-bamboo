@@ -98,6 +98,7 @@
 
 	<!-- add our web resources -->
 	<web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
+	    <dependency>com.atlassian.auiplugin:ajs</dependency>
 		<resource type="download" name="Sortable.js" location="/js/Sortable.js"/>
         <resource type="download" name="HubBomReportFunctions.js" location="/js/HubBomReportFunctions.js"/>
         <resource type="download" name="HubReportStartup.js" location="/js/HubReportStartup.js"/>
@@ -114,7 +115,8 @@
 		
 		<!--  IMPORTANT need to make changes to the urls in font-awesome.css if it is changed/updated -->
         <resource type="download" name="font-awesome.css" location="/font-awesome-4.5.0/css/font-awesome.css"/>
-	    <context>com.blackducksoftware.integration.hub-bamboo</context>
+	    <!-- need to use this to ensure the javascript functions are loaded in the browser before the risk report action is invoked -->
+	    <context>atl.general</context>
 	</web-resource>
 
 	<!-- import from the product container -->
