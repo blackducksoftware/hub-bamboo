@@ -61,7 +61,37 @@ var RiskReport = function (jsonData) {
         } else {
             return "-";
         }
-	}
+	};
+	
+	RiskReport.prototype.createPhaseString = function (phase) {
+		if(phase == "PLANNING") {
+			return "In Planning";
+		} else if (phase == "DEVELOPMENT") {
+			return "In Development";
+		} else if (phase == "RELEASED") {
+			return "Released";
+		} else if (phase == "DEPRECATED") {
+			return "Deprecated";
+		} else if (phase == "ARCHIVED") {
+			return "Archived";
+		} else {
+			return "Unknown Phase";
+		}
+	};
+	
+	RiskReport.prototype.createDistributionString = function (distribution) {
+		if(distribution == "EXTERNAL") {
+			return "External";
+		} else if(distribution =="SAAS") {
+			return "SaaS";
+		} else if(distribution =="INTERNAL") {
+			return "Internal";
+		} else if(distribution =="OPENSOURCE") { 
+			return "Open Source";
+		} else { 
+			return "Unknown Distribution";
+		}
+	};
 	
 	RiskReport.prototype.createHeader = function () {
 		var reportHeader = document.createElement("div");
@@ -107,24 +137,25 @@ var RiskReport = function (jsonData) {
 		
 		var info = AJS.$(document.createElement("div"));
 		AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">Phase:</div>'));
-		 AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+detailedReleaseSummary.phase+'</div>'));
+		 AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+this.createPhaseString(detailedReleaseSummary.phase)+'</div>'));
 	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">|</div>'));
 	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">Distribution:</div>'));
-	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+detailedReleaseSummary.distribution+'</div>'));		
+	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+this.createDistributionString(detailedReleaseSummary.distribution)+'</div>'));		
 	   AJS.$(table).append(versionInfo);
        AJS.$(table).append(info);	
 	        
 	   return table;
 	};
 	
-	RiskReport.prototype.createHorizontalBar = function (labelId,labelValue, clickFnName, barId,barValue) {
+	RiskReport.prototype.createHorizontalBar = function (labelId,labelValue, clickFnName, barId,barValue,barStyleClass) {
+		  var percentage = this.getPercentage(barValue)+'%';
 	      return  AJS.$('<div class="progress-bar horizontal">'
              +'<div id="'+labelId +'" class="clickable riskSummaryLabel"'
              +    'onclick="'+clickFnName+'(this)">' +labelValue+'</div>'
              +'<div class="riskSummaryCount">' +barValue+'</div>'
              +'<div class="progress-track">'
-             +'    <div id="'+barId+'" class="progress-fill-high">'
-             +'        <span>'+this.getPercentage(barValue)+'%</span>'
+             +'    <div id="'+barId+'" class="'+barStyleClass+'" style="width:'+percentage+'">'
+             +'        <span style="display:none;">'+percentage+'</span>'
              +'    </div>'
              +'</div>'
          +'</div>');
@@ -140,10 +171,10 @@ var RiskReport = function (jsonData) {
 	                                              +'title="Calculated risk on number of component versions based on known vulnerabilities."></i>');		
 		AJS.$(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highSecurityRiskLabel','High','filterTableByVulnerabilityRisk','highVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskHighCount));
-		AJS.$(container).append(this.createHorizontalBar('mediumSecurityRiskLabel','Medium','filterTableByVulnerabilityRisk','mediumVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskMediumCount));
-		AJS.$(container).append(this.createHorizontalBar('lowSecurityRiskLabel','Low','filterTableByVulnerabilityRisk','lowVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskLowCount));
-		AJS.$(container).append(this.createHorizontalBar('noneSecurityRiskLabel','None','filterTableByVulnerabilityRisk','noneVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskNoneCount));
+		AJS.$(container).append(this.createHorizontalBar('highSecurityRiskLabel','High','filterTableByVulnerabilityRisk','highVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskHighCount,'progress-fill-high'));
+		AJS.$(container).append(this.createHorizontalBar('mediumSecurityRiskLabel','Medium','filterTableByVulnerabilityRisk','mediumVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskMediumCount,'progress-fill-medium'));
+		AJS.$(container).append(this.createHorizontalBar('lowSecurityRiskLabel','Low','filterTableByVulnerabilityRisk','lowVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskLowCount,'progress-fill-low'));
+		AJS.$(container).append(this.createHorizontalBar('noneSecurityRiskLabel','None','filterTableByVulnerabilityRisk','noneVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
@@ -157,10 +188,10 @@ var RiskReport = function (jsonData) {
 	                                              +'title="Calculated risk based on open source software (OSS) license use in your projects."></i>');		
 		AJS.$(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highLicenseRiskLabel','High','filterTableByLicenseRisk','highLicenseRiskBar',this.rawdata.licenseRiskHighCount));
-		AJS.$(container).append(this.createHorizontalBar('mediumLicenseRiskLabel','Medium','filterTableByLicenseRisk','mediumLicenseRiskBar',this.rawdata.licenseRiskMediumCount));
-		AJS.$(container).append(this.createHorizontalBar('lowLicenseRiskLabel','Low','filterTableByLicenseRisk','lowLicenseRiskBar',this.rawdata.licenseRiskLowCount));
-		AJS.$(container).append(this.createHorizontalBar('noneLicenseRiskLabel','None','filterTableByLicenseRisk','noneLicenseRiskBar',this.rawdata.licenseRiskNoneCount));
+		AJS.$(container).append(this.createHorizontalBar('highLicenseRiskLabel','High','filterTableByLicenseRisk','highLicenseRiskBar',this.rawdata.licenseRiskHighCount,'progress-fill-high'));
+		AJS.$(container).append(this.createHorizontalBar('mediumLicenseRiskLabel','Medium','filterTableByLicenseRisk','mediumLicenseRiskBar',this.rawdata.licenseRiskMediumCount,'progress-fill-medium'));
+		AJS.$(container).append(this.createHorizontalBar('lowLicenseRiskLabel','Low','filterTableByLicenseRisk','lowLicenseRiskBar',this.rawdata.licenseRiskLowCount,'progress-fill-low'));
+		AJS.$(container).append(this.createHorizontalBar('noneLicenseRiskLabel','None','filterTableByLicenseRisk','noneLicenseRiskBar',this.rawdata.licenseRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
@@ -174,10 +205,10 @@ var RiskReport = function (jsonData) {
 	                                              +'title="Calculated risk based on tracking overall open source software (OSS) component activity."></i>');		
 		AJS.$(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highOperationalRiskLabel','High','filterTableByOperationalRisk','highOperationalRiskBar',this.rawdata.operationalRiskHighCount));
-		AJS.$(container).append(this.createHorizontalBar('mediumOperationalRiskLabel','Medium','filterTableByOperationalRisk','mediumOperationalRiskBar',this.rawdata.operationalRiskMediumCount));
-		AJS.$(container).append(this.createHorizontalBar('lowOperationalRiskLabel','Low','filterTableByOperationalRisk','lowOperationalRiskBar',this.rawdata.operationalRiskLowCount));
-		AJS.$(container).append(this.createHorizontalBar('noneOperationalRiskLabel','None','filterTableByOperationalRisk','noneOperationalRiskBar',this.rawdata.operationalRiskNoneCount));
+		AJS.$(container).append(this.createHorizontalBar('highOperationalRiskLabel','High','filterTableByOperationalRisk','highOperationalRiskBar',this.rawdata.operationalRiskHighCount,'progress-fill-high'));
+		AJS.$(container).append(this.createHorizontalBar('mediumOperationalRiskLabel','Medium','filterTableByOperationalRisk','mediumOperationalRiskBar',this.rawdata.operationalRiskMediumCount,'progress-fill-medium'));
+		AJS.$(container).append(this.createHorizontalBar('lowOperationalRiskLabel','Low','filterTableByOperationalRisk','lowOperationalRiskBar',this.rawdata.operationalRiskLowCount,'progress-fill-low'));
+		AJS.$(container).append(this.createHorizontalBar('noneOperationalRiskLabel','None','filterTableByOperationalRisk','noneOperationalRiskBar',this.rawdata.operationalRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
@@ -202,6 +233,15 @@ var RiskReport = function (jsonData) {
 		return table;
 	};
 	
+	RiskReport.prototype.columnClickEvent = function () {
+		if(this.initSortTable == false) {
+			console.log("init sorttable");
+			sorttable.makeSortable(document.getElementById('hubBomReport'));
+		} else {
+			console.log("sortable table inited");
+		}
+	};
+	
 	RiskReport.prototype.createComponentTableHead = function () {
 		var compStyleClass = "clickable componentColumn columnLabel evenPadding";
 		var licenseStyleClass = "clickable columnLabel evenPadding";
@@ -212,7 +252,7 @@ var RiskReport = function (jsonData) {
 		AJS.$(tableHeadRow).append(document.createElement("th"));
 		
 		var columnHeadComponent = document.createElement("th");
-		AJS.$(columnHeadComponent).addClass();
+		AJS.$(columnHeadComponent).addClass(compStyleClass);
 		AJS.$(columnHeadComponent).text("Component");
 		
 		var columnHeadVersion = document.createElement("th");
@@ -338,14 +378,22 @@ var RiskReport = function (jsonData) {
 		var table = document.createElement("table");
 		AJS.$(table).attr("id","hubBomReport");
 		AJS.$(table).addClass("table sortable");
+		AJS.$(table).attr("onmouseenter","initSortTable();");
 		
 		AJS.$(table).append(this.createComponentTableHead());
 		var tableBody = document.createElement("tbody");
 		AJS.$(tableBody).attr("id","hubBomReportBody");
 		var entryArray = this.rawdata.report.aggregateBomViewEntries;
 		var index;
+		var odd = true;
 		for (index in entryArray) {
-			AJS.$(tableBody).append(this.createComponentTableRow(entryArray[index]));
+			var tableRow = this.createComponentTableRow(entryArray[index]);
+			adjustTableRow(tableRow, odd);
+			adjustSecurityRisks(tableRow);
+			adjustOtherRisks(tableRow, licenseRiskColumnNum);
+			adjustOtherRisks(tableRow, operationRiskColumnNum);
+			odd = !odd;
+			AJS.$(tableBody).append(tableRow);
 		}
 		AJS.$(table).append(tableBody);
 		return table;
@@ -360,6 +408,7 @@ var RiskReport = function (jsonData) {
 		AJS.$(report).append(this.createLicenseRiskContainer());
 		AJS.$(report).append(this.createOperationalRiskContainer());
 		AJS.$(report).append(this.createSummaryTable());
-		AJS.$(report).append(this.createComponentTable());
+		var table = this.createComponentTable();
+		AJS.$(report).append(table);
 		AJS.$("#riskReportDiv").html(AJS.$(report).html());
 	};

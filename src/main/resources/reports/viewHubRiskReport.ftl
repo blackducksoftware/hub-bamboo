@@ -24,7 +24,6 @@ under the License.
 		<meta name="decorator" content="result"/>
 		<meta name="tab" content="hub_risk_report"/>
 		${webResourceManager.requireResource("com.blackducksoftware.integration.hub-bamboo:hub-bamboo-resources")}
-		
 	</head>
 	<div id="riskReportDiv"></div>
 	<script type="text/javascript">
