@@ -27,6 +27,7 @@ under the License.
 	</head>
 	<div id="riskReportDiv"></div>
 	<script type="text/javascript">
+	  // TODO refactor this code into an object loader for the JSON look into the URL JQuery plugin.
 	  //  http://stackoverflow.com/questions/19491336/get-url-parameter-jquery-or-how-to-get-query-string-values-in-js
 	  var getUrlParameter = function getUrlParameter(sParam) {
             var sPageURL = decodeURIComponent(window.location.search.substring(1)),
@@ -46,11 +47,10 @@ under the License.
 	  var url = window.location.href;
 	  var urlSplit = url.split("plugins");
 	  url = urlSplit[0];
-	  console.log("base URL: "+url);
 	  var planKey = getUrlParameter("planKey");
 	  var buildNumber = getUrlParameter("buildNumber");
 	  var artifactUrl = url+'browse/' + planKey + '-' +buildNumber + '/artifact/Hub_Risk_Report/hub_risk_report.json';
-	  AJS.$.getJSON(artifactUrl,function (data) {
+	  jQuery.getJSON(artifactUrl,function (data) {
 	     var riskReport = new RiskReport(data);
 	     riskReport.createReport();
 	  });
