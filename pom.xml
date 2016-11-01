@@ -19,7 +19,7 @@
   <properties>
     <amps.version>6.2.3</amps.version>
     <bamboo.data.version>5.3</bamboo.data.version>
-    <bamboo.version>5.10.0</bamboo.version>
+    <bamboo.version>5.14.0</bamboo.version>
     <gson.version>2.7</gson.version>
     <hub.common.version>1.4.12</hub.common.version>
     <plugin.testrunner.version>1.1.4</plugin.testrunner.version>

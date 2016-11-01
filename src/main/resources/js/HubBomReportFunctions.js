@@ -33,6 +33,7 @@ var lowSecurityColumnNum = 6;
 var licenseRiskColumnNum = 7;
 var operationRiskColumnNum = 8;
 
+var sortTableInitialized=false;
 
 function adjustWidth(object) {
 	var percentageSpan = object.getElementsByTagName("SPAN")[0];
@@ -307,5 +308,18 @@ function filterRowByOtherRisk(row, riskToFilter, filterClassName, riskColumnNum)
 function removeFilterFromRow(row, filterClassName) {
 	if (row.className.indexOf(filterClassName) != -1) {
 		row.className = row.className.replace(filterClassName, "");
+	}
+}
+
+function initSortTable() {
+	if(sortTableInitialized == false) {
+		sortTableInitialized = true;
+		console.log("initializing sort table");
+		var table = document.getElementById(tableId);
+		sorttable.makeSortable(document.getElementById(tableId));
+		// this is needed to initialize the risk report on Bamboo
+		// this should work on other browsers as well.  Bamboo doesn't fire a document onload or JQuery ready event.
+		console.log("table sortable initialization performed removing event to prevent re-initialization");
+		table.removeEventListener('mouseentered',initSortTable);
 	}
 }

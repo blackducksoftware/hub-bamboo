@@ -101,7 +101,7 @@
 	    <dependency>com.atlassian.auiplugin:ajs</dependency>
 		<resource type="download" name="Sortable.js" location="/js/Sortable.js"/>
         <resource type="download" name="HubBomReportFunctions.js" location="/js/HubBomReportFunctions.js"/>
-        <resource type="download" name="HubReportStartup.js" location="/js/HubReportStartup.js"/>
+        <resource type="download" name="HubRiskReport.js" location="/js/HubRiskReport.js"/>
         <resource type="download" name="images/" location="/images"/>
         <resource type="download" name="Hub_BD_logo.png" location="/images/Hub_BD_logo.png"/>
         <resource type="download" name="HubBomReport.css" location="/css/HubBomReport.css"/>
