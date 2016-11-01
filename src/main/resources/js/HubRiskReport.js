@@ -95,61 +95,61 @@ var RiskReport = function (jsonData) {
 	
 	RiskReport.prototype.createHeader = function () {
 		var reportHeader = document.createElement("div");
-		AJS.$(reportHeader).addClass("reportHeader");
+		jQuery(reportHeader).addClass("reportHeader");
 		var title = document.createElement("div");
-		AJS.$(title).addClass("h1 reportHeaderTitle");
-		AJS.$(title).text("Black Duck Risk Report");
+		jQuery(title).addClass("h1 reportHeaderTitle");
+		jQuery(title).text("Black Duck Risk Report");
 		var icon = document.createElement("div");
-		AJS.$(icon).addClass("reportHeaderIcon");
-		AJS.$(icon).css({"float": "right"});
+		jQuery(icon).addClass("reportHeaderIcon");
+		jQuery(icon).css({"float": "right"});
 		
-		AJS.$(reportHeader).append(title);
-		AJS.$(reportHeader).append(icon);
+		jQuery(reportHeader).append(title);
+		jQuery(reportHeader).append(icon);
 		return reportHeader;
 	};
 	
 	RiskReport.prototype.createVersionSummary = function () {
 		var detailedReleaseSummary = this.rawdata.report.detailedReleaseSummary;
 		var table = document.createElement("div");
-		AJS.$(table).addClass("versionSummaryTable");
+		jQuery(table).addClass("versionSummaryTable");
 		var versionInfo = document.createElement("div");
 		var projectName = document.createElement("div");
 		var projectVersion = document.createElement("div");
 		var moreDetail = document.createElement("div");
 		
-		AJS.$(projectName).addClass("clickable linkText versionSummaryLargeLabel");
-		AJS.$(projectName).attr("onclick" ,"window.open('"+this.createProjectUrl()+"', '_blank');");
-		AJS.$(projectName).text(detailedReleaseSummary.projectName);
+		jQuery(projectName).addClass("clickable linkText versionSummaryLargeLabel");
+		jQuery(projectName).attr("onclick" ,"window.open('"+this.createProjectUrl()+"', '_blank');");
+		jQuery(projectName).text(detailedReleaseSummary.projectName);
 		
-		AJS.$(projectVersion).addClass("clickable linkText versionSummaryLargeLabel");
-		AJS.$(projectVersion).attr("onclick" ,"window.open('"+this.createVersionUrl()+"', '_blank');");
-		AJS.$(projectVersion).text(detailedReleaseSummary.version);
+		jQuery(projectVersion).addClass("clickable linkText versionSummaryLargeLabel");
+		jQuery(projectVersion).attr("onclick" ,"window.open('"+this.createVersionUrl()+"', '_blank');");
+		jQuery(projectVersion).text(detailedReleaseSummary.version);
 		
-		AJS.$(moreDetail).addClass("linkText riskReportText clickable evenPadding");
-		AJS.$(moreDetail).css({"float": "right"});
-		AJS.$(moreDetail).attr("onclick" ,"window.open('"+this.createVersionUrl()+"', '_blank');");
-		AJS.$(moreDetail).text("See more detail...");
+		jQuery(moreDetail).addClass("linkText riskReportText clickable evenPadding");
+		jQuery(moreDetail).css({"float": "right"});
+		jQuery(moreDetail).attr("onclick" ,"window.open('"+this.createVersionUrl()+"', '_blank');");
+		jQuery(moreDetail).text("See more detail...");
 		
-		AJS.$(versionInfo).append(projectName);
-		AJS.$(versionInfo).append(AJS.$('<div class="versionSummaryLargeLabel"><i class="fa fa-caret-right"></i></div>'))
-		AJS.$(versionInfo).append(projectVersion);
-		AJS.$(versionInfo).append(moreDetail);
+		jQuery(versionInfo).append(projectName);
+		jQuery(versionInfo).append(jQuery('<div class="versionSummaryLargeLabel"><i class="fa fa-caret-right"></i></div>'))
+		jQuery(versionInfo).append(projectVersion);
+		jQuery(versionInfo).append(moreDetail);
 		
-		var info = AJS.$(document.createElement("div"));
-		AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">Phase:</div>'));
-		 AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+this.createPhaseString(detailedReleaseSummary.phase)+'</div>'));
-	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">|</div>'));
-	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">Distribution:</div>'));
-	        AJS.$(info).append(AJS.$('<div class="versionSummaryLabel">'+this.createDistributionString(detailedReleaseSummary.distribution)+'</div>'));		
-	   AJS.$(table).append(versionInfo);
-       AJS.$(table).append(info);	
+		var info = jQuery(document.createElement("div"));
+		jQuery(info).append(jQuery('<div class="versionSummaryLabel">Phase:</div>'));
+		 jQuery(info).append(jQuery('<div class="versionSummaryLabel">'+this.createPhaseString(detailedReleaseSummary.phase)+'</div>'));
+	        jQuery(info).append(jQuery('<div class="versionSummaryLabel">|</div>'));
+	        jQuery(info).append(jQuery('<div class="versionSummaryLabel">Distribution:</div>'));
+	        jQuery(info).append(jQuery('<div class="versionSummaryLabel">'+this.createDistributionString(detailedReleaseSummary.distribution)+'</div>'));		
+	   jQuery(table).append(versionInfo);
+       jQuery(table).append(info);	
 	        
 	   return table;
 	};
 	
 	RiskReport.prototype.createHorizontalBar = function (labelId,labelValue, clickFnName, barId,barValue,barStyleClass) {
 		  var percentage = this.getPercentage(barValue)+'%';
-	      return  AJS.$('<div class="progress-bar horizontal">'
+	      return  jQuery('<div class="progress-bar horizontal">'
              +'<div id="'+labelId +'" class="clickable riskSummaryLabel"'
              +    'onclick="'+clickFnName+'(this)">' +labelValue+'</div>'
              +'<div class="riskSummaryCount">' +barValue+'</div>'
@@ -163,72 +163,72 @@ var RiskReport = function (jsonData) {
 	
 	RiskReport.prototype.createSecurityRiskContainer = function () {
 		var container = document.createElement("div");
-		AJS.$(container).addClass("riskSummaryContainer horizontal rounded");
+		jQuery(container).addClass("riskSummaryContainer horizontal rounded");
 		var labelDiv = document.createElement("div");
-		AJS.$(labelDiv).addClass("riskSummaryContainerLabel");
-		AJS.$(labelDiv).text("Security Risk").append('<i id="securityDescriptionIcon"'
+		jQuery(labelDiv).addClass("riskSummaryContainerLabel");
+		jQuery(labelDiv).text("Security Risk").append('<i id="securityDescriptionIcon"'
 	                                              +'class="fa fa-info-circle infoIcon"'
 	                                              +'title="Calculated risk on number of component versions based on known vulnerabilities."></i>');		
-		AJS.$(container).append(labelDiv);
+		jQuery(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highSecurityRiskLabel','High','filterTableByVulnerabilityRisk','highVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskHighCount,'progress-fill-high'));
-		AJS.$(container).append(this.createHorizontalBar('mediumSecurityRiskLabel','Medium','filterTableByVulnerabilityRisk','mediumVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskMediumCount,'progress-fill-medium'));
-		AJS.$(container).append(this.createHorizontalBar('lowSecurityRiskLabel','Low','filterTableByVulnerabilityRisk','lowVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskLowCount,'progress-fill-low'));
-		AJS.$(container).append(this.createHorizontalBar('noneSecurityRiskLabel','None','filterTableByVulnerabilityRisk','noneVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskNoneCount,'progress-fill-none'));
+		jQuery(container).append(this.createHorizontalBar('highSecurityRiskLabel','High','filterTableByVulnerabilityRisk','highVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskHighCount,'progress-fill-high'));
+		jQuery(container).append(this.createHorizontalBar('mediumSecurityRiskLabel','Medium','filterTableByVulnerabilityRisk','mediumVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskMediumCount,'progress-fill-medium'));
+		jQuery(container).append(this.createHorizontalBar('lowSecurityRiskLabel','Low','filterTableByVulnerabilityRisk','lowVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskLowCount,'progress-fill-low'));
+		jQuery(container).append(this.createHorizontalBar('noneSecurityRiskLabel','None','filterTableByVulnerabilityRisk','noneVulnerabilityRiskBar',this.rawdata.vulnerabilityRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
 	RiskReport.prototype.createLicenseRiskContainer = function () {
 		var container = document.createElement("div");
-		AJS.$(container).addClass("riskSummaryContainer horizontal rounded");
+		jQuery(container).addClass("riskSummaryContainer horizontal rounded");
 		var labelDiv = document.createElement("div");
-		AJS.$(labelDiv).addClass("riskSummaryContainerLabel");
-		AJS.$(labelDiv).text("License Risk").append('<i id="licenseDescriptionIcon"'
+		jQuery(labelDiv).addClass("riskSummaryContainerLabel");
+		jQuery(labelDiv).text("License Risk").append('<i id="licenseDescriptionIcon"'
 	                                              +'class="fa fa-info-circle infoIcon"'
 	                                              +'title="Calculated risk based on open source software (OSS) license use in your projects."></i>');		
-		AJS.$(container).append(labelDiv);
+		jQuery(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highLicenseRiskLabel','High','filterTableByLicenseRisk','highLicenseRiskBar',this.rawdata.licenseRiskHighCount,'progress-fill-high'));
-		AJS.$(container).append(this.createHorizontalBar('mediumLicenseRiskLabel','Medium','filterTableByLicenseRisk','mediumLicenseRiskBar',this.rawdata.licenseRiskMediumCount,'progress-fill-medium'));
-		AJS.$(container).append(this.createHorizontalBar('lowLicenseRiskLabel','Low','filterTableByLicenseRisk','lowLicenseRiskBar',this.rawdata.licenseRiskLowCount,'progress-fill-low'));
-		AJS.$(container).append(this.createHorizontalBar('noneLicenseRiskLabel','None','filterTableByLicenseRisk','noneLicenseRiskBar',this.rawdata.licenseRiskNoneCount,'progress-fill-none'));
+		jQuery(container).append(this.createHorizontalBar('highLicenseRiskLabel','High','filterTableByLicenseRisk','highLicenseRiskBar',this.rawdata.licenseRiskHighCount,'progress-fill-high'));
+		jQuery(container).append(this.createHorizontalBar('mediumLicenseRiskLabel','Medium','filterTableByLicenseRisk','mediumLicenseRiskBar',this.rawdata.licenseRiskMediumCount,'progress-fill-medium'));
+		jQuery(container).append(this.createHorizontalBar('lowLicenseRiskLabel','Low','filterTableByLicenseRisk','lowLicenseRiskBar',this.rawdata.licenseRiskLowCount,'progress-fill-low'));
+		jQuery(container).append(this.createHorizontalBar('noneLicenseRiskLabel','None','filterTableByLicenseRisk','noneLicenseRiskBar',this.rawdata.licenseRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
 	RiskReport.prototype.createOperationalRiskContainer = function () {
 		var container = document.createElement("div");
-		AJS.$(container).addClass("riskSummaryContainer horizontal rounded");
+		jQuery(container).addClass("riskSummaryContainer horizontal rounded");
 		var labelDiv = document.createElement("div");
-		AJS.$(labelDiv).addClass("riskSummaryContainerLabel");
-		AJS.$(labelDiv).text("Operational Risk").append('<i id="securityDescriptionIcon"'
+		jQuery(labelDiv).addClass("riskSummaryContainerLabel");
+		jQuery(labelDiv).text("Operational Risk").append('<i id="securityDescriptionIcon"'
 	                                              +'class="fa fa-info-circle infoIcon"'
 	                                              +'title="Calculated risk based on tracking overall open source software (OSS) component activity."></i>');		
-		AJS.$(container).append(labelDiv);
+		jQuery(container).append(labelDiv);
 		
-		AJS.$(container).append(this.createHorizontalBar('highOperationalRiskLabel','High','filterTableByOperationalRisk','highOperationalRiskBar',this.rawdata.operationalRiskHighCount,'progress-fill-high'));
-		AJS.$(container).append(this.createHorizontalBar('mediumOperationalRiskLabel','Medium','filterTableByOperationalRisk','mediumOperationalRiskBar',this.rawdata.operationalRiskMediumCount,'progress-fill-medium'));
-		AJS.$(container).append(this.createHorizontalBar('lowOperationalRiskLabel','Low','filterTableByOperationalRisk','lowOperationalRiskBar',this.rawdata.operationalRiskLowCount,'progress-fill-low'));
-		AJS.$(container).append(this.createHorizontalBar('noneOperationalRiskLabel','None','filterTableByOperationalRisk','noneOperationalRiskBar',this.rawdata.operationalRiskNoneCount,'progress-fill-none'));
+		jQuery(container).append(this.createHorizontalBar('highOperationalRiskLabel','High','filterTableByOperationalRisk','highOperationalRiskBar',this.rawdata.operationalRiskHighCount,'progress-fill-high'));
+		jQuery(container).append(this.createHorizontalBar('mediumOperationalRiskLabel','Medium','filterTableByOperationalRisk','mediumOperationalRiskBar',this.rawdata.operationalRiskMediumCount,'progress-fill-medium'));
+		jQuery(container).append(this.createHorizontalBar('lowOperationalRiskLabel','Low','filterTableByOperationalRisk','lowOperationalRiskBar',this.rawdata.operationalRiskLowCount,'progress-fill-low'));
+		jQuery(container).append(this.createHorizontalBar('noneOperationalRiskLabel','None','filterTableByOperationalRisk','noneOperationalRiskBar',this.rawdata.operationalRiskNoneCount,'progress-fill-none'));
 		return container;
 	};
 	
 	RiskReport.prototype.createSummaryTable = function () {
 		var table = document.createElement("table");
-		AJS.$(table).addClass("table-summary horizontal")
+		jQuery(table).addClass("table-summary horizontal")
 		var tableBody = document.createElement("tbody");
 		var tableRow = document.createElement("tr");
 		var tableDataLabel = document.createElement("td");
-		AJS.$(tableDataLabel).addClass("summaryLabel");
-		AJS.$(tableDataLabel).css({"font-weight" : "bold"});
-		AJS.$(tableDataLabel).text("BOM Entries");
+		jQuery(tableDataLabel).addClass("summaryLabel");
+		jQuery(tableDataLabel).css({"font-weight" : "bold"});
+		jQuery(tableDataLabel).text("BOM Entries");
 		var tableDataValue = document.createElement("td");
-		AJS.$(tableDataValue).addClass("summaryLabel");
-		AJS.$(tableDataValue).text(this.rawdata.totalBomEntries);
+		jQuery(tableDataValue).addClass("summaryLabel");
+		jQuery(tableDataValue).text(this.rawdata.totalBomEntries);
 		
-		AJS.$(tableRow).append(tableDataLabel);
-		AJS.$(tableRow).append(tableDataValue);
-		AJS.$(tableBody).append(tableRow);
-		AJS.$(table).append(tableBody);
+		jQuery(tableRow).append(tableDataLabel);
+		jQuery(tableRow).append(tableDataValue);
+		jQuery(tableBody).append(tableRow);
+		jQuery(table).append(tableBody);
 		
 		return table;
 	};
@@ -249,140 +249,140 @@ var RiskReport = function (jsonData) {
 		
 		var tableHead = document.createElement("thead");
 		var tableHeadRow = document.createElement("tr");
-		AJS.$(tableHeadRow).append(document.createElement("th"));
+		jQuery(tableHeadRow).append(document.createElement("th"));
 		
 		var columnHeadComponent = document.createElement("th");
-		AJS.$(columnHeadComponent).addClass(compStyleClass);
-		AJS.$(columnHeadComponent).text("Component");
+		jQuery(columnHeadComponent).addClass(compStyleClass);
+		jQuery(columnHeadComponent).text("Component");
 		
 		var columnHeadVersion = document.createElement("th");
-		AJS.$(columnHeadVersion).addClass(compStyleClass);
-		AJS.$(columnHeadVersion).text("Version");
+		jQuery(columnHeadVersion).addClass(compStyleClass);
+		jQuery(columnHeadVersion).text("Version");
 		
 		var columnHeadLicense = document.createElement("th");
-		AJS.$(columnHeadLicense).addClass(licenseStyleClass);
-		AJS.$(columnHeadLicense).text("License");
+		jQuery(columnHeadLicense).addClass(licenseStyleClass);
+		jQuery(columnHeadLicense).text("License");
 		
 		var columnHeadEntryHigh = document.createElement("th");
-		AJS.$(columnHeadEntryHigh).addClass(riskStyleClass);
-		AJS.$(columnHeadEntryHigh).text("H");
+		jQuery(columnHeadEntryHigh).addClass(riskStyleClass);
+		jQuery(columnHeadEntryHigh).text("H");
 		
 		var columnHeadEntryMedium = document.createElement("th");
-		AJS.$(columnHeadEntryMedium).addClass(riskStyleClass);
-		AJS.$(columnHeadEntryMedium).text("M");
+		jQuery(columnHeadEntryMedium).addClass(riskStyleClass);
+		jQuery(columnHeadEntryMedium).text("M");
 		
 		var columnHeadEntryLow = document.createElement("th");
-		AJS.$(columnHeadEntryLow).addClass(riskStyleClass);
-		AJS.$(columnHeadEntryLow).text("L");
+		jQuery(columnHeadEntryLow).addClass(riskStyleClass);
+		jQuery(columnHeadEntryLow).text("L");
 		
 		var columnHeadLicenseRisk = document.createElement("th");
-		AJS.$(columnHeadLicenseRisk).addClass(riskStyleClass);
-		AJS.$(columnHeadLicenseRisk).attr("title","License Risk");
-		AJS.$(columnHeadLicenseRisk).text("Lic R");
+		jQuery(columnHeadLicenseRisk).addClass(riskStyleClass);
+		jQuery(columnHeadLicenseRisk).attr("title","License Risk");
+		jQuery(columnHeadLicenseRisk).text("Lic R");
 		
 		var columnHeadOperationRisk = document.createElement("th");
-		AJS.$(columnHeadOperationRisk).addClass(riskStyleClass);
-		AJS.$(columnHeadOperationRisk).attr("title","Operational Risk");
-		AJS.$(columnHeadOperationRisk).text("Opt R");
+		jQuery(columnHeadOperationRisk).addClass(riskStyleClass);
+		jQuery(columnHeadOperationRisk).attr("title","Operational Risk");
+		jQuery(columnHeadOperationRisk).text("Opt R");
 		
-		AJS.$(tableHeadRow).append(columnHeadComponent);
-		AJS.$(tableHeadRow).append(columnHeadVersion);
-		AJS.$(tableHeadRow).append(columnHeadLicense);
-		AJS.$(tableHeadRow).append(columnHeadEntryHigh);
-		AJS.$(tableHeadRow).append(columnHeadEntryMedium);
-		AJS.$(tableHeadRow).append(columnHeadEntryLow);
-		AJS.$(tableHeadRow).append(columnHeadLicenseRisk);
-		AJS.$(tableHeadRow).append(columnHeadOperationRisk);
+		jQuery(tableHeadRow).append(columnHeadComponent);
+		jQuery(tableHeadRow).append(columnHeadVersion);
+		jQuery(tableHeadRow).append(columnHeadLicense);
+		jQuery(tableHeadRow).append(columnHeadEntryHigh);
+		jQuery(tableHeadRow).append(columnHeadEntryMedium);
+		jQuery(tableHeadRow).append(columnHeadEntryLow);
+		jQuery(tableHeadRow).append(columnHeadLicenseRisk);
+		jQuery(tableHeadRow).append(columnHeadOperationRisk);
 		
-		AJS.$(tableHead).append(tableHeadRow);
+		jQuery(tableHead).append(tableHeadRow);
 		return tableHead;
 	};
 	
 	RiskReport.prototype.createComponentTableRow = function (entry) {
 		var tableRow = document.createElement("tr");
 		var columnApprovalStatus = document.createElement("td");
-		AJS.$(columnApprovalStatus).addClass("evenPadding violation");
-		AJS.$(columnApprovalStatus).append(AJS.$('<i class="fa fa-ban"></i>'));
+		jQuery(columnApprovalStatus).addClass("evenPadding violation");
+		jQuery(columnApprovalStatus).append(jQuery('<i class="fa fa-ban"></i>'));
 		var approvalDiv = document.createElement("div");
-		AJS.$(approvalDiv).text(entry.policyApprovalStatus);
-		AJS.$(columnApprovalStatus).append(approvalDiv);
+		jQuery(approvalDiv).text(entry.policyApprovalStatus);
+		jQuery(columnApprovalStatus).append(approvalDiv);
 	
 		var columnComponent = document.createElement("td");
-		AJS.$(columnComponent).addClass("clickable componentColumn evenPadding");
-		AJS.$(columnComponent).attr("onclick" ,"window.open('"+this.createComponentUrl(entry)+"', '_blank');");
-		AJS.$(columnComponent).text(entry.producerProject.name);
+		jQuery(columnComponent).addClass("clickable componentColumn evenPadding");
+		jQuery(columnComponent).attr("onclick" ,"window.open('"+this.createComponentUrl(entry)+"', '_blank');");
+		jQuery(columnComponent).text(entry.producerProject.name);
 
         var columnVersion = document.createElement("td");
-        AJS.$(columnVersion).addClass("clickable componentColumn evenPadding");
-		AJS.$(columnVersion).attr("onclick" ,"window.open('"+this.createComponentVersionUrl(entry)+"', '_blank');");
-		AJS.$(columnVersion).text(entry.producerReleases[0].version);
+        jQuery(columnVersion).addClass("clickable componentColumn evenPadding");
+		jQuery(columnVersion).attr("onclick" ,"window.open('"+this.createComponentVersionUrl(entry)+"', '_blank');");
+		jQuery(columnVersion).text(entry.producerReleases[0].version);
         
         var columnLicense = document.createElement("td");
-        AJS.$(columnLicense).addClass("licenseColumn evenPadding");
-        AJS.$(columnLicense).attr("title",entry.licenses[0].licenseDisplay);
-        AJS.$(columnLicense).text(entry.licenses[0].licenseDisplay);
+        jQuery(columnLicense).addClass("licenseColumn evenPadding");
+        jQuery(columnLicense).attr("title",entry.licenses[0].licenseDisplay);
+        jQuery(columnLicense).text(entry.licenses[0].licenseDisplay);
         
         var riskCategories = entry.riskProfile.categories;
         var vulnerabilityRiskProfile = riskCategories.VULNERABILITY;
         
         var columnHighRisk = document.createElement("td");
-        AJS.$(columnHighRisk).addClass("riskColumn");
+        jQuery(columnHighRisk).addClass("riskColumn");
         var highRiskDiv = document.createElement("div");
-        AJS.$(highRiskDiv).addClass("risk-span riskColumn risk-count");
-        AJS.$(highRiskDiv).text(vulnerabilityRiskProfile.HIGH);
-        AJS.$(columnHighRisk).append(highRiskDiv);
+        jQuery(highRiskDiv).addClass("risk-span riskColumn risk-count");
+        jQuery(highRiskDiv).text(vulnerabilityRiskProfile.HIGH);
+        jQuery(columnHighRisk).append(highRiskDiv);
 
         var columnMediumRisk = document.createElement("td");
-        AJS.$(columnMediumRisk).addClass("riskColumn");
+        jQuery(columnMediumRisk).addClass("riskColumn");
         var mediumRiskDiv = document.createElement("div");
-        AJS.$(mediumRiskDiv).addClass("risk-span riskColumn risk-count");
-        AJS.$( mediumRiskDiv).text(vulnerabilityRiskProfile.MEDIUM);
-        AJS.$(columnMediumRisk).append(mediumRiskDiv);
+        jQuery(mediumRiskDiv).addClass("risk-span riskColumn risk-count");
+        jQuery( mediumRiskDiv).text(vulnerabilityRiskProfile.MEDIUM);
+        jQuery(columnMediumRisk).append(mediumRiskDiv);
 
         var columnLowRisk = document.createElement("td");
-        AJS.$(columnLowRisk).addClass("riskColumn");
+        jQuery(columnLowRisk).addClass("riskColumn");
         var lowRiskDiv = document.createElement("div");
-        AJS.$(lowRiskDiv).addClass("risk-span riskColumn risk-count");
-        AJS.$(lowRiskDiv).text(vulnerabilityRiskProfile.LOW);
-        AJS.$(columnLowRisk).append(lowRiskDiv);
+        jQuery(lowRiskDiv).addClass("risk-span riskColumn risk-count");
+        jQuery(lowRiskDiv).text(vulnerabilityRiskProfile.LOW);
+        jQuery(columnLowRisk).append(lowRiskDiv);
 
         var columnLicenseRisk = document.createElement("td");
-        AJS.$(columnLicenseRisk).addClass("riskColumn");
+        jQuery(columnLicenseRisk).addClass("riskColumn");
         var licRiskDiv = document.createElement("div");
-        AJS.$(licRiskDiv).addClass("risk-span riskColumn risk-count");
-        AJS.$(licRiskDiv).text(this.createRiskString(riskCategories.LICENSE));
-        AJS.$(columnLicenseRisk).append(licRiskDiv);
+        jQuery(licRiskDiv).addClass("risk-span riskColumn risk-count");
+        jQuery(licRiskDiv).text(this.createRiskString(riskCategories.LICENSE));
+        jQuery(columnLicenseRisk).append(licRiskDiv);
         
         var columnOperationalRisk = document.createElement("td");
                 
-        AJS.$(columnOperationalRisk).addClass("riskColumn");
+        jQuery(columnOperationalRisk).addClass("riskColumn");
         var opRiskDiv = document.createElement("div");
-        AJS.$(opRiskDiv).addClass("risk-span riskColumn risk-count");
-        AJS.$(opRiskDiv).text(this.createRiskString(riskCategories.OPERATIONAL));
-        AJS.$(columnOperationalRisk).append(opRiskDiv);
+        jQuery(opRiskDiv).addClass("risk-span riskColumn risk-count");
+        jQuery(opRiskDiv).text(this.createRiskString(riskCategories.OPERATIONAL));
+        jQuery(columnOperationalRisk).append(opRiskDiv);
         
-        AJS.$(tableRow).append(columnApprovalStatus);
-        AJS.$(tableRow).append(columnComponent);
-        AJS.$(tableRow).append(columnVersion);
-        AJS.$(tableRow).append(columnLicense);
-        AJS.$(tableRow).append(columnHighRisk);
-        AJS.$(tableRow).append(columnMediumRisk);
-        AJS.$(tableRow).append(columnLowRisk);
-        AJS.$(tableRow).append(columnLicenseRisk);
-        AJS.$(tableRow).append(columnOperationalRisk);
+        jQuery(tableRow).append(columnApprovalStatus);
+        jQuery(tableRow).append(columnComponent);
+        jQuery(tableRow).append(columnVersion);
+        jQuery(tableRow).append(columnLicense);
+        jQuery(tableRow).append(columnHighRisk);
+        jQuery(tableRow).append(columnMediumRisk);
+        jQuery(tableRow).append(columnLowRisk);
+        jQuery(tableRow).append(columnLicenseRisk);
+        jQuery(tableRow).append(columnOperationalRisk);
         
 		return tableRow;
 	};
 	
 	RiskReport.prototype.createComponentTable = function () {
 		var table = document.createElement("table");
-		AJS.$(table).attr("id","hubBomReport");
-		AJS.$(table).addClass("table sortable");
-		AJS.$(table).attr("onmouseenter","initSortTable();");
+		jQuery(table).attr("id","hubBomReport");
+		jQuery(table).addClass("table sortable");
+		jQuery(table).attr("onmouseenter","initSortTable();");
 		
-		AJS.$(table).append(this.createComponentTableHead());
+		jQuery(table).append(this.createComponentTableHead());
 		var tableBody = document.createElement("tbody");
-		AJS.$(tableBody).attr("id","hubBomReportBody");
+		jQuery(tableBody).attr("id","hubBomReportBody");
 		var entryArray = this.rawdata.report.aggregateBomViewEntries;
 		var index;
 		var odd = true;
@@ -393,22 +393,22 @@ var RiskReport = function (jsonData) {
 			adjustOtherRisks(tableRow, licenseRiskColumnNum);
 			adjustOtherRisks(tableRow, operationRiskColumnNum);
 			odd = !odd;
-			AJS.$(tableBody).append(tableRow);
+			jQuery(tableBody).append(tableRow);
 		}
-		AJS.$(table).append(tableBody);
+		jQuery(table).append(tableBody);
 		return table;
 	};
 	
 	RiskReport.prototype.createReport = function () {
 		var report = document.createElement("div")
-		AJS.$(report).addClass("riskReportBackgroundColor");
-		AJS.$(report).append(this.createHeader());
-		AJS.$(report).append(this.createVersionSummary());
-		AJS.$(report).append(this.createSecurityRiskContainer());
-		AJS.$(report).append(this.createLicenseRiskContainer());
-		AJS.$(report).append(this.createOperationalRiskContainer());
-		AJS.$(report).append(this.createSummaryTable());
+		jQuery(report).addClass("riskReportBackgroundColor");
+		jQuery(report).append(this.createHeader());
+		jQuery(report).append(this.createVersionSummary());
+		jQuery(report).append(this.createSecurityRiskContainer());
+		jQuery(report).append(this.createLicenseRiskContainer());
+		jQuery(report).append(this.createOperationalRiskContainer());
+		jQuery(report).append(this.createSummaryTable());
 		var table = this.createComponentTable();
-		AJS.$(report).append(table);
-		AJS.$("#riskReportDiv").html(AJS.$(report).html());
+		jQuery(report).append(table);
+		jQuery("#riskReportDiv").html(jQuery(report).html());
 	};
