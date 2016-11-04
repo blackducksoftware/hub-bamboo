@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hub-bamboo</artifactId>
-  <version>2.0.1</version>
+  <version>2.0.2-SNAPSHOT</version>
   <packaging>atlassian-plugin</packaging>
 
   <!-- If the group or artifact changes then you must update HubBambooPluginHelper -->
