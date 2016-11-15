@@ -25,11 +25,10 @@ under the License.
 		<meta name="tab" content="hub_risk_report"/>
 		${webResourceManager.requireResource("com.blackducksoftware.integration.hub-bamboo:hub-bamboo-resources")}
 	</head>
-	<div id="riskReportDiv"></div>
+	<iframe id="reportFrame" width="100%"></iframe>
 	<script type="text/javascript">
-	  // TODO refactor this code into an object loader for the JSON look into the URL JQuery plugin.
-	  //  http://stackoverflow.com/questions/19491336/get-url-parameter-jquery-or-how-to-get-query-string-values-in-js
-	  var getUrlParameter = function getUrlParameter(sParam) {
+      //  http://stackoverflow.com/questions/19491336/get-url-parameter-jquery-or-how-to-get-query-string-values-in-js
+      var getUrlParameter = function getUrlParameter(sParam) {
             var sPageURL = decodeURIComponent(window.location.search.substring(1)),
                 sURLVariables = sPageURL.split('&'),
                 sParameterName,
@@ -42,17 +41,26 @@ under the License.
                     return sParameterName[1] === undefined ? true : sParameterName[1];
                 }
             }
-        };
-	  console.log("Getting Risk Report JSON file...");
-	  var url = window.location.href;
-	  var urlSplit = url.split("plugins");
-	  url = urlSplit[0];
-	  var planKey = getUrlParameter("planKey");
-	  var buildNumber = getUrlParameter("buildNumber");
-	  var artifactUrl = url+'browse/' + planKey + '-' +buildNumber + '/artifact/Hub_Risk_Report/hub_risk_report.json';
-	  jQuery.getJSON(artifactUrl,function (data) {
-	     var riskReport = new RiskReport(data);
-	     riskReport.createReport();
-	  });
+      };
+      
+      function getRiskReportHtml() {
+        var url = window.location.href;
+        var urlSplit = url.split("plugins");
+        url = urlSplit[0];
+        var planKey = getUrlParameter("planKey");
+        var buildNumber = getUrlParameter("buildNumber");
+        var artifactUrl = url+'browse/' + planKey + '-' +buildNumber + '/artifact/Hub_Risk_Report/riskreport.html';
+        console.log("Risk Report html file "+artifactUrl);
+        return artifactUrl;
+      }
+	  
+	  var frame = document.getElementById("reportFrame");
+	  frame.onload = function() {
+	    setTimeout(function () {
+	    var frame = document.getElementById("reportFrame");
+        frame.height = frame.contentWindow.document.body.scrollHeight;
+        }, 200);
+	  };
+	  frame.src = getRiskReportHtml();
 	</script>
 </html>
