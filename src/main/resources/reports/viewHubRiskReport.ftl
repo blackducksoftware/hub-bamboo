@@ -57,8 +57,8 @@ under the License.
 	  var frame = document.getElementById("reportFrame");
 	  frame.onload = function() {
 	    setTimeout(function () {
-	    var frame = document.getElementById("reportFrame");
-        frame.height = frame.contentWindow.document.body.scrollHeight;
+	       var frame = document.getElementById("reportFrame");
+           frame.height = frame.contentWindow.document.body.scrollHeight;
         }, 200);
 	  };
 	  frame.src = getRiskReportHtml();
