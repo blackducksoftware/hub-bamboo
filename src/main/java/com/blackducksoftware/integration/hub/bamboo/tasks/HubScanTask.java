@@ -197,7 +197,7 @@ public class HubScanTask implements TaskType {
             final CLILocation cliLocation = createCLILocation(logger);
 
             // install the CLI
-            installCLI(logger, hubConfig.getHubUrl().getAuthority().toString(), hubVersion, localHostName, cliLocation,
+            installCLI(logger, hubConfig.getHubUrl().toString(), hubVersion, localHostName, cliLocation,
                     commonEnvVars);
 
             if (cliLocation == null || !cliLocation.getCLIExists(logger)) {
