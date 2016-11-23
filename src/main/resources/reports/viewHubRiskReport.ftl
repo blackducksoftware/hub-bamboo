@@ -50,8 +50,10 @@ under the License.
       var planKey = getUrlParameter("planKey");
       var buildNumber = getUrlParameter("buildNumber");
       var artifactUrl = url+'browse/' + planKey + '-' +buildNumber + '/artifact/Hub_Risk_Report/hub_risk_report.json';
-      jQuery.getJSON(artifactUrl,function (data) {
-         var riskReport = new RiskReport(data);
+      var myJQuery = jQuery.noConflict();
+      
+      myJQuery.getJSON(artifactUrl,function (data) {
+         var riskReport = new RiskReport(myJQuery,data);
          riskReport.createReport();
       });
     </script>
