@@ -96,29 +96,6 @@
 	<!-- add our i18n resource -->
 	<resource type="i18n" name="i18n" location="com.blackducksoftware.integration.hub.bamboo.i18n" />
     
-    <!-- add our web resources -->
-    <web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
-        <dependency>com.atlassian.auiplugin:ajs</dependency>
-        <resource type="download" name="Sortable.js" location="/js/Sortable.js"/>
-        <resource type="download" name="HubBomReportFunctions.js" location="/js/HubBomReportFunctions.js"/>
-        <resource type="download" name="HubRiskReport.js" location="/js/HubRiskReport.js"/>
-        <resource type="download" name="images/" location="/images"/>
-        <resource type="download" name="Hub_BD_logo.png" location="/images/Hub_BD_logo.png"/>
-        <resource type="download" name="HubBomReport.css" location="/css/HubBomReport.css"/>
-        
-        <!-- using font awesome in Bamboo https://answers.atlassian.com/questions/312638/how-to-include-icon-fonts-in-plugin -->
-        <resource name="FontAwesome.otf"      type="download" location="/font-awesome-4.5.0/fonts/FontAwesome.otf"></resource>
-        <resource name="fontawesome-webfont.eot"  type="download" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.eot"></resource>
-        <resource name="fontawesome-webfont.svg"  type="download" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.svg"></resource>
-        <resource name="fontawesome-webfont.ttf"  type="download" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.ttf"></resource>
-        <resource name="fontawesome-webfont.woff" type="download" location="/font-awesome-4.5.0/fonts/fontawesome-webfont.woff"></resource>
-        
-        <!--  IMPORTANT need to make changes to the urls in font-awesome.css if it is changed/updated -->
-        <resource type="download" name="font-awesome.css" location="/font-awesome-4.5.0/css/font-awesome.css"/>
-        <!-- need to use this to ensure the javascript functions are loaded in the browser before the risk report action is invoked -->
-        <context>atl.general</context>
-    </web-resource>
-    
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"
 		interface="com.atlassian.sal.api.ApplicationProperties" />

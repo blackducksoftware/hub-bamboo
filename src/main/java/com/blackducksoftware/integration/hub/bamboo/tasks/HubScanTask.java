@@ -22,7 +22,6 @@
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.json.JSONException;
@@ -44,6 +44,7 @@ import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.configuration.ConfigurationMap;
 import com.atlassian.bamboo.plan.PlanResultKey;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
+import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.plan.artifact.ArtifactPublishingResult;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
 import com.atlassian.bamboo.process.ProcessService;
@@ -58,7 +59,6 @@ import com.atlassian.bamboo.util.BuildUtils;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.plugin.PluginAccessor;
-import com.atlassian.utils.process.IOUtils;
 import com.blackducksoftware.integration.builder.ValidationResultEnum;
 import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.exception.EncryptionException;
@@ -77,6 +77,7 @@ import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
 import com.blackducksoftware.integration.hub.api.report.ReportCategoriesEnum;
 import com.blackducksoftware.integration.hub.api.report.ReportFormatEnum;
 import com.blackducksoftware.integration.hub.api.report.ReportRestService;
+import com.blackducksoftware.integration.hub.api.report.RiskReportResourceCopier;
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem;
 import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
 import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
@@ -148,7 +149,6 @@ public class HubScanTask implements TaskType {
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
-
         final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
                 environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
 
@@ -535,40 +535,57 @@ public class HubScanTask implements TaskType {
         // report.
         final ReportCategoriesEnum[] categories = { ReportCategoriesEnum.VERSION, ReportCategoriesEnum.COMPONENTS };
         HubRiskReportData report = reportService.generateHubReport(hubReportGenerationInfo.getVersion(), ReportFormatEnum.JSON, categories);
-        final String reportPath = taskContext.getWorkingDirectory() + File.separator
-                + HubBambooUtils.HUB_RISK_REPORT_FILENAME;
-
-        final Gson gson = new GsonBuilder().create();
-        final String contents = gson.toJson(report);
-
-        FileWriter writer = null;
-        try {
-            writer = new FileWriter(reportPath);
-            writer.write(contents);
-        } finally {
-            IOUtils.closeQuietly(writer);
-        }
-
-        final BuildContext buildContext = taskContext.getBuildContext();
-        final PlanResultKey planResultKey = buildContext.getPlanResultKey();
-        final BuildLogger buildLogger = taskContext.getBuildLogger();
-        final File baseDirectory = taskContext.getWorkingDirectory();
 
         final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
 
         final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
-        final ArtifactDefinitionContext artifact = HubBambooUtils.getInstance()
-                .getRiskReportArtifactDefinitionContext(token);
 
-        final Map<String, String> config = new HashMap<>();
+        publishRiskReportFiles(logger, taskContext, token, report);
+    }
 
-        final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey,
-                baseDirectory, artifact, config, 1);
+    private void publishRiskReportFiles(final IntLogger logger, TaskContext taskContext, SecureToken token, HubRiskReportData hubRiskReportData) {
 
-        if (!publishResult.shouldContinueBuild()) {
-            logger.error("Could not publish the " + HubBambooUtils.HUB_RISK_REPORT_FILENAME
-                    + " artifact for the Risk Report");
+        final BuildContext buildContext = taskContext.getBuildContext();
+        final PlanResultKey planResultKey = buildContext.getPlanResultKey();
+        final BuildLogger buildLogger = taskContext.getBuildLogger();
+
+        try {
+            final Map<String, String> config = new HashMap<>();
+            File baseDirectory = new File(taskContext.getWorkingDirectory() + HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+
+            RiskReportResourceCopier resourceCopier = new RiskReportResourceCopier(baseDirectory.getAbsolutePath());
+            List<File> fileList = resourceCopier.copy();
+            final Gson gson = new GsonBuilder().create();
+            final String contents = gson.toJson(hubRiskReportData);
+
+            File htmlFile = null;
+            for (File file : fileList) {
+                if (file.getName().equals("riskreport.html")) {
+                    htmlFile = file;
+                    break;
+                }
+            }
+            String htmlFileString = FileUtils.readFileToString(htmlFile, "UTF-8");
+            htmlFileString = htmlFileString.replace(RiskReportResourceCopier.JSON_TOKEN_TO_REPLACE, contents);
+            FileUtils.writeStringToFile(htmlFile, htmlFileString, "UTF-8");
+
+            final ArtifactDefinitionContext artifact = createArtifactDefContext(token);
+            final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey,
+                    baseDirectory, artifact, config, fileList.size());
+
+            if (!publishResult.shouldContinueBuild()) {
+                logger.error("Could not publish the artifacts for the Risk Report");
+            }
+        } catch (IOException | URISyntaxException ex) {
+            logger.error("Could not publish the Risk Report", ex);
         }
+    }
+
+    private ArtifactDefinitionContextImpl createArtifactDefContext(SecureToken token) {
+        final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+                HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
+        artifact.setCopyPattern("**/*");
+        return artifact;
     }
 
     /**
