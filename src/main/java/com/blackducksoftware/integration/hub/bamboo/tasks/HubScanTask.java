@@ -32,9 +32,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.json.JSONException;
 import org.restlet.resource.ResourceException;
 
@@ -47,7 +45,6 @@ import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.plan.artifact.ArtifactPublishingResult;
 import com.atlassian.bamboo.process.EnvironmentVariableAccessor;
-import com.atlassian.bamboo.process.ProcessService;
 import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
@@ -67,17 +64,8 @@ import com.blackducksoftware.integration.hub.HubSupportHelper;
 import com.blackducksoftware.integration.hub.ScanExecutor.Result;
 import com.blackducksoftware.integration.hub.api.HubServicesFactory;
 import com.blackducksoftware.integration.hub.api.HubVersionRestService;
-import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationItem;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem;
-import com.blackducksoftware.integration.hub.api.project.ProjectItem;
-import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionItem;
-import com.blackducksoftware.integration.hub.api.report.HubReportGenerationInfo;
-import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
-import com.blackducksoftware.integration.hub.api.report.ReportCategoriesEnum;
-import com.blackducksoftware.integration.hub.api.report.ReportFormatEnum;
-import com.blackducksoftware.integration.hub.api.report.ReportRestService;
-import com.blackducksoftware.integration.hub.api.report.RiskReportResourceCopier;
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem;
 import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
 import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
@@ -88,6 +76,9 @@ import com.blackducksoftware.integration.hub.builder.HubScanJobConfigBuilder;
 import com.blackducksoftware.integration.hub.capabilities.HubCapabilitiesEnum;
 import com.blackducksoftware.integration.hub.cli.CLIDownloadService;
 import com.blackducksoftware.integration.hub.cli.SimpleScanService;
+import com.blackducksoftware.integration.hub.dataservices.policystatus.PolicyStatusDataService;
+import com.blackducksoftware.integration.hub.dataservices.policystatus.PolicyStatusDescription;
+import com.blackducksoftware.integration.hub.dataservices.report.RiskReportDataService;
 import com.blackducksoftware.integration.hub.dataservices.scan.ScanStatusDataService;
 import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
@@ -108,22 +99,16 @@ import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName;
 import com.blackducksoftware.integration.phone.home.exception.PhoneHomeException;
 import com.blackducksoftware.integration.phone.home.exception.PropertiesLoaderException;
 import com.blackducksoftware.integration.util.CIEnvironmentVariables;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 public class HubScanTask implements TaskType {
 
-    private static final String ERROR_MSG_PREFIX_RESPONSE = "Response : ";
-
-    private static final String ERROR_MSG_PREFIX_STATUS = "Status : ";
+    private static final int RISK_REPORT_MINIMUM_FILE_COUNT = 41;
 
     private static final String HUB_SCAN_TASK_ERROR = "Hub Scan Task error";
 
     private final static String CLI_FOLDER_NAME = "tools/HubCLI";
 
     public static final String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
-
-    private final ProcessService processService;
 
     private final EnvironmentVariableAccessor environmentVariableAccessor;
 
@@ -133,10 +118,8 @@ public class HubScanTask implements TaskType {
 
     private final PluginAccessor pluginAccessor;
 
-    public HubScanTask(final ProcessService processService,
-            final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
+    public HubScanTask(final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
             final ArtifactManager artifactManager, final PluginAccessor pluginAccessor) {
-        this.processService = processService;
         this.environmentVariableAccessor = environmentVariableAccessor;
         this.bandanaManager = bandanaManager;
         this.artifactManager = artifactManager;
@@ -220,7 +203,6 @@ public class HubScanTask implements TaskType {
             }
 
             // run the scan
-            final DateTime beforeScanTime = new DateTime();
             int scanMemory = jobConfig.getScanMemory();
             String workingDirectory = jobConfig.getWorkingDirectory();
             String projectName = jobConfig.getProjectName();
@@ -230,7 +212,6 @@ public class HubScanTask implements TaskType {
                     scanMemory, true, isDryRun, projectName, versionName, jobConfig.getScanTargetPaths(), workingDirectory);
 
             Result scanResult = simpleScanService.setupAndExecuteScan();
-            final DateTime afterScanTime = new DateTime();
 
             if (scanResult != Result.SUCCESS) {
                 if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
@@ -241,33 +222,13 @@ public class HubScanTask implements TaskType {
                 }
             } else {
                 final List<ScanSummaryItem> scanSummaryList = simpleScanService.getScanSummaryItems();
-
-                ProjectVersionItem version = null;
-                ProjectItem project = null;
-                if (StringUtils.isNotBlank(jobConfig.getProjectName()) && StringUtils.isNotBlank(jobConfig.getVersion()) && !jobConfig.isDryRun()) {
-                    version = getProjectVersionFromScanStatus(services, scanSummaryList);
-                    project = getProjectFromVersion(version, services);
-                }
-                // check the policy failures
-
-                final HubReportGenerationInfo bomUpdateInfo = new HubReportGenerationInfo();
-                bomUpdateInfo.setService(hubIntRestService);
-                bomUpdateInfo.setProject(project);
-                bomUpdateInfo.setVersion(version);
-                bomUpdateInfo.setHostname(HostnameHelper.getMyHostname());
-                bomUpdateInfo.setScanTargets(jobConfig.getScanTargetPaths());
-                bomUpdateInfo.setMaximumWaitTime(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
-
-                bomUpdateInfo.setBeforeScanTime(beforeScanTime);
-                bomUpdateInfo.setAfterScanTime(afterScanTime);
-
-                // bomUpdateInfo.setScanStatusDirectory(scanExecutor.getScanStatusDirectoryPath());
+                long maximumWaitTime = jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds();
 
                 boolean waitForBom = true;
                 final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
 
                 if (isGenRiskReport) {
-                    generateRiskReport(taskContext, logger, bomUpdateInfo, scanSummaryList, hubSupport, services);
+                    generateRiskReport(taskContext, logger, scanSummaryList, hubSupport, services, projectName, versionName, maximumWaitTime);
                     waitForBom = false;
                 }
 
@@ -286,8 +247,7 @@ public class HubScanTask implements TaskType {
                         long timeout = hubConfig.getTimeout() * 1000;
                         waitForHub(scanStatusDataService, scanSummaryList, logger, timeout);
                     }
-                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, hubIntRestService,
-                            hubSupport, bomUpdateInfo, version.getLink(ProjectVersionItem.POLICY_STATUS_LINK));
+                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, services, projectName, versionName);
 
                     result = policyResult.build();
                 }
@@ -402,63 +362,30 @@ public class HubScanTask implements TaskType {
     }
 
     private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
-            final IntLogger logger, final HubIntRestService service, final HubSupportHelper hubSupport,
-            final HubReportGenerationInfo bomUpdateInfo, final String policyStatusUrl) {
+            final IntLogger logger, final HubServicesFactory services, String projectName, String versionName) {
         try {
-            // We use this conditional in case there are other failure
-            // conditions in the future
-            final PolicyStatusItem policyStatus = service.getPolicyStatus(policyStatusUrl);
-            if (policyStatus == null) {
+            final PolicyStatusDataService policyStatusDataService = services.createPolicyStatusDataService();
+
+            final PolicyStatusItem policyStatusItem = policyStatusDataService
+                    .getPolicyStatusForProjectAndVersion(projectName, versionName);
+            if (policyStatusItem == null) {
                 logger.error("Could not find any information about the Policy status of the bom.");
                 return resultBuilder.failed();
             }
 
-            if (policyStatus.getCountInViolation() == null) {
-                logger.error(createPolicyCountNotFound("In Violation"));
-            } else {
-                final String inViolationMsg = createPolicyCountMessage(policyStatus.getCountInViolation().getValue(),
-                        "In Violation");
-                if (policyStatus.getOverallStatus() == PolicyStatusEnum.IN_VIOLATION) {
-                    logger.error(inViolationMsg);
-                } else {
-                    logger.info(inViolationMsg);
-                }
-            }
-            if (policyStatus.getCountInViolationOverridden() == null) {
-                logger.error(createPolicyCountNotFound("In Violation Overridden"));
-            } else {
-                logger.info(createPolicyCountMessage(policyStatus.getCountInViolationOverridden().getValue(),
-                        "In Violation") + ", but they have been overridden.");
-            }
-            if (policyStatus.getCountNotInViolation() == null) {
-                logger.error(createPolicyCountNotFound("Not In Violation"));
-            } else {
-                logger.info(
-                        createPolicyCountMessage(policyStatus.getCountNotInViolation().getValue(), "Not In Violation"));
-            }
-
-            if (policyStatus.getOverallStatus() == PolicyStatusEnum.IN_VIOLATION) {
+            final PolicyStatusDescription policyStatusDescription = new PolicyStatusDescription(policyStatusItem);
+            final String policyStatusMessage = policyStatusDescription.getPolicyStatusMessage();
+            if (policyStatusItem.getOverallStatus() == PolicyStatusEnum.IN_VIOLATION) {
+                logger.error(policyStatusMessage);
                 return resultBuilder.failedWithError();
             }
+            logger.info(policyStatusMessage);
             return resultBuilder.success();
-        } catch (final IOException e) {
-            logger.error(e.getMessage(), e);
-            return resultBuilder.failed();
-        } catch (final BDRestException e) {
-            logger.error(e.getMessage(), e);
-            return resultBuilder.failed();
-        } catch (final URISyntaxException e) {
+        } catch (final IOException | URISyntaxException | BDRestException | ProjectDoesNotExistException | HubIntegrationException | MissingUUIDException
+                | UnexpectedHubResponseException e) {
             logger.error(e.getMessage(), e);
             return resultBuilder.failed();
         }
-    }
-
-    private String createPolicyCountNotFound(final String type) {
-        return "Could not find the number of bom entries " + type + " of a Policy.";
-    }
-
-    private String createPolicyCountMessage(final int count, final String type) {
-        return "Found " + count + " bom entries to be " + type + " of a defined Policy";
     }
 
     private HubServerConfig getHubServerConfig(final IntLogger logger)
@@ -505,78 +432,41 @@ public class HubScanTask implements TaskType {
         return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
     }
 
-    private ProjectVersionItem getProjectVersionFromScanStatus(HubServicesFactory services, List<ScanSummaryItem> scanSummaryList)
-            throws IOException, InterruptedException, HubIntegrationException, BDRestException, URISyntaxException, UnexpectedHubResponseException {
-        CodeLocationItem codeLocationItem = services.createCodeLocationRestService()
-                .getItem(scanSummaryList.get(0).getLink(ScanSummaryItem.CODE_LOCATION_LINK));
-        String projectVersionUrl = codeLocationItem.getMappedProjectVersion();
-        ProjectVersionItem projectVersion = services.createProjectVersionRestService().getItem(projectVersionUrl);
-        return projectVersion;
-    }
-
-    private ProjectItem getProjectFromVersion(ProjectVersionItem version, HubServicesFactory services)
-            throws IOException, BDRestException, URISyntaxException, UnexpectedHubResponseException {
-        ProjectItem project = services.createProjectRestService().getItem(version.getLink(ProjectVersionItem.PROJECT_LINK));
-        return project;
-    }
-
-    private void generateRiskReport(final TaskContext taskContext, final IntLogger logger,
-            final HubReportGenerationInfo hubReportGenerationInfo, final List<ScanSummaryItem> scanSummaryList, final HubSupportHelper hubSupport,
-            final HubServicesFactory services)
+    private void generateRiskReport(final TaskContext taskContext, final IntLogger logger, final List<ScanSummaryItem> scanSummaryList,
+            final HubSupportHelper hubSupport,
+            final HubServicesFactory services, String projectName, String versionName, long maximumWaitTime)
             throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException,
             UnexpectedHubResponseException, ProjectDoesNotExistException, MissingUUIDException {
         logger.info("Generating Risk Report");
-        final long maximumWaitTime = hubReportGenerationInfo.getMaximumWaitTime();
-        final ReportRestService reportService = services.createReportRestService(logger);
         final ScanStatusDataService scanStatusDataService = services.createScanStatusDataService();
         waitForHub(scanStatusDataService, scanSummaryList, logger, maximumWaitTime);
 
-        // will wait for bom to be updated while generating the
-        // report.
-        final ReportCategoriesEnum[] categories = { ReportCategoriesEnum.VERSION, ReportCategoriesEnum.COMPONENTS };
-        HubRiskReportData report = reportService.generateHubReport(hubReportGenerationInfo.getVersion(), ReportFormatEnum.JSON, categories);
-
         final Map<String, String> runtimeMap = taskContext.getRuntimeTaskContext();
-
         final SecureToken token = SecureToken.createFromString(runtimeMap.get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
 
-        publishRiskReportFiles(logger, taskContext, token, report);
+        publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger), projectName, versionName);
     }
 
-    private void publishRiskReportFiles(final IntLogger logger, TaskContext taskContext, SecureToken token, HubRiskReportData hubRiskReportData) {
+    private void publishRiskReportFiles(final IntLogger logger, TaskContext taskContext, SecureToken token, RiskReportDataService riskReportDataService,
+            String projectName, String projectVersion) {
 
         final BuildContext buildContext = taskContext.getBuildContext();
         final PlanResultKey planResultKey = buildContext.getPlanResultKey();
         final BuildLogger buildLogger = taskContext.getBuildLogger();
 
         try {
-            final Map<String, String> config = new HashMap<>();
             File baseDirectory = new File(taskContext.getWorkingDirectory() + HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
-
-            RiskReportResourceCopier resourceCopier = new RiskReportResourceCopier(baseDirectory.getAbsolutePath());
-            List<File> fileList = resourceCopier.copy();
-            final Gson gson = new GsonBuilder().create();
-            final String contents = gson.toJson(hubRiskReportData);
-
-            File htmlFile = null;
-            for (File file : fileList) {
-                if (file.getName().equals("riskreport.html")) {
-                    htmlFile = file;
-                    break;
-                }
-            }
-            String htmlFileString = FileUtils.readFileToString(htmlFile, "UTF-8");
-            htmlFileString = htmlFileString.replace(RiskReportResourceCopier.JSON_TOKEN_TO_REPLACE, contents);
-            FileUtils.writeStringToFile(htmlFile, htmlFileString, "UTF-8");
-
+            riskReportDataService.createRiskReport(baseDirectory, projectName, projectVersion);
+            final Map<String, String> config = new HashMap<>();
             final ArtifactDefinitionContext artifact = createArtifactDefContext(token);
             final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey,
-                    baseDirectory, artifact, config, fileList.size());
+                    baseDirectory, artifact, config, RISK_REPORT_MINIMUM_FILE_COUNT);
 
             if (!publishResult.shouldContinueBuild()) {
                 logger.error("Could not publish the artifacts for the Risk Report");
             }
-        } catch (IOException | URISyntaxException ex) {
+        } catch (IOException | URISyntaxException | BDRestException | ProjectDoesNotExistException | HubIntegrationException | InterruptedException
+                | UnexpectedHubResponseException ex) {
             logger.error("Could not publish the Risk Report", ex);
         }
     }
