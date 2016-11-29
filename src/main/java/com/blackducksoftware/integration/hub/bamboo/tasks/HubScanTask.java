@@ -227,8 +227,8 @@ public class HubScanTask implements TaskType {
                 boolean waitForBom = true;
                 final boolean isGenRiskReport = taskConfigMap.getAsBoolean(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
 
-                if (isGenRiskReport) {
-                    generateRiskReport(taskContext, logger, scanSummaryList, hubSupport, services, projectName, versionName, maximumWaitTime);
+                if (isGenRiskReport && !isDryRun) {
+                    generateRiskReport(taskContext, logger, scanSummaryList, services, projectName, versionName, maximumWaitTime);
                     waitForBom = false;
                 }
 
@@ -244,10 +244,10 @@ public class HubScanTask implements TaskType {
 
                     if (waitForBom) {
                         final ScanStatusDataService scanStatusDataService = services.createScanStatusDataService();
-                        long timeout = hubConfig.getTimeout() * 1000;
-                        waitForHub(scanStatusDataService, scanSummaryList, logger, timeout);
+                        waitForHub(scanStatusDataService, scanSummaryList, logger, maximumWaitTime);
                     }
-                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, services, projectName, versionName);
+                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, services, projectName, versionName,
+                            isDryRun);
 
                     result = policyResult.build();
                 }
@@ -354,16 +354,19 @@ public class HubScanTask implements TaskType {
         for (final String target : jobConfig.getScanTargetPaths()) {
             logger.alwaysLog("-> " + target);
         }
-        // logger.info("-> Generate Hub report : " +
-        // jobConfig.isShouldGenerateRiskReport());
         final String formattedTime = String.format("%d minutes",
                 TimeUnit.MILLISECONDS.toMinutes(jobConfig.getMaxWaitTimeForBomUpdateInMilliseconds()));
         logger.alwaysLog("-> Maximum wait time for the BOM Update : " + formattedTime);
     }
 
     private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
-            final IntLogger logger, final HubServicesFactory services, String projectName, String versionName) {
+            final IntLogger logger, final HubServicesFactory services, String projectName, String versionName, final boolean isDryRun) {
         try {
+
+            if (isDryRun) {
+                logger.warn("Will not run the Failure conditions because this was a dry run scan.");
+                return resultBuilder.success();
+            }
             final PolicyStatusDataService policyStatusDataService = services.createPolicyStatusDataService();
 
             final PolicyStatusItem policyStatusItem = policyStatusDataService
@@ -433,7 +436,6 @@ public class HubScanTask implements TaskType {
     }
 
     private void generateRiskReport(final TaskContext taskContext, final IntLogger logger, final List<ScanSummaryItem> scanSummaryList,
-            final HubSupportHelper hubSupport,
             final HubServicesFactory services, String projectName, String versionName, long maximumWaitTime)
             throws IOException, BDRestException, URISyntaxException, InterruptedException, HubIntegrationException,
             UnexpectedHubResponseException, ProjectDoesNotExistException, MissingUUIDException {
