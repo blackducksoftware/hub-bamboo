@@ -41,9 +41,7 @@ import com.atlassian.bamboo.utils.SystemProperty;
 import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
-import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtils implements Cloneable {
 
@@ -101,17 +99,6 @@ public class HubBambooUtils implements Cloneable {
             }
         }
         return configBuilder.buildResults();
-    }
-
-    public void configureProxyToService(final HubServerConfig hubConfig, final RestConnection restConnection) {
-
-        final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
-
-        if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-            if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
-                restConnection.setProxyProperties(proxyInfo);
-            }
-        }
     }
 
     public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
