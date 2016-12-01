@@ -28,62 +28,92 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanParamEnum;
+import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
+import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator;
+import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder;
+import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 
 import ut.com.blackducksoftware.integration.hub.bamboo.utils.TestTaskDefinition;
 
 public class HubScanTaskConfiguratorTest {
 
-	private Map<String, String> createConfigurationMap() {
-		final Map<String, String> configMap = new HashMap<String, String>();
-		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
-			final String key = param.getKey();
-			configMap.put(key, param.getDefaultValue());
-		}
-		return configMap;
-	}
+    private Map<String, String> createConfigurationMap() {
+        final Map<String, String> configMap = new HashMap<>();
+        configMap.put(HubScanConfigFieldEnum.PROJECT.getKey(), "");
+        configMap.put(HubScanConfigFieldEnum.VERSION.getKey(), "");
+        configMap.put(HubScanConfigFieldEnum.PHASE.getKey(), PhaseEnum.PLANNING.getDisplayValue());
+        configMap.put(HubScanConfigFieldEnum.DISTRIBUTION.getKey(), DistributionEnum.EXTERNAL.getDisplayValue());
+        configMap.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
+        configMap.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
+        configMap.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
+                String.valueOf(HubScanConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES));
+        configMap.put(HubScanConfigFieldEnum.SCANMEMORY.getKey(), String.valueOf(HubScanConfigBuilder.DEFAULT_MEMORY_IN_MEGABYTES));
+        configMap.put(HubScanConfigFieldEnum.TARGETS.getKey(), "");
+        configMap.put(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey(), "false");
+        return configMap;
+    }
 
-	@Test
-	public void testPopulateContextForCreate() {
-		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+    private void assertDefaultValues(final Map<String, Object> context) {
+        assertEquals("", context.get(HubScanConfigFieldEnum.PROJECT.getKey()));
+        assertEquals("", context.get(HubScanConfigFieldEnum.VERSION.getKey()));
+        assertEquals(PhaseEnum.PLANNING.getDisplayValue(), context.get(HubScanConfigFieldEnum.PHASE.getKey()));
+        assertEquals(DistributionEnum.EXTERNAL.getDisplayValue(), context.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey()));
+        assertEquals("false", context.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey()));
+        assertEquals("false", context.get(HubScanConfigFieldEnum.DRY_RUN.getKey()));
+        assertEquals(String.valueOf(HubScanConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES),
+                context.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey()));
+        assertEquals(String.valueOf(HubScanConfigBuilder.DEFAULT_MEMORY_IN_MEGABYTES), context.get(HubScanConfigFieldEnum.SCANMEMORY.getKey()));
+        assertEquals("", context.get(HubScanConfigFieldEnum.TARGETS.getKey()));
+        assertEquals("false", context.get(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey()));
+    }
 
-		final Map<String, Object> context = new HashMap<String, Object>();
-		taskConfigurator.populateContextForCreate(context);
+    @Test
+    public void testPopulateContextForCreate() {
+        final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
 
-		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
-			final String key = param.getKey();
-			assertEquals(param.getDefaultValue(), context.get(key));
-		}
-	}
+        final Map<String, Object> context = new HashMap<>();
+        taskConfigurator.populateContextForCreate(context);
 
-	@Test
-	public void testPopulateContextForEdit() {
-		final TestTaskDefinition taskDefinition = new TestTaskDefinition();
-		taskDefinition.setConfiguration(createConfigurationMap());
-		final Map<String, Object> context = new HashMap<String, Object>();
+        assertDefaultValues(context);
+    }
 
-		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
-		taskConfigurator.populateContextForEdit(context, taskDefinition);
+    @Test
+    public void testPopulateContextForEdit() {
+        final TestTaskDefinition taskDefinition = new TestTaskDefinition();
+        taskDefinition.setConfiguration(createConfigurationMap());
+        final Map<String, Object> context = new HashMap<>();
 
-		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
-			final String key = param.getKey();
-			assertEquals(param.getDefaultValue(), context.get(key));
-		}
-	}
+        final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+        taskConfigurator.populateContextForEdit(context, taskDefinition);
 
-	@Test
-	public void testPopulateContextForView() {
-		final TestTaskDefinition taskDefinition = new TestTaskDefinition();
-		taskDefinition.setConfiguration(createConfigurationMap());
-		final Map<String, Object> context = new HashMap<String, Object>();
+        assertDefaultValues(context);
+    }
 
-		final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
-		taskConfigurator.populateContextForView(context, taskDefinition);
+    @Test
+    public void testPopulateContextForView() {
+        final TestTaskDefinition taskDefinition = new TestTaskDefinition();
+        taskDefinition.setConfiguration(createConfigurationMap());
+        final Map<String, Object> context = new HashMap<>();
 
-		for (final HubScanParamEnum param : HubScanParamEnum.values()) {
-			final String key = param.getKey();
-			assertEquals(param.getDefaultValue(), context.get(key));
-		}
-	}
+        final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+        taskConfigurator.populateContextForView(context, taskDefinition);
+
+        assertDefaultValues(context);
+    }
+
+    @Test
+    public void testMigrateFromOldKey() {
+        final String value = "WOAH";
+        final TestTaskDefinition taskDefinition = new TestTaskDefinition();
+        final Map<String, String> configMap = new HashMap<>();
+        configMap.put("generateRiskReport", value);
+        taskDefinition.setConfiguration(configMap);
+
+        final Map<String, Object> context = new HashMap<>();
+        final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
+        taskConfigurator.populateContextForEdit(context, taskDefinition);
+
+        assertEquals(value, context.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey()));
+    }
 }

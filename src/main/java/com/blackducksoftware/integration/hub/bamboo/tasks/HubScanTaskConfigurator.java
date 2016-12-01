@@ -24,12 +24,16 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.blackducksoftware.integration.builder.ValidationResultEnum;
 import com.blackducksoftware.integration.builder.ValidationResults;
+import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
+import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder;
 import com.blackducksoftware.integration.hub.scan.HubScanConfig;
@@ -42,7 +46,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             final TaskDefinition previousTaskDefinition) {
         final Map<String, String> configMap = super.generateTaskConfigMap(params, previousTaskDefinition);
 
-        for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+        for (final HubScanConfigFieldEnum param : HubScanConfigFieldEnum.values()) {
             final String key = param.getKey();
             final String value = params.getString(key);
             configMap.put(key, value);
@@ -54,22 +58,14 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
     public void validate(final ActionParametersMap params, final ErrorCollection errorCollection) {
         super.validate(params, errorCollection);
 
-        String key = HubScanParamEnum.PROJECT.getKey();
-        final String project = params.getString(key);
-        key = HubScanParamEnum.VERSION.getKey();
-        final String version = params.getString(key);
-        key = HubScanParamEnum.PHASE.getKey();
-        final String phase = params.getString(key);
-        key = HubScanParamEnum.DISTRIBUTION.getKey();
-        final String distribution = params.getString(key);
-        key = HubScanParamEnum.GENERATE_RISK_REPORT.getKey();
-        final String generateRiskReport = params.getString(key);
-        key = HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey();
-        final String maxWaitTime = params.getString(key);
-        key = HubScanParamEnum.SCANMEMORY.getKey();
-        final String scanMemory = params.getString(key);
-        key = HubScanParamEnum.TARGETS.getKey();
-        final String scanTargetText = params.getString(key);
+        final String project = params.getString(HubScanConfigFieldEnum.PROJECT.getKey());
+        final String version = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
+        final String phase = params.getString(HubScanConfigFieldEnum.PHASE.getKey());
+        final String distribution = params.getString(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
+        final String generateRiskReport = params.getString(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
+        final String maxWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
+        final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
+        final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
 
         final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(scanTargetText, null);
 
@@ -87,22 +83,21 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         if (!result.isSuccess()) {
 
-            checkValidationErrors(HubScanParamEnum.PROJECT, HubScanConfigFieldEnum.PROJECT, result, errorCollection);
-            checkValidationErrors(HubScanParamEnum.VERSION, HubScanConfigFieldEnum.VERSION, result, errorCollection);
-            checkValidationErrors(HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE,
-                    HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, result, errorCollection);
-            checkValidationErrors(HubScanParamEnum.SCANMEMORY, HubScanConfigFieldEnum.SCANMEMORY, result, errorCollection);
-            checkValidationErrors(HubScanParamEnum.TARGETS, HubScanConfigFieldEnum.TARGETS, result, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.PROJECT, result, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.VERSION, result, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, result, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.SCANMEMORY, result, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
         }
     }
 
-    private void checkValidationErrors(final HubScanParamEnum parameter, final HubScanConfigFieldEnum field,
+    private void checkValidationErrors(final HubScanConfigFieldEnum field,
             final ValidationResults<HubScanConfigFieldEnum, HubScanConfig> result,
             final ErrorCollection errorCollection) {
 
         if (result.hasErrors(field)) {
             final String message = result.getResultString(field, ValidationResultEnum.ERROR);
-            errorCollection.addError(parameter.getKey(), message);
+            errorCollection.addError(field.getKey(), message);
         }
     }
 
@@ -111,10 +106,16 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         super.populateContextForCreate(context);
 
-        for (final HubScanParamEnum param : HubScanParamEnum.values()) {
-            final String key = param.getKey();
-            context.put(key, param.getDefaultValue());
-        }
+        context.put(HubScanConfigFieldEnum.PROJECT.getKey(), "");
+        context.put(HubScanConfigFieldEnum.VERSION.getKey(), "");
+        context.put(HubScanConfigFieldEnum.PHASE.getKey(), PhaseEnum.PLANNING.getDisplayValue());
+        context.put(HubScanConfigFieldEnum.DISTRIBUTION.getKey(), DistributionEnum.EXTERNAL.getDisplayValue());
+        context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
+        context.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
+        context.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(), String.valueOf(HubScanConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES));
+        context.put(HubScanConfigFieldEnum.SCANMEMORY.getKey(), String.valueOf(HubScanConfigBuilder.DEFAULT_MEMORY_IN_MEGABYTES));
+        context.put(HubScanConfigFieldEnum.TARGETS.getKey(), "");
+        context.put(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey(), "false");
     }
 
     @Override
@@ -133,10 +134,14 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
     private void populateContextMap(final Map<String, Object> context, final TaskDefinition taskDefinition) {
 
-        for (final HubScanParamEnum param : HubScanParamEnum.values()) {
+        for (final HubScanConfigFieldEnum param : HubScanConfigFieldEnum.values()) {
 
             final String key = param.getKey();
             context.put(key, taskDefinition.getConfiguration().get(key));
+        }
+        if (StringUtils.isNotBlank(taskDefinition.getConfiguration().get("generateRiskReport"))) {
+            // Migrate from the old key value
+            context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), taskDefinition.getConfiguration().get("generateRiskReport"));
         }
     }
 }

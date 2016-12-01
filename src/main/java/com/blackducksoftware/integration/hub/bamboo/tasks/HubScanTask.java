@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.artifact.ArtifactManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
@@ -148,7 +150,7 @@ public class HubScanTask implements TaskType {
             HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir, thirdPartyVersion, pluginVersion, logger);
 
             final boolean isFailOnPolicySelected = taskConfigMap
-                    .getAsBoolean(HubScanParamEnum.FAIL_ON_POLICY_VIOLATION.getKey());
+                    .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 
             List<ScanSummaryItem> scanSummaryList = null;
             try {
@@ -273,14 +275,18 @@ public class HubScanTask implements TaskType {
     private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
             String thirdPartyVersion, String pluginVersion,
             final IntLogger logger) throws HubIntegrationException, IOException {
-        final String project = configMap.get(HubScanParamEnum.PROJECT.getKey());
-        final String version = configMap.get(HubScanParamEnum.VERSION.getKey());
-        final String phase = configMap.get(HubScanParamEnum.PHASE.getKey());
-        final String distribution = configMap.get(HubScanParamEnum.DISTRIBUTION.getKey());
-        final String generateRiskReport = configMap.get(HubScanParamEnum.GENERATE_RISK_REPORT.getKey());
-        final String maxWaitTimeForBomUpdate = configMap.get(HubScanParamEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
-        final String scanMemory = configMap.get(HubScanParamEnum.SCANMEMORY.getKey());
-        final String targets = configMap.get(HubScanParamEnum.TARGETS.getKey());
+        final String project = configMap.get(HubScanConfigFieldEnum.PROJECT.getKey());
+        final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
+        final String phase = configMap.get(HubScanConfigFieldEnum.PHASE.getKey());
+        final String distribution = configMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
+        String generateRiskReport = configMap.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
+        if (StringUtils.isBlank(generateRiskReport)) {
+            // Check for the old key
+            generateRiskReport = configMap.get("generateRiskReport");
+        }
+        final String maxWaitTimeForBomUpdate = configMap.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
+        final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
+        final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
         final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
 
