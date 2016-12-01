@@ -24,8 +24,6 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
@@ -138,10 +136,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
             final String key = param.getKey();
             context.put(key, taskDefinition.getConfiguration().get(key));
-        }
-        if (StringUtils.isNotBlank(taskDefinition.getConfiguration().get("generateRiskReport"))) {
-            // Migrate from the old key value, starting in Hub Bamboo 3.0.0
-            context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), taskDefinition.getConfiguration().get("generateRiskReport"));
         }
     }
 }

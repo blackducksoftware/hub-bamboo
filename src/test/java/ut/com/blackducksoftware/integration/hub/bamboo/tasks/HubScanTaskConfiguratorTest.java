@@ -102,18 +102,4 @@ public class HubScanTaskConfiguratorTest {
         assertDefaultValues(context);
     }
 
-    @Test
-    public void testMigrateFromOldKey() {
-        final String value = "WOAH";
-        final TestTaskDefinition taskDefinition = new TestTaskDefinition();
-        final Map<String, String> configMap = new HashMap<>();
-        configMap.put("generateRiskReport", value);
-        taskDefinition.setConfiguration(configMap);
-
-        final Map<String, Object> context = new HashMap<>();
-        final HubScanTaskConfigurator taskConfigurator = new HubScanTaskConfigurator();
-        taskConfigurator.populateContextForEdit(context, taskDefinition);
-
-        assertEquals(value, context.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey()));
-    }
 }

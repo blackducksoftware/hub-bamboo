@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.artifact.ArtifactManager;
 import com.atlassian.bamboo.build.logger.BuildLogger;
@@ -280,10 +278,7 @@ public class HubScanTask implements TaskType {
         final String phase = configMap.get(HubScanConfigFieldEnum.PHASE.getKey());
         final String distribution = configMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
         String generateRiskReport = configMap.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
-        if (StringUtils.isBlank(generateRiskReport)) {
-            // Check for the old key
-            generateRiskReport = configMap.get("generateRiskReport");
-        }
+        String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
         final String maxWaitTimeForBomUpdate = configMap.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
@@ -302,6 +297,7 @@ public class HubScanTask implements TaskType {
         hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
         hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
         hubScanConfigBuilder.setShouldGenerateRiskReport(generateRiskReport);
+        hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
         hubScanConfigBuilder.setMaxWaitTimeForBomUpdate(maxWaitTimeForBomUpdate);
         hubScanConfigBuilder.setScanMemory(scanMemory);
         hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
