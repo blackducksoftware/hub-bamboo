@@ -147,7 +147,7 @@ public class HubScanTask implements TaskType {
 
     @Override
     public TaskResult execute(final TaskContext taskContext) throws TaskException {
-
+        HubBambooUtils.getInstance().initializeHttpClientHelper();
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
