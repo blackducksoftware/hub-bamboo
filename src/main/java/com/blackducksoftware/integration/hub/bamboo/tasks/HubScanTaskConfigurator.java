@@ -140,7 +140,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             context.put(key, taskDefinition.getConfiguration().get(key));
         }
         if (StringUtils.isNotBlank(taskDefinition.getConfiguration().get("generateRiskReport"))) {
-            // Migrate from the old key value
+            // Migrate from the old key value, starting in Hub Bamboo 3.0.0
             context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), taskDefinition.getConfiguration().get("generateRiskReport"));
         }
     }
