@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+import org.restlet.engine.Engine;
+import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
@@ -47,150 +49,182 @@ import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtils implements Cloneable {
 
-	private static HubBambooUtils myInstance = null;
-	public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
-	public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
-	public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
-	public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
+    private static HubBambooUtils myInstance = null;
 
-	public static HubBambooUtils getInstance() {
+    public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
 
-		if (myInstance == null) {
-			myInstance = new HubBambooUtils();
-		}
-		return myInstance;
-	}
+    public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
 
-	private HubBambooUtils() {
+    public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
 
-	}
+    public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
 
-	@Override
-	protected Object clone() throws CloneNotSupportedException {
-		throw new CloneNotSupportedException();
-	}
+    private boolean httpClientHelperInitialized = false;
 
-	public ValidationResults<GlobalFieldKey, HubServerConfig> buildConfigFromStrings(final String hubUrl,
-			final String hubUser, final String hubPass, final String hubPassLength, final String hubProxyUrl,
-			final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
-			final String hubProxyPass, final String hubProxyPassLength) {
-		final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
-		configBuilder.setHubUrl(hubUrl);
-		configBuilder.setUsername(hubUser);
-		configBuilder.setPassword(hubPass);
-		configBuilder.setProxyHost(hubProxyUrl);
-		configBuilder.setProxyPort(hubProxyPort);
-		configBuilder.setProxyUsername(hubProxyUser);
+    public static HubBambooUtils getInstance() {
 
-		configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
-		int length = 0;
-		if (StringUtils.isNotBlank(hubPassLength)) {
-			length = Integer.valueOf(hubPassLength);
-			configBuilder.setPasswordLength(length);
-		}
+        if (myInstance == null) {
+            myInstance = new HubBambooUtils();
+        }
+        return myInstance;
+    }
 
-		if (StringUtils.isNotBlank(hubProxyUser)) {
-			configBuilder.setProxyPassword(hubProxyPass);
-			if (StringUtils.isNotBlank(hubProxyPassLength)) {
-				length = Integer.valueOf(hubProxyPassLength);
-				configBuilder.setProxyPasswordLength(length);
-			}
-		}
-		return configBuilder.buildResults();
-	}
+    private HubBambooUtils() {
 
+    }
 
-	public void configureProxyToService(final HubServerConfig hubConfig, final RestConnection restConnection) {
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
 
-		final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
+    public ValidationResults<GlobalFieldKey, HubServerConfig> buildConfigFromStrings(final String hubUrl,
+            final String hubUser, final String hubPass, final String hubPassLength, final String hubProxyUrl,
+            final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
+            final String hubProxyPass, final String hubProxyPassLength) {
+        final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
+        configBuilder.setHubUrl(hubUrl);
+        configBuilder.setUsername(hubUser);
+        configBuilder.setPassword(hubPass);
+        configBuilder.setProxyHost(hubProxyUrl);
+        configBuilder.setProxyPort(hubProxyPort);
+        configBuilder.setProxyUsername(hubProxyUser);
 
-		if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-			if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
-				restConnection.setProxyProperties(proxyInfo);
-			}
-		}
-	}
+        configBuilder.setIgnoredProxyHosts(hubProxyNoHost);
+        int length = 0;
+        if (StringUtils.isNotBlank(hubPassLength)) {
+            length = Integer.valueOf(hubPassLength);
+            configBuilder.setPasswordLength(length);
+        }
 
-	public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
+        if (StringUtils.isNotBlank(hubProxyUser)) {
+            configBuilder.setProxyPassword(hubProxyPass);
+            if (StringUtils.isNotBlank(hubProxyPassLength)) {
+                length = Integer.valueOf(hubProxyPassLength);
+                configBuilder.setProxyPasswordLength(length);
+            }
+        }
+        return configBuilder.buildResults();
+    }
 
-		final List<String> scanTargets = new ArrayList<>();
+    public void configureProxyToService(final HubServerConfig hubConfig, final RestConnection restConnection) {
 
-		if (StringUtils.isNotBlank(targetPathText)) {
-			final String[] scanTargetPathsArray = targetPathText.split("\\r?\\n");
-			for (final String target : scanTargetPathsArray) {
-				if (!StringUtils.isBlank(target)) {
-					if (workingDirectory != null && StringUtils.isBlank(workingDirectory.getAbsolutePath())) {
-						scanTargets.add(target);
+        final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
 
-					} else {
-						scanTargets.add(new File(workingDirectory, target).getAbsolutePath());
-					}
-				}
-			}
-		}
+        if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
+            if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
+                restConnection.setProxyProperties(proxyInfo);
+            }
+        }
+    }
 
-		return scanTargets;
-	}
+    public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
 
-	public Map<String, String> getEnvironmentVariablesMap(final Map<String, String> systemVariables,
-			final Map<String, String> taskContextVariables) {
-		final Map<String, String> allVariablesMap = new HashMap<>(
-				systemVariables.size() + taskContextVariables.size());
+        final List<String> scanTargets = new ArrayList<>();
 
-		trimBambooEnvironmentVariables(allVariablesMap, systemVariables);
-		trimBambooEnvironmentVariables(allVariablesMap, taskContextVariables);
-		return allVariablesMap;
-	}
+        if (StringUtils.isNotBlank(targetPathText)) {
+            final String[] scanTargetPathsArray = targetPathText.split("\\r?\\n");
+            for (final String target : scanTargetPathsArray) {
+                if (!StringUtils.isBlank(target)) {
+                    if (workingDirectory != null && StringUtils.isBlank(workingDirectory.getAbsolutePath())) {
+                        scanTargets.add(target);
 
-	private void trimBambooEnvironmentVariables(final Map<String, String> newEnvMap,
-			final Map<String, String> envVars) {
-		for (final Entry<String, String> entry : envVars.entrySet()) {
-			String key = entry.getKey();
-			final String value = entry.getValue();
-			if (key.startsWith("bamboo_")) {
-				key = key.replace("bamboo_", "");
-			}
-			newEnvMap.put(key, value);
-		}
-	}
+                    } else {
+                        scanTargets.add(new File(workingDirectory, target).getAbsolutePath());
+                    }
+                }
+            }
+        }
 
-	public String getBambooHome() {
+        return scanTargets;
+    }
 
-		File bambooHome = null;
-		// On remote agents SystemDirectory.getApplicationHome may throw a NPE,
-		// because it calls another get method in SystemDirectory. On the master
-		// node the call works. When remote agents start up
-		// the Bamboo home environment variable is set. This code is needed
-		// because we observed different behavior on the master and remote
-		// nodes.
-		try {
-			bambooHome = SystemDirectory.getApplicationHome();
-		} catch (final NullPointerException npe) {
-		}
+    public Map<String, String> getEnvironmentVariablesMap(final Map<String, String> systemVariables,
+            final Map<String, String> taskContextVariables) {
+        final Map<String, String> allVariablesMap = new HashMap<>(
+                systemVariables.size() + taskContextVariables.size());
 
-		if (bambooHome != null) {
-			return bambooHome.getAbsolutePath();
-		} else {
-			return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
-		}
-	}
+        trimBambooEnvironmentVariables(allVariablesMap, systemVariables);
+        trimBambooEnvironmentVariables(allVariablesMap, taskContextVariables);
+        return allVariablesMap;
+    }
 
-	public File getRiskReportFile(final String planKey, final int buildNumber) throws NoSuchMethodException,
-	SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
-		final ArtifactDefinitionContext artifact = getRiskReportArtifactDefinitionContext(null);
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
-		storageHelper.setResultKey(resultKey);
-		storageHelper.setArtifactDefinition(artifact);
-		final File planRoot = storageHelper.buildArtifactRootDirectory();
-		final File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
-		return dataFile;
-	}
+    private void trimBambooEnvironmentVariables(final Map<String, String> newEnvMap,
+            final Map<String, String> envVars) {
+        for (final Entry<String, String> entry : envVars.entrySet()) {
+            String key = entry.getKey();
+            final String value = entry.getValue();
+            if (key.startsWith("bamboo_")) {
+                key = key.replace("bamboo_", "");
+            }
+            newEnvMap.put(key, value);
+        }
+    }
 
-	public ArtifactDefinitionContext getRiskReportArtifactDefinitionContext(final SecureToken token) {
-		final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
-				HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
-		artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
-		return artifact;
-	}
+    public String getBambooHome() {
+
+        File bambooHome = null;
+        // On remote agents SystemDirectory.getApplicationHome may throw a NPE,
+        // because it calls another get method in SystemDirectory. On the master
+        // node the call works. When remote agents start up
+        // the Bamboo home environment variable is set. This code is needed
+        // because we observed different behavior on the master and remote
+        // nodes.
+        try {
+            bambooHome = SystemDirectory.getApplicationHome();
+        } catch (final NullPointerException npe) {
+        }
+
+        if (bambooHome != null) {
+            return bambooHome.getAbsolutePath();
+        } else {
+            return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
+        }
+    }
+
+    public File getRiskReportFile(final String planKey, final int buildNumber) throws NoSuchMethodException,
+            SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        final PlanResultKey resultKey = PlanKeys.getPlanResultKey(planKey, buildNumber);
+        final ArtifactDefinitionContext artifact = getRiskReportArtifactDefinitionContext(null);
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+        storageHelper.setResultKey(resultKey);
+        storageHelper.setArtifactDefinition(artifact);
+        final File planRoot = storageHelper.buildArtifactRootDirectory();
+        final File dataFile = new File(planRoot, HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+        return dataFile;
+    }
+
+    public ArtifactDefinitionContext getRiskReportArtifactDefinitionContext(final SecureToken token) {
+        final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
+                HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
+        artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
+        return artifact;
+    }
+
+    public void initializeHttpClientHelper() {
+        if (!isHttpClientHelperInitialized()) {
+            // configure the Restlet engine so that the HTTPHandle and classes
+            // from the com.sun.net.httpserver package
+            // do not need to be used at runtime to make client calls.
+            // DO NOT REMOVE THIS or the OSGI bundle will throw a
+            // ClassNotFoundException for com.sun.net.httpserver.HttpHandler.
+            // Since we are acting as a client we do not need the httpserver
+            // components.
+
+            // This workaround found here:
+            // http://stackoverflow.com/questions/25179243/com-sun-net-httpserver-httphandler-classnotfound-exception-on-java-embedded-runt
+
+            Engine.register(false);
+            Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
+            setHttpClientHelperInitialized(true);
+        }
+    }
+
+    public boolean isHttpClientHelperInitialized() {
+        return httpClientHelperInitialized;
+    }
+
+    private void setHttpClientHelperInitialized(boolean httpClientHelperInitialized) {
+        this.httpClientHelperInitialized = httpClientHelperInitialized;
+    }
 }
