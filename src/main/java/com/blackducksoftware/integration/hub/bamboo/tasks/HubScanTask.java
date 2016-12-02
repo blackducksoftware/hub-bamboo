@@ -115,10 +115,6 @@ import com.google.gson.GsonBuilder;
 
 public class HubScanTask implements TaskType {
 
-    private static final String ERROR_MSG_PREFIX_RESPONSE = "Response : ";
-
-    private static final String ERROR_MSG_PREFIX_STATUS = "Status : ";
-
     private static final String HUB_SCAN_TASK_ERROR = "Hub Scan Task error";
 
     private final static String CLI_FOLDER_NAME = "tools/HubCLI";
@@ -147,7 +143,6 @@ public class HubScanTask implements TaskType {
 
     @Override
     public TaskResult execute(final TaskContext taskContext) throws TaskException {
-        HubBambooUtils.getInstance().initializeHttpClientHelper();
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
