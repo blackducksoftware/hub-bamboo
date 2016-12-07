@@ -28,7 +28,6 @@ import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
-import com.blackducksoftware.integration.builder.ValidationResultEnum;
 import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
 import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
@@ -60,7 +59,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         final String version = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
         final String phase = params.getString(HubScanConfigFieldEnum.PHASE.getKey());
         final String distribution = params.getString(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
-        final String generateRiskReport = params.getString(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
         final String maxWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
@@ -72,8 +70,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         hubScanJobConfigBuilder.setVersion(version);
         hubScanJobConfigBuilder.setPhase(phase);
         hubScanJobConfigBuilder.setDistribution(distribution);
-        hubScanJobConfigBuilder.setShouldGenerateRiskReport(generateRiskReport);
-        hubScanJobConfigBuilder.setMaxWaitTimeForBomUpdate(maxWaitTime);
         hubScanJobConfigBuilder.setScanMemory(scanMemory);
         hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
         hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
@@ -93,8 +89,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             final ValidationResults<HubScanConfigFieldEnum, HubScanConfig> result,
             final ErrorCollection errorCollection) {
 
-        if (result.hasErrors(field)) {
-            final String message = result.getResultString(field, ValidationResultEnum.ERROR);
+        if (result.hasErrors()) {
+            final String message = result.getResultString(field);
             errorCollection.addError(field.getKey(), message);
         }
     }

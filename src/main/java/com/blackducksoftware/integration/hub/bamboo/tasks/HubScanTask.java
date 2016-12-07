@@ -23,11 +23,13 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import com.atlassian.bamboo.bandana.PlanAwareBandanaContext;
 import com.atlassian.bamboo.build.artifact.ArtifactManager;
@@ -49,7 +51,6 @@ import com.atlassian.bamboo.util.BuildUtils;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.plugin.PluginAccessor;
-import com.blackducksoftware.integration.builder.ValidationResultEnum;
 import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusEnum;
@@ -65,12 +66,8 @@ import com.blackducksoftware.integration.hub.dataservice.cli.CLIDataService;
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDataService;
 import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStatusDescription;
 import com.blackducksoftware.integration.hub.dataservice.report.RiskReportDataService;
-import com.blackducksoftware.integration.hub.exception.BDRestException;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
-import com.blackducksoftware.integration.hub.exception.MissingUUIDException;
-import com.blackducksoftware.integration.hub.exception.ProjectDoesNotExistException;
 import com.blackducksoftware.integration.hub.exception.ScanFailedException;
-import com.blackducksoftware.integration.hub.exception.UnexpectedHubResponseException;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
@@ -82,6 +79,8 @@ import com.blackducksoftware.integration.log.IntLogger;
 import com.blackducksoftware.integration.util.CIEnvironmentVariables;
 
 public class HubScanTask implements TaskType {
+
+    private static final int DEFAULT_MAX_WAIT_TIME_MILLISEC = 5 * 60 * 1000;
 
     private static final int RISK_REPORT_MINIMUM_FILE_COUNT = 41;
 
@@ -109,7 +108,6 @@ public class HubScanTask implements TaskType {
 
     @Override
     public TaskResult execute(final TaskContext taskContext) throws TaskException {
-
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
@@ -135,26 +133,37 @@ public class HubScanTask implements TaskType {
 
             final RestConnection restConnection = new CredentialsRestConnection(hubConfig);
 
-            restConnection.setCookies(hubConfig.getGlobalCredentials().getUsername(),
-                    hubConfig.getGlobalCredentials().getDecryptedPassword());
+            restConnection.connect();
 
             final HubServicesFactory services = new HubServicesFactory(restConnection);
-            CLIDataService cliDataService = services.createCLIDataService(logger);
+            final CLIDataService cliDataService = services.createCLIDataService(logger);
             final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
 
             final String thirdPartyVersion = BuildUtils.getCurrentVersion();
             final String pluginVersion = pluginHelper.getPluginVersion();
+            final String shouldGenerateRiskReport = taskConfigMap.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
+            final String maxWaitTimeForRiskReport = taskConfigMap.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
+            boolean isRiskReportGenerated = false;
+            long waitTimeForReport = DEFAULT_MAX_WAIT_TIME_MILLISEC;
 
-            HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir, thirdPartyVersion, pluginVersion, logger);
+            if (StringUtils.isNotBlank(shouldGenerateRiskReport)) {
+                isRiskReportGenerated = Boolean.getBoolean(shouldGenerateRiskReport);
+            }
+
+            if (StringUtils.isNotBlank(maxWaitTimeForRiskReport)) {
+                waitTimeForReport = NumberUtils.toInt(maxWaitTimeForRiskReport) * 60 * 1000; // 5 minutes is the default
+            }
+            final HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir, thirdPartyVersion, pluginVersion,
+                    logger);
 
             final boolean isFailOnPolicySelected = taskConfigMap
                     .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 
             List<ScanSummaryItem> scanSummaryList = null;
             try {
-                scanSummaryList = cliDataService.installAndRunScan(commonEnvVars, hubConfig, hubScanConfig);
+                scanSummaryList = cliDataService.installAndRunScan(hubConfig, hubScanConfig);
 
-            } catch (ScanFailedException e) {
+            } catch (final ScanFailedException e) {
                 if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
                     logger.error("Hub Scan Failed : " + e.getMessage());
                     result = resultBuilder.build();
@@ -163,11 +172,11 @@ public class HubScanTask implements TaskType {
                 }
             }
             if (!hubScanConfig.isDryRun()) {
-                if (hubScanConfig.isShouldGenerateRiskReport() || isFailOnPolicySelected) {
+                if (isRiskReportGenerated || isFailOnPolicySelected) {
                     services.createScanStatusDataService().assertBomImportScansFinished(scanSummaryList,
-                            hubScanConfig.getMaxWaitTimeForBomUpdateInMilliseconds());
+                            waitTimeForReport);
                 }
-                if (hubScanConfig.isShouldGenerateRiskReport()) {
+                if (isRiskReportGenerated) {
                     final SecureToken token = SecureToken.createFromString(taskContext.getRuntimeTaskContext().get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
                     publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger), hubScanConfig.getProjectName(),
                             hubScanConfig.getVersion());
@@ -180,7 +189,7 @@ public class HubScanTask implements TaskType {
                     result = policyResult.build();
                 }
             } else {
-                if (hubScanConfig.isShouldGenerateRiskReport()) {
+                if (isRiskReportGenerated) {
                     logger.warn("Will not generate the risk report because this was a dry run scan.");
                 }
                 if (isFailOnPolicySelected) {
@@ -226,8 +235,7 @@ public class HubScanTask implements TaskType {
             }
             logger.info(policyStatusMessage);
             return resultBuilder.success();
-        } catch (final IOException | URISyntaxException | BDRestException | ProjectDoesNotExistException | HubIntegrationException | MissingUUIDException
-                | UnexpectedHubResponseException e) {
+        } catch (final HubIntegrationException e) {
             logger.error(e.getMessage(), e);
             return resultBuilder.failed();
         }
@@ -257,12 +265,12 @@ public class HubScanTask implements TaskType {
             logger.error("Hub Server Configuration Invalid.");
             final Set<GlobalFieldKey> keySet = results.getResultMap().keySet();
             for (final GlobalFieldKey key : keySet) {
-                if (results.hasErrors(key)) {
-                    logger.error(results.getResultString(key, ValidationResultEnum.ERROR));
+                if (results.hasErrors()) {
+                    logger.error(results.getResultString(key));
                 }
 
-                if (results.hasWarnings(key)) {
-                    logger.warn(results.getResultString(key, ValidationResultEnum.ERROR));
+                if (results.hasWarnings()) {
+                    logger.warn(results.getResultString(key));
                 }
             }
 
@@ -277,9 +285,9 @@ public class HubScanTask implements TaskType {
         final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
         final String phase = configMap.get(HubScanConfigFieldEnum.PHASE.getKey());
         final String distribution = configMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
-        String generateRiskReport = configMap.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey());
-        String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
-        final String maxWaitTimeForBomUpdate = configMap.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
+
+        final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
+
         final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
@@ -296,9 +304,7 @@ public class HubScanTask implements TaskType {
         hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
         hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
         hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-        hubScanConfigBuilder.setShouldGenerateRiskReport(generateRiskReport);
         hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
-        hubScanConfigBuilder.setMaxWaitTimeForBomUpdate(maxWaitTimeForBomUpdate);
         hubScanConfigBuilder.setScanMemory(scanMemory);
         hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
         hubScanConfigBuilder.setToolsDir(toolsDir);
@@ -313,12 +319,12 @@ public class HubScanTask implements TaskType {
             logger.error("Hub Scan Configuration Invalid.");
             final Set<HubScanConfigFieldEnum> keySet = results.getResultMap().keySet();
             for (final HubScanConfigFieldEnum key : keySet) {
-                if (results.hasErrors(key)) {
-                    logger.error(results.getResultString(key, ValidationResultEnum.ERROR));
+                if (results.hasErrors()) {
+                    logger.error(results.getResultString(key));
                 }
 
-                if (results.hasWarnings(key)) {
-                    logger.warn(results.getResultString(key, ValidationResultEnum.ERROR));
+                if (results.hasWarnings()) {
+                    logger.warn(results.getResultString(key));
                 }
             }
 
@@ -339,7 +345,7 @@ public class HubScanTask implements TaskType {
         final BuildLogger buildLogger = taskContext.getBuildLogger();
 
         try {
-            File baseDirectory = new File(taskContext.getWorkingDirectory() + HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
+            final File baseDirectory = new File(taskContext.getWorkingDirectory() + HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME);
             riskReportDataService.createRiskReportFiles(baseDirectory, projectName, projectVersion);
             final Map<String, String> config = new HashMap<>();
             final ArtifactDefinitionContext artifact = createArtifactDefContext(token);
@@ -349,8 +355,7 @@ public class HubScanTask implements TaskType {
             if (!publishResult.shouldContinueBuild()) {
                 logger.error("Could not publish the artifacts for the Risk Report");
             }
-        } catch (IOException | URISyntaxException | BDRestException | ProjectDoesNotExistException | HubIntegrationException | InterruptedException
-                | UnexpectedHubResponseException ex) {
+        } catch (final HubIntegrationException ex) {
             logger.error("Could not publish the Risk Report", ex);
         }
     }

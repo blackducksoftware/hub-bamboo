@@ -158,7 +158,9 @@ public class HubBambooUtils implements Cloneable {
         } catch (final NullPointerException npe) {
         }
 
-        if (bambooHome != null) {
+        if (bambooHome != null)
+
+        {
             return bambooHome.getAbsolutePath();
         } else {
             return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
