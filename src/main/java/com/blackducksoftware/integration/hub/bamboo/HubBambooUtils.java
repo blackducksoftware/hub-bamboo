@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+import org.restlet.engine.Engine;
+import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
@@ -54,6 +56,8 @@ public class HubBambooUtils implements Cloneable {
     public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
 
     public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
+
+    private boolean httpClientHelperInitialized = false;
 
     public static HubBambooUtils getInstance() {
 
@@ -184,5 +188,32 @@ public class HubBambooUtils implements Cloneable {
                 HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
         artifact.setCopyPattern(HubBambooUtils.HUB_RISK_REPORT_FILENAME);
         return artifact;
+    }
+
+    public void initializeHttpClientHelper() {
+        if (!isHttpClientHelperInitialized()) {
+            // configure the Restlet engine so that the HTTPHandle and classes
+            // from the com.sun.net.httpserver package
+            // do not need to be used at runtime to make client calls.
+            // DO NOT REMOVE THIS or the OSGI bundle will throw a
+            // ClassNotFoundException for com.sun.net.httpserver.HttpHandler.
+            // Since we are acting as a client we do not need the httpserver
+            // components.
+
+            // This workaround found here:
+            // http://stackoverflow.com/questions/25179243/com-sun-net-httpserver-httphandler-classnotfound-exception-on-java-embedded-runt
+
+            Engine.register(false);
+            Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
+            setHttpClientHelperInitialized(true);
+        }
+    }
+
+    public boolean isHttpClientHelperInitialized() {
+        return httpClientHelperInitialized;
+    }
+
+    private void setHttpClientHelperInitialized(boolean httpClientHelperInitialized) {
+        this.httpClientHelperInitialized = httpClientHelperInitialized;
     }
 }

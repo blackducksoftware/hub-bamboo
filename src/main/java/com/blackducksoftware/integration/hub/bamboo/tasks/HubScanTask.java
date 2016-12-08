@@ -108,6 +108,7 @@ public class HubScanTask implements TaskType {
 
     @Override
     public TaskResult execute(final TaskContext taskContext) throws TaskException {
+        HubBambooUtils.getInstance().initializeHttpClientHelper();
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
@@ -147,7 +148,7 @@ public class HubScanTask implements TaskType {
             long waitTimeForReport = DEFAULT_MAX_WAIT_TIME_MILLISEC;
 
             if (StringUtils.isNotBlank(shouldGenerateRiskReport)) {
-                isRiskReportGenerated = Boolean.getBoolean(shouldGenerateRiskReport);
+                isRiskReportGenerated = Boolean.valueOf(shouldGenerateRiskReport);
             }
 
             if (StringUtils.isNotBlank(maxWaitTimeForRiskReport)) {
