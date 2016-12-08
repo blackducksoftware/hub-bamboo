@@ -30,6 +30,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
+import org.restlet.engine.Engine;
+import org.restlet.engine.connector.HttpClientHelper;
 
 import com.atlassian.bamboo.fileserver.SystemDirectory;
 import com.atlassian.bamboo.plan.PlanKeys;
@@ -41,21 +43,21 @@ import com.atlassian.bamboo.utils.SystemProperty;
 import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
-import com.blackducksoftware.integration.hub.global.HubProxyInfo;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
-import com.blackducksoftware.integration.hub.rest.RestConnection;
 
 public class HubBambooUtils implements Cloneable {
 
     private static HubBambooUtils myInstance = null;
 
-    public final static String HUB_RISK_REPORT_FILENAME = "hub_risk_report.json";
+    public final static String HUB_RISK_REPORT_FILENAME = "riskreport.html";
 
     public final static String HUB_TASK_SECURE_TOKEN = "hub_task_secure_token";
 
     public final static String HUB_RISK_REPORT_ARTIFACT_NAME = "Hub_Risk_Report";
 
     public final static String HUB_I18N_KEY_PREFIX = "hub.riskreport";
+
+    private boolean httpClientHelperInitialized = false;
 
     public static HubBambooUtils getInstance() {
 
@@ -101,17 +103,6 @@ public class HubBambooUtils implements Cloneable {
             }
         }
         return configBuilder.buildResults();
-    }
-
-    public void configureProxyToService(final HubServerConfig hubConfig, final RestConnection restConnection) {
-
-        final HubProxyInfo proxyInfo = hubConfig.getProxyInfo();
-
-        if (StringUtils.isNotBlank(proxyInfo.getHost()) && proxyInfo.getPort() != 0) {
-            if (proxyInfo.shouldUseProxyForUrl(hubConfig.getHubUrl())) {
-                restConnection.setProxyProperties(proxyInfo);
-            }
-        }
     }
 
     public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
@@ -171,7 +162,9 @@ public class HubBambooUtils implements Cloneable {
         } catch (final NullPointerException npe) {
         }
 
-        if (bambooHome != null) {
+        if (bambooHome != null)
+
+        {
             return bambooHome.getAbsolutePath();
         } else {
             return SystemProperty.BAMBOO_HOME_FROM_ENV.getValue();
@@ -197,4 +190,30 @@ public class HubBambooUtils implements Cloneable {
         return artifact;
     }
 
+    public void initializeHttpClientHelper() {
+        if (!isHttpClientHelperInitialized()) {
+            // configure the Restlet engine so that the HTTPHandle and classes
+            // from the com.sun.net.httpserver package
+            // do not need to be used at runtime to make client calls.
+            // DO NOT REMOVE THIS or the OSGI bundle will throw a
+            // ClassNotFoundException for com.sun.net.httpserver.HttpHandler.
+            // Since we are acting as a client we do not need the httpserver
+            // components.
+
+            // This workaround found here:
+            // http://stackoverflow.com/questions/25179243/com-sun-net-httpserver-httphandler-classnotfound-exception-on-java-embedded-runt
+
+            Engine.register(false);
+            Engine.getInstance().getRegisteredClients().add(new HttpClientHelper(null));
+            setHttpClientHelperInitialized(true);
+        }
+    }
+
+    public boolean isHttpClientHelperInitialized() {
+        return httpClientHelperInitialized;
+    }
+
+    private void setHttpClientHelperInitialized(boolean httpClientHelperInitialized) {
+        this.httpClientHelperInitialized = httpClientHelperInitialized;
+    }
 }

@@ -31,107 +31,111 @@ import org.apache.commons.lang3.StringUtils;
 import com.blackducksoftware.integration.log.IntLogger;
 import com.blackducksoftware.integration.log.LogLevel;
 
-
 public class TestLogger extends IntLogger {
-	private ArrayList<String> outputList = new ArrayList<>();
+    private ArrayList<String> outputList = new ArrayList<>();
 
-	private ArrayList<Throwable> errorList = new ArrayList<>();
+    private ArrayList<Throwable> errorList = new ArrayList<>();
 
-	public ArrayList<String> getOutputList() {
-		return outputList;
-	}
+    public ArrayList<String> getOutputList() {
+        return outputList;
+    }
 
-	public ArrayList<Throwable> getErrorList() {
-		return errorList;
-	}
+    public ArrayList<Throwable> getErrorList() {
+        return errorList;
+    }
 
-	public void resetOutputList() {
-		outputList = new ArrayList<>();
-	}
+    public void resetOutputList() {
+        outputList = new ArrayList<>();
+    }
 
-	public void resetErrorList() {
-		errorList = new ArrayList<>();
-	}
+    public void resetErrorList() {
+        errorList = new ArrayList<>();
+    }
 
-	public void resetAllOutput() {
-		resetOutputList();
-		resetErrorList();
-	}
+    public void resetAllOutput() {
+        resetOutputList();
+        resetErrorList();
+    }
 
-	public String getOutputString() {
-		return StringUtils.join(outputList, '\n');
-	}
+    public String getOutputString() {
+        return StringUtils.join(outputList, '\n');
+    }
 
-	public String getErrorOutputString() {
-		final StringBuilder sb = new StringBuilder();
-		if (errorList != null && !errorList.isEmpty()) {
-			for (final Throwable e : errorList) {
-				if (sb.length() > 0) {
-					sb.append('\n');
-				}
-				final StringWriter sw = new StringWriter();
-				e.printStackTrace(new PrintWriter(sw));
-				sb.append(sw.toString());
-			}
-		}
-		return sb.toString();
-	}
+    public String getErrorOutputString() {
+        final StringBuilder sb = new StringBuilder();
+        if (errorList != null && !errorList.isEmpty()) {
+            for (final Throwable e : errorList) {
+                if (sb.length() > 0) {
+                    sb.append('\n');
+                }
+                final StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                sb.append(sw.toString());
+            }
+        }
+        return sb.toString();
+    }
 
-	@Override
-	public void debug(final String txt) {
-		outputList.add(txt);
-	}
+    @Override
+    public void alwaysLog(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public void debug(final String txt, final Throwable e) {
-		outputList.add(txt);
-		errorList.add(e);
-	}
+    @Override
+    public void debug(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public void error(final Throwable e) {
-		errorList.add(e);
-	}
+    @Override
+    public void debug(final String txt, final Throwable e) {
+        outputList.add(txt);
+        errorList.add(e);
+    }
 
-	@Override
-	public void error(final String txt) {
-		outputList.add(txt);
-	}
+    @Override
+    public void error(final Throwable e) {
+        errorList.add(e);
+    }
 
-	@Override
-	public void error(final String txt, final Throwable e) {
-		outputList.add(txt);
-		errorList.add(e);
-	}
+    @Override
+    public void error(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public void info(final String txt) {
-		outputList.add(txt);
-	}
+    @Override
+    public void error(final String txt, final Throwable e) {
+        outputList.add(txt);
+        errorList.add(e);
+    }
 
-	@Override
-	public void trace(final String txt) {
-		outputList.add(txt);
-	}
+    @Override
+    public void info(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public void trace(final String txt, final Throwable e) {
-		outputList.add(txt);
-		errorList.add(e);
-	}
+    @Override
+    public void trace(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public void warn(final String txt) {
-		outputList.add(txt);
-	}
+    @Override
+    public void trace(final String txt, final Throwable e) {
+        outputList.add(txt);
+        errorList.add(e);
+    }
 
-	@Override
-	public void setLogLevel(final LogLevel level) {
-	}
+    @Override
+    public void warn(final String txt) {
+        outputList.add(txt);
+    }
 
-	@Override
-	public LogLevel getLogLevel() {
-		return null;
-	}
+    @Override
+    public void setLogLevel(final LogLevel level) {
+    }
+
+    @Override
+    public LogLevel getLogLevel() {
+        return null;
+    }
 
 }

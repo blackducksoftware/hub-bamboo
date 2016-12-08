@@ -33,7 +33,7 @@ public class TestTaskDefinition implements TaskDefinition {
 
     private static final long serialVersionUID = 6572977600672994755L;
 
-    private Map<String, String> configMap = new HashMap<String, String>();
+    private Map<String, String> configMap = new HashMap<>();
 
     @Override
     public long getId() {
