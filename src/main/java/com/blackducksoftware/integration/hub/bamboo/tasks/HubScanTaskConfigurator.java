@@ -21,6 +21,8 @@
  *******************************************************************************/
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +65,12 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
 
-        final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(scanTargetText, null);
+        List<String> scanTargets = new ArrayList<>();
+        try {
+            scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(scanTargetText, null);
+        } catch (IOException e) {
+            errorCollection.addError(HubScanConfigFieldEnum.TARGETS.getKey(), e.getMessage());
+        }
 
         final HubScanConfigBuilder hubScanJobConfigBuilder = new HubScanConfigBuilder(false);
         hubScanJobConfigBuilder.setProjectName(project);
@@ -81,7 +88,9 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             checkValidationErrors(HubScanConfigFieldEnum.VERSION, result, errorCollection);
             checkValidationErrors(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, result, errorCollection);
             checkValidationErrors(HubScanConfigFieldEnum.SCANMEMORY, result, errorCollection);
-            checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
+            if (!scanTargets.isEmpty()) {
+                checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
+            }
         }
     }
 

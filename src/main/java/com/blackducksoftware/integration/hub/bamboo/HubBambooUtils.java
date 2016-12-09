@@ -22,6 +22,7 @@
 package com.blackducksoftware.integration.hub.bamboo;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -105,7 +106,7 @@ public class HubBambooUtils implements Cloneable {
         return configBuilder.buildResults();
     }
 
-    public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
+    public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) throws IOException {
 
         final List<String> scanTargets = new ArrayList<>();
 
@@ -113,11 +114,11 @@ public class HubBambooUtils implements Cloneable {
             final String[] scanTargetPathsArray = targetPathText.split("\\r?\\n");
             for (final String target : scanTargetPathsArray) {
                 if (!StringUtils.isBlank(target)) {
-                    if (workingDirectory != null && StringUtils.isBlank(workingDirectory.getAbsolutePath())) {
+                    if (workingDirectory != null && StringUtils.isBlank(workingDirectory.getCanonicalPath())) {
                         scanTargets.add(target);
 
                     } else {
-                        scanTargets.add(new File(workingDirectory, target).getAbsolutePath());
+                        scanTargets.add(new File(workingDirectory, target).getCanonicalPath());
                     }
                 }
             }
