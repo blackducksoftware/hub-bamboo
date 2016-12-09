@@ -122,10 +122,11 @@ public class HubBambooUtilsTest {
         final String targetText = "aFile";
         final File workingDir = new File(".");
         List<String> targets = HubBambooUtils.getInstance().createScanTargetPaths(targetText, workingDir);
-
+        final String expectedPath = new File(workingDir, targetText).getCanonicalPath();
+        final String actualPath = targets.get(0);
         assertNotNull(targets);
         assertEquals(1, targets.size());
-        assertEquals(new File(workingDir, targetText).getAbsolutePath(), targets.get(0));
+        assertEquals(expectedPath, actualPath);
 
         targets = HubBambooUtils.getInstance().createScanTargetPaths("", workingDir);
         assertNotNull(targets);
@@ -150,20 +151,20 @@ public class HubBambooUtilsTest {
 
         assertNotNull(targets);
         assertEquals(2, targets.size());
-        assertEquals(new File(workingDir, "aFile").getAbsolutePath(), targets.get(0));
-        assertEquals(new File(workingDir, "anotherFile").getAbsolutePath(), targets.get(1));
+        assertEquals(new File(workingDir, "aFile").getCanonicalPath(), targets.get(0));
+        assertEquals(new File(workingDir, "anotherFile").getCanonicalPath(), targets.get(1));
 
         targetText = " \nanotherFile";
         targets = HubBambooUtils.getInstance().createScanTargetPaths(targetText, workingDir);
         assertNotNull(targets);
         assertEquals(1, targets.size());
-        assertEquals(new File(workingDir, "anotherFile").getAbsolutePath(), targets.get(0));
+        assertEquals(new File(workingDir, "anotherFile").getCanonicalPath(), targets.get(0));
 
         targetText = "aFile\n ";
         targets = HubBambooUtils.getInstance().createScanTargetPaths(targetText, workingDir);
         assertNotNull(targets);
         assertEquals(1, targets.size());
-        assertEquals(new File(workingDir, "aFile").getAbsolutePath(), targets.get(0));
+        assertEquals(new File(workingDir, "aFile").getCanonicalPath(), targets.get(0));
     }
 
     @Test

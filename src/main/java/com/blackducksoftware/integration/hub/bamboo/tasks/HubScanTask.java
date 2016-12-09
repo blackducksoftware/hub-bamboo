@@ -283,7 +283,7 @@ public class HubScanTask implements TaskType {
 
         if (scanTargets.isEmpty()) {
             // no targets specified assume the working directory.
-            scanTargets.add(workingDirectory.getAbsolutePath());
+            scanTargets.add(workingDirectory.getCanonicalPath());
         }
 
         try {

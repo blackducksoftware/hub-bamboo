@@ -43,27 +43,27 @@ public class HubBambooUtilsPowerMockTest {
 
     @PrepareForTest(SystemDirectory.class)
     @Test
-    public void testGetBambooHome() {
+    public void testGetBambooHome() throws Exception {
         final File file = new File("bamboo-home/");
         PowerMockito.mockStatic(SystemDirectory.class);
         PowerMockito.when(SystemDirectory.getApplicationHome()).thenReturn(file);
 
         final String path = HubBambooUtils.getInstance().getBambooHome();
 
-        assertEquals(file.getAbsolutePath(), path);
+        assertEquals(file.getCanonicalPath(), path);
 
         PowerMockito.verifyStatic();
         SystemDirectory.getApplicationHome();
     }
 
     @Test
-    public void testGetBambooHomeFromEnv() {
+    public void testGetBambooHomeFromEnv() throws Exception {
         final File file = new File("bamboo-home/");
-        SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getAbsolutePath());
+        SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getCanonicalPath());
         final String path = HubBambooUtils.getInstance().getBambooHome();
 
-        assertEquals(file.getAbsolutePath(), path);
-        assertEquals(file.getAbsolutePath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
+        assertEquals(file.getCanonicalPath(), path);
+        assertEquals(file.getCanonicalPath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
     }
 
     @PrepareForTest(SystemDirectory.class)
@@ -76,8 +76,8 @@ public class HubBambooUtilsPowerMockTest {
         PowerMockito.when(storage.getArtifactDirectory(Mockito.any(PlanResultKey.class))).thenReturn(file);
 
         final File reportFile = HubBambooUtils.getInstance().getRiskReportFile("TEST-PLAN-JOB1", 1);
-        final String path = file.getAbsolutePath() + "/Hub_Risk_Report/riskreport.html";
-        final String reportFilePath = reportFile.getAbsolutePath();
+        final String path = file.getCanonicalPath() + "/Hub_Risk_Report/riskreport.html";
+        final String reportFilePath = reportFile.getCanonicalPath();
         assertEquals(path, reportFilePath);
     }
 }
