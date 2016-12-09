@@ -20,7 +20,7 @@
     <amps.version>6.2.3</amps.version>
     <bamboo.data.version>5.3</bamboo.data.version>
     <bamboo.version>5.14.0</bamboo.version>
-    <hub.common.version>4.0.0</hub.common.version>
+    <hub.common.version>5.0.0-SNAPSHOT</hub.common.version>
     <plugin.testrunner.version>1.1.4</plugin.testrunner.version>
     <source.java.version>1.8</source.java.version>
     <target.java.version>1.8</target.java.version>

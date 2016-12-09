@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -51,7 +50,6 @@ import com.atlassian.bamboo.util.BuildUtils;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.plugin.PluginAccessor;
-import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem;
@@ -68,7 +66,6 @@ import com.blackducksoftware.integration.hub.dataservice.policystatus.PolicyStat
 import com.blackducksoftware.integration.hub.dataservice.report.RiskReportDataService;
 import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.exception.ScanFailedException;
-import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
 import com.blackducksoftware.integration.hub.rest.RestConnection;
@@ -256,26 +253,16 @@ public class HubScanTask implements TaskType {
         final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
         final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-        final ValidationResults<GlobalFieldKey, HubServerConfig> results = HubBambooUtils.getInstance()
-                .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
-                        hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+        try {
+            final HubServerConfig result = HubBambooUtils.getInstance()
+                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+                            hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+            return result;
 
-        if (results.isSuccess()) {
-            return results.getConstructedObject();
-        } else {
-            logger.error("Hub Server Configuration Invalid.");
-            final Set<GlobalFieldKey> keySet = results.getResultMap().keySet();
-            for (final GlobalFieldKey key : keySet) {
-                if (results.hasErrors()) {
-                    logger.error(results.getResultString(key));
-                }
-
-                if (results.hasWarnings()) {
-                    logger.warn(results.getResultString(key));
-                }
-            }
-
+        } catch (final IllegalStateException ex) {
+            logger.error("Hub Server Configuration Invalid.", ex);
         }
+
         return null;
     }
 
@@ -299,39 +286,25 @@ public class HubScanTask implements TaskType {
             scanTargets.add(workingDirectory.getAbsolutePath());
         }
 
-        final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder(false);
-        hubScanConfigBuilder.setProjectName(project);
-        hubScanConfigBuilder.setVersion(version);
-        hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
-        hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
-        hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-        hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
-        hubScanConfigBuilder.setScanMemory(scanMemory);
-        hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
-        hubScanConfigBuilder.setToolsDir(toolsDir);
-        hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
-        hubScanConfigBuilder.setPluginVersion(pluginVersion);
-
-        final ValidationResults<HubScanConfigFieldEnum, HubScanConfig> results = hubScanConfigBuilder.buildResults();
-
-        if (results.isSuccess()) {
-            return results.getConstructedObject();
-        } else {
-            logger.error("Hub Scan Configuration Invalid.");
-            final Set<HubScanConfigFieldEnum> keySet = results.getResultMap().keySet();
-            for (final HubScanConfigFieldEnum key : keySet) {
-                if (results.hasErrors()) {
-                    logger.error(results.getResultString(key));
-                }
-
-                if (results.hasWarnings()) {
-                    logger.warn(results.getResultString(key));
-                }
-            }
-
+        try {
+            final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
+            hubScanConfigBuilder.setProjectName(project);
+            hubScanConfigBuilder.setVersion(version);
+            hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
+            hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
+            hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
+            hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
+            hubScanConfigBuilder.setScanMemory(scanMemory);
+            hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
+            hubScanConfigBuilder.setToolsDir(toolsDir);
+            hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
+            hubScanConfigBuilder.setPluginVersion(pluginVersion);
+            return hubScanConfigBuilder.build();
+        } catch (final IllegalStateException ex) {
+            logger.error("Hub Scan Configuration Invalid.", ex);
         }
 
-        return hubScanConfigBuilder.build();
+        return null;
     }
 
     private String getPersistedValue(final String key) {

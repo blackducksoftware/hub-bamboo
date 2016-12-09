@@ -31,8 +31,8 @@ import org.junit.Test;
 import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
 import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator;
-import com.blackducksoftware.integration.hub.builder.HubScanConfigBuilder;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
+import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
 
 import ut.com.blackducksoftware.integration.hub.bamboo.utils.TestTaskDefinition;
 
@@ -47,8 +47,8 @@ public class HubScanTaskConfiguratorTest {
         configMap.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
         configMap.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
         configMap.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
-                String.valueOf(HubScanConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES));
-        configMap.put(HubScanConfigFieldEnum.SCANMEMORY.getKey(), String.valueOf(HubScanConfigBuilder.DEFAULT_MEMORY_IN_MEGABYTES));
+                String.valueOf(HubScanConfigValidator.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES));
+        configMap.put(HubScanConfigFieldEnum.SCANMEMORY.getKey(), String.valueOf(HubScanConfigValidator.DEFAULT_MEMORY_IN_MEGABYTES));
         configMap.put(HubScanConfigFieldEnum.TARGETS.getKey(), "");
         configMap.put(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey(), "false");
         return configMap;
@@ -61,9 +61,9 @@ public class HubScanTaskConfiguratorTest {
         assertEquals(DistributionEnum.EXTERNAL.getDisplayValue(), context.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey()));
         assertEquals("false", context.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey()));
         assertEquals("false", context.get(HubScanConfigFieldEnum.DRY_RUN.getKey()));
-        assertEquals(String.valueOf(HubScanConfigBuilder.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES),
+        assertEquals(String.valueOf(HubScanConfigValidator.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES),
                 context.get(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey()));
-        assertEquals(String.valueOf(HubScanConfigBuilder.DEFAULT_MEMORY_IN_MEGABYTES), context.get(HubScanConfigFieldEnum.SCANMEMORY.getKey()));
+        assertEquals(String.valueOf(HubScanConfigValidator.DEFAULT_MEMORY_IN_MEGABYTES), context.get(HubScanConfigFieldEnum.SCANMEMORY.getKey()));
         assertEquals("", context.get(HubScanConfigFieldEnum.TARGETS.getKey()));
         assertEquals("false", context.get(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey()));
     }

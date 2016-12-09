@@ -40,9 +40,7 @@ import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.utils.SystemProperty;
-import com.blackducksoftware.integration.builder.ValidationResults;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
-import com.blackducksoftware.integration.hub.global.GlobalFieldKey;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 
 public class HubBambooUtils implements Cloneable {
@@ -76,11 +74,11 @@ public class HubBambooUtils implements Cloneable {
         throw new CloneNotSupportedException();
     }
 
-    public ValidationResults<GlobalFieldKey, HubServerConfig> buildConfigFromStrings(final String hubUrl,
+    public HubServerConfig buildConfigFromStrings(final String hubUrl,
             final String hubUser, final String hubPass, final String hubPassLength, final String hubProxyUrl,
             final String hubProxyPort, final String hubProxyNoHost, final String hubProxyUser,
             final String hubProxyPass, final String hubProxyPassLength) {
-        final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder(true);
+        final HubServerConfigBuilder configBuilder = new HubServerConfigBuilder();
         configBuilder.setHubUrl(hubUrl);
         configBuilder.setUsername(hubUser);
         configBuilder.setPassword(hubPass);
@@ -102,7 +100,7 @@ public class HubBambooUtils implements Cloneable {
                 configBuilder.setProxyPasswordLength(length);
             }
         }
-        return configBuilder.buildResults();
+        return configBuilder.build();
     }
 
     public List<String> createScanTargetPaths(final String targetPathText, final File workingDirectory) {
