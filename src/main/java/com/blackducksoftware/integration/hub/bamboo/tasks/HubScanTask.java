@@ -170,7 +170,7 @@ public class HubScanTask implements TaskType {
             }
             if (!hubScanConfig.isDryRun()) {
                 if (isRiskReportGenerated || isFailOnPolicySelected) {
-                    services.createScanStatusDataService().assertBomImportScansFinished(scanSummaryList,
+                    services.createScanStatusDataService(logger).assertBomImportScansFinished(scanSummaryList,
                             waitTimeForReport);
                 }
                 if (isRiskReportGenerated) {
@@ -215,7 +215,7 @@ public class HubScanTask implements TaskType {
                 logger.warn("Will not run the Failure conditions because this was a dry run scan.");
                 return resultBuilder.success();
             }
-            final PolicyStatusDataService policyStatusDataService = services.createPolicyStatusDataService();
+            final PolicyStatusDataService policyStatusDataService = services.createPolicyStatusDataService(logger);
 
             final PolicyStatusItem policyStatusItem = policyStatusDataService
                     .getPolicyStatusForProjectAndVersion(projectName, versionName);
