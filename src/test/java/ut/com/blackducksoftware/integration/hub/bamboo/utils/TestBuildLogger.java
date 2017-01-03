@@ -28,8 +28,8 @@ import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.atlassian.bamboo.build.logger.LogInterceptorStack;
 import com.atlassian.bamboo.build.logger.LogMutatorStack;
 import com.atlassian.bamboo.plan.PlanResultKey;
-import com.blackducksoftware.integration.hub.logging.IntBufferedLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.log.IntBufferedLogger;
+import com.blackducksoftware.integration.log.LogLevel;
 
 public class TestBuildLogger implements BuildLogger {
 

@@ -25,128 +25,138 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
-import com.blackducksoftware.integration.hub.logging.IntLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.log.LogLevel;
 
 public class HubBambooLogger extends IntLogger {
 
-	private final BuildLogger buildLogger;
-	private LogLevel level = LogLevel.INFO;
+    private final BuildLogger buildLogger;
 
-	public HubBambooLogger(final BuildLogger buildLogger) {
-		this.buildLogger = buildLogger;
-	}
+    private LogLevel level = LogLevel.INFO;
 
-	public BuildLogger getBuildLogger() {
-		return buildLogger;
-	}
+    public HubBambooLogger(final BuildLogger buildLogger) {
+        this.buildLogger = buildLogger;
+    }
 
-	@Override
-	public LogLevel getLogLevel() {
-		return level;
-	}
+    public BuildLogger getBuildLogger() {
+        return buildLogger;
+    }
 
-	@Override
-	public void setLogLevel(final LogLevel level) {
-		this.level = level;
-	}
+    @Override
+    public LogLevel getLogLevel() {
+        return level;
+    }
 
-	@Override
-	public void debug(final String txt, final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
-			logThrowable(txt, throwable);
-		}
-	}
+    @Override
+    public void setLogLevel(final LogLevel level) {
+        this.level = level;
+    }
 
-	@Override
-	public void debug(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
-			logMessage(txt);
-		}
-	}
+    @Override
+    public void alwaysLog(final String txt) {
+        logMessage(txt);
+    }
 
-	@Override
-	public void error(final String txt, final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
-			logThrowable(txt, throwable);
-		}
-	}
+    public void alwaysLog(final String txt, final Throwable throwable) {
+        logThrowable(txt, throwable);
+    }
 
-	@Override
-	public void error(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
-			logErrorMessage(txt);
-		}
-	}
+    @Override
+    public void debug(final String txt, final Throwable throwable) {
+        if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+            logThrowable(txt, throwable);
+        }
+    }
 
-	@Override
-	public void error(final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
-			logThrowable(throwable);
-		}
-	}
+    @Override
+    public void debug(final String txt) {
+        if (LogLevel.isLoggable(level, LogLevel.DEBUG)) {
+            logMessage(txt);
+        }
+    }
 
-	@Override
-	public void info(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.INFO)) {
-			logMessage(txt);
-		}
-	}
+    @Override
+    public void error(final String txt, final Throwable throwable) {
+        if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
+            logThrowable(txt, throwable);
+        }
+    }
 
-	@Override
-	public void trace(final String txt, final Throwable throwable) {
-		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
-			logThrowable(txt, throwable);
-		}
-	}
+    @Override
+    public void error(final String txt) {
+        if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
+            logErrorMessage(txt);
+        }
+    }
 
-	@Override
-	public void trace(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
-			logMessage(txt);
-		}
-	}
+    @Override
+    public void error(final Throwable throwable) {
+        if (LogLevel.isLoggable(level, LogLevel.ERROR)) {
+            logThrowable(throwable);
+        }
+    }
 
-	@Override
-	public void warn(final String txt) {
-		if (LogLevel.isLoggable(level, LogLevel.WARN)) {
-			logMessage(txt);
-		}
-	}
+    @Override
+    public void info(final String txt) {
+        if (LogLevel.isLoggable(level, LogLevel.INFO)) {
+            logMessage(txt);
+        }
+    }
 
-	private void logMessage(final String txt) {
-		if (txt != null) {
-			if (buildLogger != null) {
-				buildLogger.addBuildLogEntry(txt);
-			} else {
-				System.out.println(txt);
-			}
-		}
-	}
+    @Override
+    public void trace(final String txt, final Throwable throwable) {
+        if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
+            logThrowable(txt, throwable);
+        }
+    }
 
-	private void logErrorMessage(final String txt) {
-		if (txt != null) {
-			if (buildLogger != null) {
-				buildLogger.addErrorLogEntry(txt);
-			} else {
-				System.out.println(txt);
-			}
-		}
-	}
+    @Override
+    public void trace(final String txt) {
+        if (LogLevel.isLoggable(level, LogLevel.TRACE)) {
+            logMessage(txt);
+        }
+    }
 
-	private void logThrowable(final Throwable throwable) {
-		logThrowable("An error occurred caused by ", throwable);
-	}
+    @Override
+    public void warn(final String txt) {
+        if (LogLevel.isLoggable(level, LogLevel.WARN)) {
+            logMessage(txt);
+        }
+    }
 
-	private void logThrowable(final String txt, final Throwable throwable) {
-		if (txt != null) {
-			if (buildLogger != null) {
-				buildLogger.addErrorLogEntry(txt, throwable);
-			} else {
-				final StringWriter sw = new StringWriter();
-				throwable.printStackTrace(new PrintWriter(sw));
-				System.err.println(sw.toString());
-			}
-		}
-	}
+    private void logMessage(final String txt) {
+        if (txt != null) {
+            if (buildLogger != null) {
+                buildLogger.addBuildLogEntry(txt);
+            } else {
+                System.out.println(txt);
+            }
+        }
+    }
+
+    private void logErrorMessage(final String txt) {
+        if (txt != null) {
+            if (buildLogger != null) {
+                buildLogger.addErrorLogEntry(txt);
+            } else {
+                System.out.println(txt);
+            }
+        }
+    }
+
+    private void logThrowable(final Throwable throwable) {
+        logThrowable("An error occurred caused by ", throwable);
+    }
+
+    private void logThrowable(final String txt, final Throwable throwable) {
+        if (txt != null) {
+            if (buildLogger != null) {
+                buildLogger.addErrorLogEntry(txt, throwable);
+            } else {
+                final StringWriter sw = new StringWriter();
+                throwable.printStackTrace(new PrintWriter(sw));
+                System.err.println(sw.toString());
+            }
+        }
+    }
 }

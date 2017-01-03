@@ -44,82 +44,82 @@ import com.blackducksoftware.integration.hub.bamboo.BambooFileStorageHelper;
 @RunWith(PowerMockRunner.class)
 public class BambooFileStorageHelperPowerMockTest {
 
-	@Rule
-	public ExpectedException exception = ExpectedException.none();
+    @Rule
+    public ExpectedException exception = ExpectedException.none();
 
-	private ArtifactDefinitionContext createArtifact() {
-		final ArtifactDefinitionContext artifactDefinition = new ArtifactDefinitionContextImpl("Hub_Risk_Report", false,
-				null);
+    private ArtifactDefinitionContext createArtifact() {
+        final ArtifactDefinitionContext artifactDefinition = new ArtifactDefinitionContextImpl("Hub_Risk_Report", false,
+                null);
 
-		return artifactDefinition;
-	}
+        return artifactDefinition;
+    }
 
-	private PlanResultKey createResultKey() {
-		final PlanResultKey resultKey = PlanKeys.getPlanResultKey("TEST-PLAN-JOB1", 1);
-		return resultKey;
-	}
+    private PlanResultKey createResultKey() {
+        final PlanResultKey resultKey = PlanKeys.getPlanResultKey("TEST-PLAN-JOB1", 1);
+        return resultKey;
+    }
 
-	@Test
-	public void testEmptyClass() throws Exception {
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_RESULT_KEY);
+    @Test
+    public void testEmptyClass() throws Exception {
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_RESULT_KEY);
 
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
-		storageHelper.buildArtifactRootDirectory();
-	}
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+        storageHelper.buildArtifactRootDirectory();
+    }
 
-	@Test
-	public void testPlanKeyNull() throws Exception {
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_RESULT_KEY);
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
-		storageHelper.setResultKey(null);
-		storageHelper.setArtifactDefinition(createArtifact());
-		storageHelper.buildArtifactRootDirectory();
-	}
+    @Test
+    public void testPlanKeyNull() throws Exception {
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_RESULT_KEY);
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+        storageHelper.setResultKey(null);
+        storageHelper.setArtifactDefinition(createArtifact());
+        storageHelper.buildArtifactRootDirectory();
+    }
 
-	@Test
-	public void testArtifactNull() throws Exception {
-		exception.expect(IllegalArgumentException.class);
-		exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_ARTIFACT_DEFINITION);
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
-		storageHelper.setResultKey(createResultKey());
-		storageHelper.setArtifactDefinition(null);
-		storageHelper.buildArtifactRootDirectory();
-	}
+    @Test
+    public void testArtifactNull() throws Exception {
+        exception.expect(IllegalArgumentException.class);
+        exception.expectMessage(BambooFileStorageHelper.ILLEGAL_ARG_MESSAGE_ARTIFACT_DEFINITION);
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+        storageHelper.setResultKey(createResultKey());
+        storageHelper.setArtifactDefinition(null);
+        storageHelper.buildArtifactRootDirectory();
+    }
 
-	@Test
-	public void testGetMethods() throws Exception {
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
-		final PlanResultKey key = createResultKey();
-		final ArtifactDefinitionContext artifact = createArtifact();
-		storageHelper.setResultKey(key);
-		storageHelper.setArtifactDefinition(artifact);
+    @Test
+    public void testGetMethods() throws Exception {
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+        final PlanResultKey key = createResultKey();
+        final ArtifactDefinitionContext artifact = createArtifact();
+        storageHelper.setResultKey(key);
+        storageHelper.setArtifactDefinition(artifact);
 
-		assertEquals(key, storageHelper.getResultKey());
-		assertEquals(artifact, storageHelper.getArtifactDefinition());
-	}
+        assertEquals(key, storageHelper.getResultKey());
+        assertEquals(artifact, storageHelper.getArtifactDefinition());
+    }
 
-	@Test
-	@PrepareForTest(SystemDirectory.class)
-	public void testGetArtifactRootDir() throws Exception {
-		final File file = new File("bamboo-artifacts/");
-		final ArtifactStorage storage = PowerMockito.mock(ArtifactStorage.class);
-		PowerMockito.mockStatic(SystemDirectory.class);
-		PowerMockito.when(SystemDirectory.getArtifactStorage()).thenReturn(storage);
-		final PlanResultKey key = createResultKey();
-		final ArtifactDefinitionContext artifact = createArtifact();
-		PowerMockito.when(storage.getArtifactDirectory(key)).thenReturn(file);
-		final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
+    @Test
+    @PrepareForTest(SystemDirectory.class)
+    public void testGetArtifactRootDir() throws Exception {
+        final File file = new File("bamboo-artifacts/");
+        final ArtifactStorage storage = PowerMockito.mock(ArtifactStorage.class);
+        PowerMockito.mockStatic(SystemDirectory.class);
+        PowerMockito.when(SystemDirectory.getArtifactStorage()).thenReturn(storage);
+        final PlanResultKey key = createResultKey();
+        final ArtifactDefinitionContext artifact = createArtifact();
+        PowerMockito.when(storage.getArtifactDirectory(key)).thenReturn(file);
+        final BambooFileStorageHelper storageHelper = new BambooFileStorageHelper();
 
-		storageHelper.setResultKey(key);
-		storageHelper.setArtifactDefinition(artifact);
+        storageHelper.setResultKey(key);
+        storageHelper.setArtifactDefinition(artifact);
 
-		final File reportFile = storageHelper.buildArtifactRootDirectory();
-		final String path = file.getAbsolutePath() + "/Hub_Risk_Report";
-		final String reportFilePath = reportFile.getAbsolutePath();
-		assertEquals(key, storageHelper.getResultKey());
-		assertEquals(artifact, storageHelper.getArtifactDefinition());
-		assertEquals(path, reportFilePath);
-	}
+        final File reportFile = storageHelper.buildArtifactRootDirectory();
+        final String path = file.getCanonicalPath() + "/Hub_Risk_Report";
+        final String reportFilePath = reportFile.getCanonicalPath();
+        assertEquals(key, storageHelper.getResultKey());
+        assertEquals(artifact, storageHelper.getArtifactDefinition());
+        assertEquals(path, reportFilePath);
+    }
 }

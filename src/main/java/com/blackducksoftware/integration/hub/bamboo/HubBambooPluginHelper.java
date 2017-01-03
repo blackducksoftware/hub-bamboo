@@ -19,41 +19,20 @@
  * specific language governing permissions and limitations
  * under the License.
  *******************************************************************************/
-package com.blackducksoftware.integration.hub.bamboo.tasks;
+package com.blackducksoftware.integration.hub.bamboo;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.atlassian.plugin.PluginAccessor;
 
-/**
- * Remember to close the Streams when they are done being used.
- *
- * @author jrichard
- */
-public class StreamRedirectThread extends Thread {
-	private final InputStream in;
+public class HubBambooPluginHelper {
 
-	private final OutputStream out;
+	private final PluginAccessor pluginAccessor;
 
-	public StreamRedirectThread(final InputStream in, final OutputStream out) {
-		super("Stream Redirect Thread");
-		this.in = in;
-		this.out = out;
+	public HubBambooPluginHelper(final PluginAccessor pluginAccessor) {
+		this.pluginAccessor = pluginAccessor;
 	}
 
-	@Override
-	public void run() {
-		try {
-			int i;
-			while ((i = in.read()) >= 0) {
-				if (i == -1) {
-					break;
-				}
-				out.write(i);
-			}
-		} catch (final IOException e) {
-			// Ignore
-		}
+	public String getPluginVersion() {
+		return pluginAccessor.getPlugin("com.blackducksoftware.integration.hub-bamboo").getPluginInformation()
+				.getVersion();
 	}
-
 }

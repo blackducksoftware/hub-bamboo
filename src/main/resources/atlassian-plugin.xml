@@ -1,5 +1,6 @@
 <atlassian-plugin key="${project.groupId}.${project.artifactId}"
 	name="${project.name}" plugins-version="2">
+	<!-- If the plugin key changes then you must update HubBambooPluginHelper -->
 	<plugin-info>
 		<description>${project.description}
 	    This project depends on the hub-atlassian-config plugin in order to configure the Hub server to be used.
@@ -7,9 +8,13 @@
 		</description>
 		<version>${project.version}</version>
 		<vendor name="${project.organization.name}" url="${project.organization.url}" />
-		<param name="plugin-icon">images/BlackDuckLogo.png</param>
-		<param name="plugin-logo">images/BlackDuckLogo.png</param>
+		<param name="plugin-icon">images/Ducky-200.png</param>
+		<param name="plugin-logo">images/Ducky-200.png</param>
 		<bundle-instructions>
+			<Export-Package>
+				com.google.gson;version="2.7",
+				com.google.gson.reflect;version="2.7"
+			</Export-Package>
 			<Import-Package>
 				org.springframework.osgi.service.exporter.support;resolution:=optional,
 				org.springframework.osgi.service.importer.support;resolution:=optional,
@@ -39,8 +44,8 @@
 				com.atlassian.plugin.osgi.factory,
 				com.atlassian.plugin.web.conditions,
 				com.atlassian.sal.api,
-				com.google.gson;version="0.0",
-				com.google.gson.*;version="0.0",
+				com.google.gson;version="2.7",
+				com.google.gson.reflect;version="2.7",
 				com.thoughtworks.xstream,
 				com.thoughtworks.xstream.io,
 				com.thoughtworks.xstream.io.xml,
@@ -67,7 +72,8 @@
 				org.codehaus.plexus.component.annotations,
 				org.osgi.framework,
 				org.osgi.util.tracker,
-				org.slf4j.impl,
+				org.slf4j;version="0.0",
+				org.slf4j.impl;version="0.0",
 				org.sonatype.aether.artifact,
 				org.sonatype.aether.graph,
 				org.springframework.beans,
@@ -83,23 +89,15 @@
 				org.w3c.dom,
 				org.w3c.dom.ls,
 				org.xml.sax,
-				org.xml.sax.helpers
+				org.xml.sax.helpers,
+			    *;resolution:=optional
 			</Import-Package>
 		</bundle-instructions>
 	</plugin-info>
 
 	<!-- add our i18n resource -->
 	<resource type="i18n" name="i18n" location="com.blackducksoftware.integration.hub.bamboo.i18n" />
-
-	<!-- add our web resources -->
-	<web-resource key="hub-bamboo-resources" name="hub-bamboo Web Resources">
-		<resource type="download" name="css/" location="/css"/>
-		<resource type="download" name="images/" location="/images"/>
-        <resource type="download" name="js/" location="/js"/>
-		<resource type="download" name="font-awesome-4.5.0/" location="/font-awesome-4.5.0"/>
-	     <context>hub-bamboo</context>
-	</web-resource>
-
+    
 	<!-- import from the product container -->
 	<component-import key="applicationProperties"
 		interface="com.atlassian.sal.api.ApplicationProperties" />
@@ -117,7 +115,7 @@
 		<configuration
 			class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator" />
 	    <runtimeTaskDataProvider class="com.blackducksoftware.integration.hub.bamboo.tasks.HubTaskDataProvider"/>
-		<resource type="download" name="icon" location="images/BlackDuckLogo.png"/>
+		<resource type="download" name="icon" location="images/Ducky-80.png"/>
 		<resource type="freemarker" name="edit" location="tasks/editHubScanTask.ftl" />
 		<resource type="freemarker" name="view" location="tasks/viewHubScanTask.ftl" />
 	</taskType>
@@ -126,6 +124,7 @@
 	   <package name="HubBambooPluginBuild" extends="buildView" namespace="/plugins/hub-bamboo/reports">  
 	       <action name="viewRiskReport" class="com.blackducksoftware.integration.hub.bamboo.reports.HubRiskReportAction">
 	           <result name="success" type="freemarker">/reports/viewHubRiskReport.ftl</result>
+	           
            </action>
 	   </package>
 	</xwork>
@@ -134,7 +133,7 @@
         <label key="blackduckhub.report.risk.tab.label"/>
         <tooltip key="blackduckhub.report.risk.tab.tooltip"/>
         <icon height="16" width="16">
-            <link>/plugins/hub-bamboo/images/Bdicon.gif</link>
+            <link>/plugins/hub-bamboo/images/Ducky-200.png</link>
         </icon>
         <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action?planKey=${planKey}&amp;buildNumber=${buildNumber}</link>
         <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.RiskReportCondition"/>

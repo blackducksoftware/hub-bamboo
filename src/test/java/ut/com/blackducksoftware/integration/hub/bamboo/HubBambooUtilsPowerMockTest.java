@@ -41,43 +41,43 @@ import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 @RunWith(PowerMockRunner.class)
 public class HubBambooUtilsPowerMockTest {
 
-	@PrepareForTest(SystemDirectory.class)
-	@Test
-	public void testGetBambooHome() {
-		final File file = new File("bamboo-home/");
-		PowerMockito.mockStatic(SystemDirectory.class);
-		PowerMockito.when(SystemDirectory.getApplicationHome()).thenReturn(file);
+    @PrepareForTest(SystemDirectory.class)
+    @Test
+    public void testGetBambooHome() throws Exception {
+        final File file = new File("bamboo-home/");
+        PowerMockito.mockStatic(SystemDirectory.class);
+        PowerMockito.when(SystemDirectory.getApplicationHome()).thenReturn(file);
 
-		final String path = HubBambooUtils.getInstance().getBambooHome();
+        final String path = HubBambooUtils.getInstance().getBambooHome();
 
-		assertEquals(file.getAbsolutePath(), path);
+        assertEquals(file.getCanonicalPath(), path);
 
-		PowerMockito.verifyStatic();
-		SystemDirectory.getApplicationHome();
-	}
+        PowerMockito.verifyStatic();
+        SystemDirectory.getApplicationHome();
+    }
 
-	@Test
-	public void testGetBambooHomeFromEnv() {
-		final File file = new File("bamboo-home/");
-		SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getAbsolutePath());
-		final String path = HubBambooUtils.getInstance().getBambooHome();
+    @Test
+    public void testGetBambooHomeFromEnv() throws Exception {
+        final File file = new File("bamboo-home/");
+        SystemProperty.BAMBOO_HOME_FROM_ENV.setValue(file.getCanonicalPath());
+        final String path = HubBambooUtils.getInstance().getBambooHome();
 
-		assertEquals(file.getAbsolutePath(), path);
-		assertEquals(file.getAbsolutePath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
-	}
+        assertEquals(file.getCanonicalPath(), path);
+        assertEquals(file.getCanonicalPath(), SystemProperty.BAMBOO_HOME_FROM_ENV.getValue());
+    }
 
-	@PrepareForTest(SystemDirectory.class)
-	@Test
-	public void testGetRiskReport() throws Exception {
-		final File file = new File("bamboo-artifacts/");
-		final ArtifactStorage storage = PowerMockito.mock(ArtifactStorage.class);
-		PowerMockito.mockStatic(SystemDirectory.class);
-		PowerMockito.when(SystemDirectory.getArtifactStorage()).thenReturn(storage);
-		PowerMockito.when(storage.getArtifactDirectory(Mockito.any(PlanResultKey.class))).thenReturn(file);
+    @PrepareForTest(SystemDirectory.class)
+    @Test
+    public void testGetRiskReport() throws Exception {
+        final File file = new File("bamboo-artifacts/");
+        final ArtifactStorage storage = PowerMockito.mock(ArtifactStorage.class);
+        PowerMockito.mockStatic(SystemDirectory.class);
+        PowerMockito.when(SystemDirectory.getArtifactStorage()).thenReturn(storage);
+        PowerMockito.when(storage.getArtifactDirectory(Mockito.any(PlanResultKey.class))).thenReturn(file);
 
-		final File reportFile = HubBambooUtils.getInstance().getRiskReportFile("TEST-PLAN-JOB1", 1);
-		final String path = file.getAbsolutePath() + "/Hub_Risk_Report/hub_risk_report.json";
-		final String reportFilePath = reportFile.getAbsolutePath();
-		assertEquals(path, reportFilePath);
-	}
+        final File reportFile = HubBambooUtils.getInstance().getRiskReportFile("TEST-PLAN-JOB1", 1);
+        final String path = file.getCanonicalPath() + "/Hub_Risk_Report/riskreport.html";
+        final String reportFilePath = reportFile.getCanonicalPath();
+        assertEquals(path, reportFilePath);
+    }
 }

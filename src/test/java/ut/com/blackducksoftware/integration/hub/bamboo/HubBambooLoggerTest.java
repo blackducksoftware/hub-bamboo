@@ -31,7 +31,7 @@ import org.junit.Test;
 
 import com.atlassian.bamboo.build.logger.BuildLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
-import com.blackducksoftware.integration.hub.logging.LogLevel;
+import com.blackducksoftware.integration.log.LogLevel;
 
 import ut.com.blackducksoftware.integration.hub.bamboo.utils.TestBuildLogger;
 
