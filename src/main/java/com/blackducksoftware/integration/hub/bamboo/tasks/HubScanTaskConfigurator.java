@@ -1,5 +1,7 @@
-/*******************************************************************************
- * Copyright (C) 2016 Black Duck Software, Inc.
+/**
+ * Black Duck Hub Plugin for Bamboo
+ *
+ * Copyright (C) 2017 Black Duck Software, Inc.
  * http://www.blackducksoftware.com/
  *
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -18,11 +20,12 @@
  * KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations
  * under the License.
- *******************************************************************************/
+ */
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -64,7 +67,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         List<String> scanTargets = new ArrayList<>();
         try {
             scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(scanTargetText, null);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             errorCollection.addError(HubScanConfigFieldEnum.TARGETS.getKey(), e.getMessage());
         }
 
@@ -72,7 +75,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         hubScanJobConfigBuilder.setProjectName(project);
         hubScanJobConfigBuilder.setVersion(version);
         hubScanJobConfigBuilder.setScanMemory(scanMemory);
-        hubScanJobConfigBuilder.addAllScanTargetPaths(scanTargets);
+        hubScanJobConfigBuilder.addAllScanTargetPaths(new HashSet<>(scanTargets));
         hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
         final ValidationResults result = hubScanJobConfigBuilder.assertValid();
 

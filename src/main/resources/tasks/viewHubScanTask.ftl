@@ -26,4 +26,6 @@ under the License.
 [@ww.textfield labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
 [@ww.label labelKey='blackduckhub.task.scan.scanmemory.label' name='hubScanMemory'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.dryrun.label' name='dryRun' readonly='true'/]
-[@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets' readonly='true'/]
+[@ww.checkbox labelKey='blackduckhub.task.scan.cleanuponsuccessfulscan.label' name='cleanupLogsOnSuccess' readonly='true'/]
+[@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets' readonly='true' description='Path of the target to be scanned. One target per line.'/]
+[@ww.textarea labelKey='blackduckhub.task.scan.excludepatterns.label' name='excludePatterns' readonly='true' description='Excludes a directory from scanning. Leading and trailing slashes are required. One pattern per line.'/]
