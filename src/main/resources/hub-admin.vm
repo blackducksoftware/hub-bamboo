@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>$i18n.getText("hub.integration.admin.label")</title>
+    <title>$i18n.getText("hub.integration.bamboo.label")</title>
     <meta name="decorator" content="atl.admin" />
    		$webResourceManager.requireResource("com.blackducksoftware.integration.hub-bamboo:hub-bamboo-config-admin-resources")
   </head>
@@ -20,12 +20,12 @@
       </div>
       
       <fieldset class="fieldSection">
-      	  <legend class="legend"><i class="fa fa-angle-down" onclick="toggleDisplay(this,'serverConfigArea');"> </i> $i18n.getText("hub.integration.admin.serverConfig.label")</legend>
+      	  <legend class="legend"><i class="fa fa-angle-down" onclick="toggleDisplay(this,'serverConfigArea');"> </i> $i18n.getText("hub.integration.bamboo.serverConfig.label")</legend>
       	  <div id="serverConfigArea">
 		      <div class="field-group">
-		        <label class="label" for="hubServerUrl">$i18n.getText("hub.integration.admin.url.label")<span class="error"> *</span></label>
+		        <label class="label" for="hubServerUrl">$i18n.getText("hub.integration.bamboo.url.label")<span class="error"> *</span></label>
 		        <input type="text" id="hubServerUrl" name="hubServerUrl" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.url.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.url.description')"></span>
 		      </div>
 		      <div id="hubServerUrlErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -33,9 +33,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="hubUsername">$i18n.getText("hub.integration.admin.username.label")<span class="error"> *</span></label>
+		        <label class="label" for="hubUsername">$i18n.getText("hub.integration.bamboo.username.label")<span class="error"> *</span></label>
 		        <input type="text" id="hubUsername" name="hubUsername" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.username.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.username.description')"></span>
 		      </div>
 		      <div id="hubUsernameErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -43,9 +43,9 @@
 		      </div>
 		        
 		      <div class="field-group">
-		        <label class="label" for="hubPassword">$i18n.getText("hub.integration.admin.password.label")<span class="error"> *</span></label>
+		        <label class="label" for="hubPassword">$i18n.getText("hub.integration.bamboo.password.label")<span class="error"> *</span></label>
 		        <input type="password" id="hubPassword" name="hubPassword" class="password longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.password.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.password.description')"></span>
 		      </div>
 		       <div id="hubPasswordErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -53,9 +53,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="hubTimeout">$i18n.getText("hub.integration.admin.timeout.label")<span class="error"> *</span></label>
+		        <label class="label" for="hubTimeout">$i18n.getText("hub.integration.bamboo.timeout.label")<span class="error"> *</span></label>
 		        <input type="text" id="hubTimeout" name="hubTimeout" class="longInput textStyle" default="120">
-		         <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.timeout.description')"></span>
+		         <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.timeout.description')"></span>
 		      </div>
 		       <div id="hubTimeoutErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -65,12 +65,12 @@
       </fieldset>
       
       <fieldset class="fieldSection">
-      	  <legend class="legend"><i id="proxyConfigDisplayIcon" class="fa fa-angle-down" onclick="toggleDisplay(this,'proxyConfigArea');"> </i> $i18n.getText("hub.integration.admin.proxyConfig.label")</legend>
+      	  <legend class="legend"><i id="proxyConfigDisplayIcon" class="fa fa-angle-down" onclick="toggleDisplay(this,'proxyConfigArea');"> </i> $i18n.getText("hub.integration.bamboo.proxyConfig.label")</legend>
       	  <div id="proxyConfigArea">
 		      <div class="field-group">
-		        <label class="label" for="proxyHost">$i18n.getText("hub.integration.admin.proxy.host.label")</label>
+		        <label class="label" for="proxyHost">$i18n.getText("hub.integration.bamboo.proxy.host.label")</label>
 		        <input type="text" id="proxyHost" name="proxyHost" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.proxy.host.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.proxy.host.description')"></span>
 		      </div>
 		       <div id="proxyHostErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -78,9 +78,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="proxyPort">$i18n.getText("hub.integration.admin.proxy.port.label")</label>
+		        <label class="label" for="proxyPort">$i18n.getText("hub.integration.bamboo.proxy.port.label")</label>
 		        <input type="text" id="proxyPort" name="proxyPort" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.proxy.port.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.proxy.port.description')"></span>
 		      </div>
 		       <div id="proxyPortErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -88,9 +88,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="noProxyHost">$i18n.getText("hub.integration.admin.proxy.noproxyhost.label")</label>
+		        <label class="label" for="noProxyHost">$i18n.getText("hub.integration.bamboo.proxy.noproxyhost.label")</label>
 		        <input type="text" id="noProxyHost" name="noProxyHost" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.proxy.noproxyhost.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.proxy.noproxyhost.description')"></span>
 		      </div>
 		       <div id="noProxyHostErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -98,9 +98,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="proxyUsername">$i18n.getText("hub.integration.admin.proxy.username.label")</label>
+		        <label class="label" for="proxyUsername">$i18n.getText("hub.integration.bamboo.proxy.username.label")</label>
 		        <input type="text" id="proxyUsername" name="proxyUsername" class="longInput textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.proxy.username.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.proxy.username.description')"></span>
 		      </div>
 		       <div id="proxyUsernameErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -108,9 +108,9 @@
 		      </div>
 		      
 		      <div class="field-group">
-		        <label class="label" for="proxyPassword">$i18n.getText("hub.integration.admin.proxy.password.label")</label>
+		        <label class="label" for="proxyPassword">$i18n.getText("hub.integration.bamboo.proxy.password.label")</label>
 		        <input type="password" id="proxyPassword" name="proxyPassword" class="longInput password textStyle">
-		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.admin.proxy.password.description')"></span>
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.proxy.password.description')"></span>
 		      </div>
 		      <div id="proxyPasswordErrorRow" class="field-group hidden">
 		      	<label> </label>
@@ -123,8 +123,8 @@
       	  <div id="progressSpinner" style="display: inline-block;">
 		  	<i class="largeIcon fa fa-spinner fa-spin fa-fw"></i>
 		  </div>
-		  <input id="testConnectionButton" onclick="testConnection(); startProgressSpinner();" type="button" value="$i18n.getText("hub.integration.admin.test.label")" class="aui-button aui-button-primary">
-		  <input id="saveConfigButton" onclick="updateConfig(); startProgressSpinner();" type="button" value="$i18n.getText("hub.integration.admin.save.label")" class="aui-button aui-button-primary">
+		  <input id="testConnectionButton" onclick="testConnection(); startProgressSpinner();" type="button" value="$i18n.getText("hub.integration.bamboo.test.label")" class="aui-button aui-button-primary">
+		  <input id="saveConfigButton" onclick="updateConfig(); startProgressSpinner();" type="button" value="$i18n.getText("hub.integration.bamboo.save.label")" class="aui-button aui-button-primary">
 	  </div>
     </form>
   </body>

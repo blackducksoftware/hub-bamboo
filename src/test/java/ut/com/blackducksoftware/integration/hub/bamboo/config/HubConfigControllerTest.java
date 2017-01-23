@@ -36,6 +36,8 @@ import org.junit.Test;
 
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.blackducksoftware.integration.atlassian.mocks.HttpServletRequestMock;
+import com.blackducksoftware.integration.atlassian.mocks.PluginAccessorMock;
+import com.blackducksoftware.integration.atlassian.mocks.PluginMock;
 import com.blackducksoftware.integration.atlassian.mocks.PluginSettingsFactoryMock;
 import com.blackducksoftware.integration.atlassian.mocks.TransactionTemplateMock;
 import com.blackducksoftware.integration.atlassian.mocks.UserManagerMock;
@@ -52,9 +54,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -68,9 +71,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -86,9 +90,10 @@ public class HubConfigControllerTest {
         settingsFactory.createGlobalSettings().put(HubConfigKeys.HUB_CONFIG_GROUPS, "GroupTest, OtherGroup");
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -96,16 +101,19 @@ public class HubConfigControllerTest {
     }
 
     @Test
-    public void testGetConfigEmpty() {
+    public void testGetConfigEmptyAtlassianConfigPluginInstalled() {
         final UserManagerMock managerMock = new UserManagerMock();
         managerMock.setRemoteUsername("User");
         managerMock.setIsSystemAdmin(true);
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
+        final PluginMock pluginMock = new PluginMock("com.blackducksoftware.integration.hub-atlassian-config");
+        pluginAccessorMock.setPlugin(pluginMock);
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -129,7 +137,7 @@ public class HubConfigControllerTest {
         assertNull(config.getHubProxyHostError());
         assertNull(config.getHubProxyUserError());
         assertNull(config.getHubProxyPasswordError());
-        assertNull(config.getTestConnectionError());
+        assertEquals("You have the Hub Atlassian Config installed, please un-install that plugin to reduce confusion.", config.getTestConnectionError());
         assertTrue(config.hasErrors());
     }
 
@@ -157,9 +165,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -209,9 +218,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final Response response = controller.get(requestMock);
         assertNotNull(response);
@@ -245,9 +255,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -263,9 +274,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -283,9 +295,10 @@ public class HubConfigControllerTest {
         settingsFactory.createGlobalSettings().put(HubConfigKeys.HUB_CONFIG_GROUPS, "GroupTest, OtherGroupOtherGroup");
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -302,9 +315,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -344,9 +358,10 @@ public class HubConfigControllerTest {
         settingsFactory.createGlobalSettings().put(HubConfigKeys.HUB_CONFIG_GROUPS, "GroupTest, OtherGroup, UserGroup");
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -398,9 +413,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -461,9 +477,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
         config.setHubUrl(testUrl);
@@ -524,9 +541,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
         config.setHubUrl(testUrl2);
@@ -574,9 +592,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -592,9 +611,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -612,9 +632,10 @@ public class HubConfigControllerTest {
         settingsFactory.createGlobalSettings().put(HubConfigKeys.HUB_CONFIG_GROUPS, "GroupTest, OtherGroup");
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -632,9 +653,10 @@ public class HubConfigControllerTest {
         settingsFactory.createGlobalSettings().put(HubConfigKeys.HUB_CONFIG_GROUPS, "GroupTest, OtherGroup,UserGroup");
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -673,9 +695,10 @@ public class HubConfigControllerTest {
         final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -727,9 +750,10 @@ public class HubConfigControllerTest {
 
         final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
         final HttpServletRequestMock requestMock = new HttpServletRequestMock();
+        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
 
         final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager);
+                transactionManager, pluginAccessorMock);
 
         HubServerConfigSerializable config = new HubServerConfigSerializable();
 

@@ -40,6 +40,8 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import com.atlassian.plugin.Plugin;
+import com.atlassian.plugin.PluginAccessor;
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.sal.api.transaction.TransactionCallback;
@@ -67,11 +69,14 @@ public class HubConfigController {
 
     private final TransactionTemplate transactionTemplate;
 
+    private final PluginAccessor pluginAccessor;
+
     public HubConfigController(final UserManager userManager, final PluginSettingsFactory pluginSettingsFactory,
-            final TransactionTemplate transactionTemplate) {
+            final TransactionTemplate transactionTemplate, final PluginAccessor pluginAccessor) {
         this.userManager = userManager;
         this.pluginSettingsFactory = pluginSettingsFactory;
         this.transactionTemplate = transactionTemplate;
+        this.pluginAccessor = pluginAccessor;
     }
 
     private Response checkUserPermissions(final HttpServletRequest request, final PluginSettings settings) {
@@ -163,11 +168,19 @@ public class HubConfigController {
                         config.setHubProxyPassword(config.getMaskedProxyPassword());
                     }
                 }
+                checkAtlassianConfigInstalled(config);
                 return config;
             }
         });
 
         return Response.ok(obj).build();
+    }
+
+    private void checkAtlassianConfigInstalled(final HubServerConfigSerializable config) {
+        final Plugin atlassianConfigPlugin = pluginAccessor.getPlugin("com.blackducksoftware.integration.hub-atlassian-config");
+        if (atlassianConfigPlugin != null) {
+            config.setTestConnectionError("You have the Hub Atlassian Config installed, please un-install that plugin to reduce confusion.");
+        }
     }
 
     private int getIntFromObject(final String value) {

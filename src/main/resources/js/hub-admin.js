@@ -118,6 +118,7 @@ function populateForm() {
 	      handleError('proxyUsernameErrorRow', 'proxyUsernameError', config.hubProxyUserError);
 	      handleError('proxyPasswordErrorRow', 'proxyPasswordError', config.hubProxyPasswordError);
 	      handleError('noProxyHostErrorRow', 'noProxyHostError', config.hubNoProxyHostsError);
+	      handleError('configurationErrorRow', 'configurationError', config.testConnectionError);
 			    
 	    }, error: function(response){
 	    	console.log("putConfig(): " + response.responseText);
