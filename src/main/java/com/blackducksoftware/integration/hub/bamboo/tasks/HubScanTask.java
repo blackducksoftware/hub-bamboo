@@ -172,12 +172,12 @@ public class HubScanTask implements TaskType {
             }
             if (!hubScanConfig.isDryRun()) {
                 if (isRiskReportGenerated || isFailOnPolicySelected) {
-                    services.createScanStatusDataService(logger).assertBomImportScansFinished(scanSummaryList,
-                            waitTimeForReport);
+                    services.createScanStatusDataService(logger, waitTimeForReport).assertBomImportScansFinished(scanSummaryList);
                 }
                 if (isRiskReportGenerated) {
                     final SecureToken token = SecureToken.createFromString(taskContext.getRuntimeTaskContext().get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
-                    publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger), hubScanConfig.getProjectName(),
+                    publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger, waitTimeForReport),
+                            hubScanConfig.getProjectName(),
                             hubScanConfig.getVersion());
                 }
                 if (isFailOnPolicySelected) {
@@ -283,6 +283,7 @@ public class HubScanTask implements TaskType {
         final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsConfig);
 
         final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
+        final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
         final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
         final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
@@ -307,6 +308,7 @@ public class HubScanTask implements TaskType {
             hubScanConfigBuilder.setToolsDir(toolsDir);
             hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
             hubScanConfigBuilder.setPluginVersion(pluginVersion);
+            hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
             return hubScanConfigBuilder.build();
         } catch (final IllegalStateException ex) {
             logger.error("Hub Scan Configuration Invalid.", ex);

@@ -25,6 +25,7 @@ under the License.
 [@ww.checkbox labelKey='blackduckhub.task.scan.failonpolicy.label' name='failOnPolicyViolation' readonly='true'/]
 [@ww.textfield labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
 [@ww.label labelKey='blackduckhub.task.scan.scanmemory.label' name='hubScanMemory'/]
+[@ww.label labelKey='blackduckhub.task.scan.codelocationname.label' name='codeLocationAlias' description='This will change the name of the Code Location that is created by this scan. Example Code Location Name could be http://bambooHost:8111-\${bamboo.buildPlanName}'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.dryrun.label' name='dryRun' readonly='true'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.cleanuponsuccessfulscan.label' name='cleanupLogsOnSuccess' readonly='true'/]
 [@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets' readonly='true' description='Path of the target to be scanned. One target per line.'/]

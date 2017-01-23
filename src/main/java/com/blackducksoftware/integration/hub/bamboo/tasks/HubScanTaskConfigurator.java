@@ -71,13 +71,13 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             errorCollection.addError(HubScanConfigFieldEnum.TARGETS.getKey(), e.getMessage());
         }
 
-        final HubScanConfigValidator hubScanJobConfigBuilder = new HubScanConfigValidator();
-        hubScanJobConfigBuilder.setProjectName(project);
-        hubScanJobConfigBuilder.setVersion(version);
-        hubScanJobConfigBuilder.setScanMemory(scanMemory);
-        hubScanJobConfigBuilder.addAllScanTargetPaths(new HashSet<>(scanTargets));
-        hubScanJobConfigBuilder.disableScanTargetPathExistenceCheck();
-        final ValidationResults result = hubScanJobConfigBuilder.assertValid();
+        final HubScanConfigValidator hubScanJobConfigValidator = new HubScanConfigValidator();
+        hubScanJobConfigValidator.setProjectName(project);
+        hubScanJobConfigValidator.setVersion(version);
+        hubScanJobConfigValidator.setScanMemory(scanMemory);
+        hubScanJobConfigValidator.addAllScanTargetPaths(new HashSet<>(scanTargets));
+        hubScanJobConfigValidator.disableScanTargetPathExistenceCheck();
+        final ValidationResults result = hubScanJobConfigValidator.assertValid();
 
         if (!result.isSuccess()) {
 
@@ -115,6 +115,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         context.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
                 String.valueOf(HubScanConfigValidator.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES));
         context.put(HubScanConfigFieldEnum.SCANMEMORY.getKey(), String.valueOf(HubScanConfigValidator.DEFAULT_MEMORY_IN_MEGABYTES));
+        context.put(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey(), "");
         context.put(HubScanConfigFieldEnum.TARGETS.getKey(), "");
         context.put(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey(), "false");
     }
