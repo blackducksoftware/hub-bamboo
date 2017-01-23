@@ -51,9 +51,9 @@ public class HubBambooUtilsTest {
 
     private static final String HUB_URL = "https://www.google.com";
 
-    private static final String VALID_PORT = "2303";
+    private static final String VALID_PORT = "3128";
 
-    private static final String VALID_HOST = "https://www.google.com";
+    private static final String VALID_HOST = "tank.blackducksoftware.com";
 
     private static final String VALID_PASSWORD = "itsasecret";
 

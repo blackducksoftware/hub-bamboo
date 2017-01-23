@@ -99,14 +99,12 @@
 	<resource type="i18n" name="i18n" location="com.blackducksoftware.integration.hub.bamboo.i18n" />
     
 	<!-- import from the product container -->
-	<component-import key="applicationProperties"
-		interface="com.atlassian.sal.api.ApplicationProperties" />
-	<component-import key="userManager"
-		interface="com.atlassian.sal.api.user.UserManager" />
-	<component-import key="loginUriProvider"
-		interface="com.atlassian.sal.api.auth.LoginUriProvider" />
-	<component-import key="renderer"
-		interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
+	<component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties" />
+	<component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" />
+	<component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider" />
+	<component-import key="renderer" interface="com.atlassian.templaterenderer.velocity.one.six.VelocityTemplateRenderer" />
+	<component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory" />
+	<component-import key="transactionTemplate" interface="com.atlassian.sal.api.transaction.TransactionTemplate" />
 
     <taskType key="hubScanTask" name="Black Duck Hub Scan Task"
 		class="com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTask">
@@ -138,4 +136,27 @@
         <link linkId="risk_report">/plugins/hub-bamboo/reports/viewRiskReport.action?planKey=${planKey}&amp;buildNumber=${buildNumber}</link>
         <condition class="com.blackducksoftware.integration.hub.bamboo.conditions.RiskReportCondition"/>
     </web-item>
+    
+    <web-resource name="Admin Web Resources" key="hub-bamboo-config-admin-resources"> 
+  		<dependency>com.atlassian.auiplugin:ajs</dependency> 
+  		<resource type="download" name="js/hub-admin.js" location="js/hub-admin.js"/> 
+  		<resource type="download" name="hub-bamboo-config.css" location="/css/hub-bamboo-config.css"/>
+  		<resource type="download" name="fonts/" location="/font-awesome-4.5.0/fonts"/>
+        <resource type="download" name="font-awesome.min.css" location="/font-awesome-4.5.0/css/font-awesome.min.css"/>
+  		 <context>hub-bamboo-config</context>
+	</web-resource>
+    
+    <servlet key="admin-servlet" class="com.blackducksoftware.integration.hub.bamboo.HubAdminServlet">
+  		<url-pattern>/hub-bamboo/admin</url-pattern>
+	</servlet>
+    
+    <rest key="rest" path="/hub-bamboo" version="1.0">
+	  <description>Provides REST resources for the admin UI.</description>
+	</rest>
+    
+    <web-item key="bamboo-menu-item" name="Hub Admin" section="system.admin/plugins" weight="10" application="bamboo"> 
+	  <description>Link to hub admin page.</description> 
+	  <label key="hub.integration.admin.label" /> 
+	  <link linkId="hub-admin-link">/plugins/servlet/hub-bamboo/admin</link> 
+	</web-item>
 </atlassian-plugin>
