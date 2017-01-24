@@ -1,6 +1,7 @@
 <html>
   <head>
     <title>$i18n.getText("hub.integration.bamboo.label")</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <meta name="decorator" content="atl.admin" />
    		$webResourceManager.requireResource("com.blackducksoftware.integration.hub-bamboo:hub-bamboo-config-admin-resources")
   </head>
@@ -64,7 +65,7 @@
 		      
 		      <div class="field-group">
 		        <label class="label" for="hubWorkspaceCheck">$i18n.getText("hub.integration.bamboo.workspace.check.label")</label>
-		        <input type="checkbox" id="hubWorkspaceCheck" name="hubWorkspaceCheck" >
+		        <input type="checkbox" id="hubWorkspaceCheck" name="hubWorkspaceCheck">
 		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.workspace.check.description')"></span>
 		      </div>
 		   </div>

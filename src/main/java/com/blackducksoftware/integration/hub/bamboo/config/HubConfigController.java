@@ -130,7 +130,12 @@ public class HubConfigController {
                 final String proxyPassword = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS);
                 final String proxyPasswordLength = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-                final Boolean hubWorkspaceCheck = getBoolean(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+                final String hubWorkspaceCheckString = getValue(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+
+                Boolean hubWorkspaceCheck = true;
+                if (StringUtils.isNotBlank(hubWorkspaceCheckString)) {
+                    hubWorkspaceCheck = Boolean.valueOf(hubWorkspaceCheckString);
+                }
 
                 final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
@@ -394,10 +399,6 @@ public class HubConfigController {
 
     private String getValue(final PluginSettings settings, final String key) {
         return (String) settings.get(key);
-    }
-
-    private Boolean getBoolean(final PluginSettings settings, final String key) {
-        return Boolean.valueOf(getValue(settings, key));
     }
 
     private void setValue(final PluginSettings settings, final String key, final Object value) {

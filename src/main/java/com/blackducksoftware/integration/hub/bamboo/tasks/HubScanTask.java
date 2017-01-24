@@ -75,6 +75,7 @@ import com.blackducksoftware.integration.hub.scan.HubScanConfig;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.service.HubServicesFactory;
 import com.blackducksoftware.integration.log.IntLogger;
+import com.blackducksoftware.integration.phone.home.enums.ThirdPartyName;
 import com.blackducksoftware.integration.util.CIEnvironmentVariables;
 
 public class HubScanTask implements TaskType {
@@ -254,17 +255,10 @@ public class HubScanTask implements TaskType {
         final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
         final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-        try {
-            final HubServerConfig result = HubBambooUtils.getInstance()
-                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
-                            hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
-            return result;
-
-        } catch (final IllegalStateException ex) {
-            logger.error("Hub Server Configuration Invalid.", ex);
-        }
-
-        return null;
+        final HubServerConfig result = HubBambooUtils.getInstance()
+                .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+                        hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+        return result;
     }
 
     private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
@@ -286,7 +280,12 @@ public class HubScanTask implements TaskType {
         final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
         final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
-        final Boolean hubWorkspaceCheck = getPersistedBooleanValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+        final String hubWorkspaceCheckString = getPersistedValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+
+        Boolean hubWorkspaceCheck = true;
+        if (StringUtils.isNotBlank(hubWorkspaceCheckString)) {
+            hubWorkspaceCheck = Boolean.valueOf(hubWorkspaceCheckString);
+        }
 
         final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
 
@@ -295,39 +294,31 @@ public class HubScanTask implements TaskType {
             scanTargets.add(workingDirectory.getCanonicalPath());
         }
 
-        try {
-            final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
-            hubScanConfigBuilder.setProjectName(project);
-            hubScanConfigBuilder.setVersion(version);
-            hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
-            hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
-            hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-            hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
-            hubScanConfigBuilder.setCleanupLogsOnSuccess(Boolean.valueOf(cleanupLogsOnSuccess));
-            hubScanConfigBuilder.setScanMemory(scanMemory);
-            hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
-            hubScanConfigBuilder.setExcludePatterns(excludePatterns);
-            hubScanConfigBuilder.setToolsDir(toolsDir);
-            hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
-            hubScanConfigBuilder.setPluginVersion(pluginVersion);
-            hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
-            if (hubWorkspaceCheck) {
-                hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
-            }
-            return hubScanConfigBuilder.build();
-        } catch (final IllegalStateException ex) {
-            logger.error("Hub Scan Configuration Invalid.", ex);
+        final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
+        hubScanConfigBuilder.setProjectName(project);
+        hubScanConfigBuilder.setVersion(version);
+        hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
+        hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
+        hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
+        hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
+        hubScanConfigBuilder.setCleanupLogsOnSuccess(Boolean.valueOf(cleanupLogsOnSuccess));
+        hubScanConfigBuilder.setScanMemory(scanMemory);
+        hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
+        hubScanConfigBuilder.setExcludePatterns(excludePatterns);
+        hubScanConfigBuilder.setToolsDir(toolsDir);
+        hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.BAMBOO);
+        hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
+        hubScanConfigBuilder.setPluginVersion(pluginVersion);
+        hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
+        if (hubWorkspaceCheck) {
+            hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
         }
+        return hubScanConfigBuilder.build();
 
-        return null;
     }
 
     private String getPersistedValue(final String key) {
         return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
-    }
-
-    private Boolean getPersistedBooleanValue(final String key) {
-        return Boolean.valueOf(getPersistedValue(key));
     }
 
     private void publishRiskReportFiles(final IntLogger logger, final TaskContext taskContext, final SecureToken token,
@@ -348,7 +339,7 @@ public class HubScanTask implements TaskType {
             if (!publishResult.shouldContinueBuild()) {
                 logger.error("Could not publish the artifacts for the Risk Report");
             }
-            cleanupReportFiles(baseDirectory);
+            // cleanupReportFiles(baseDirectory);
         } catch (final HubIntegrationException ex) {
             logger.error("Could not publish the Risk Report", ex);
         }

@@ -123,7 +123,12 @@ public class HubBambooUtils implements Cloneable {
                         scanTargets.add(target);
 
                     } else {
-                        scanTargets.add(new File(workingDirectory, target).getCanonicalPath());
+                        final File tmpTarget = new File(target);
+                        if (tmpTarget.isAbsolute()) {
+                            scanTargets.add(tmpTarget.getCanonicalPath());
+                        } else {
+                            scanTargets.add(new File(workingDirectory, target).getCanonicalPath());
+                        }
                     }
                 }
             }
