@@ -37,6 +37,8 @@ public class HubConfigKeys {
 
     public final static String CONFIG_HUB_TIMEOUT = HUB_CONFIG_KEY_PREFIX + ".hubtimeout";
 
+    public final static String CONFIG_HUB_WORKSPACE_CHECK = HUB_CONFIG_KEY_PREFIX + ".hubWorkspaceCheck";
+
     public final static String CONFIG_PROXY_HOST = HUB_CONFIG_KEY_PREFIX + ".hubproxyhost";
 
     public final static String CONFIG_PROXY_PORT = HUB_CONFIG_KEY_PREFIX + ".hubproxyport";

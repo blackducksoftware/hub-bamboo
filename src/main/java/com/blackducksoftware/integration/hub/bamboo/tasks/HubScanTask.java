@@ -286,6 +286,8 @@ public class HubScanTask implements TaskType {
         final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
         final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
+        final Boolean hubWorkspaceCheck = getPersistedBooleanValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+
         final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
 
         if (scanTargets.isEmpty()) {
@@ -309,6 +311,9 @@ public class HubScanTask implements TaskType {
             hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
             hubScanConfigBuilder.setPluginVersion(pluginVersion);
             hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
+            if (hubWorkspaceCheck) {
+                hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
+            }
             return hubScanConfigBuilder.build();
         } catch (final IllegalStateException ex) {
             logger.error("Hub Scan Configuration Invalid.", ex);
@@ -319,6 +324,10 @@ public class HubScanTask implements TaskType {
 
     private String getPersistedValue(final String key) {
         return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
+    }
+
+    private Boolean getPersistedBooleanValue(final String key) {
+        return Boolean.valueOf(getPersistedValue(key));
     }
 
     private void publishRiskReportFiles(final IntLogger logger, final TaskContext taskContext, final SecureToken token,

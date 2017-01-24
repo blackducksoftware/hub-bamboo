@@ -130,6 +130,8 @@ public class HubConfigController {
                 final String proxyPassword = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS);
                 final String proxyPasswordLength = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
+                final Boolean hubWorkspaceCheck = getBoolean(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+
                 final HubServerConfigSerializable config = new HubServerConfigSerializable();
 
                 final HubServerConfigBuilder serverConfigBuilder = new HubServerConfigBuilder();
@@ -168,6 +170,8 @@ public class HubConfigController {
                         config.setHubProxyPassword(config.getMaskedProxyPassword());
                     }
                 }
+                config.setHubWorkspaceCheck(hubWorkspaceCheck);
+
                 checkAtlassianConfigInstalled(config);
                 return config;
             }
@@ -230,6 +234,8 @@ public class HubConfigController {
                 setValue(settings, HubConfigKeys.CONFIG_PROXY_PORT, config.getHubProxyPort());
                 setValue(settings, HubConfigKeys.CONFIG_PROXY_NO_HOST, config.getHubNoProxyHosts());
                 setValue(settings, HubConfigKeys.CONFIG_PROXY_USER, config.getHubProxyUser());
+
+                setValue(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK, config.getHubWorkspaceCheck());
 
                 final String proxyPassword = config.getHubProxyPassword();
                 if (StringUtils.isNotBlank(proxyPassword) && !config.isProxyPasswordMasked()) {
@@ -388,6 +394,10 @@ public class HubConfigController {
 
     private String getValue(final PluginSettings settings, final String key) {
         return (String) settings.get(key);
+    }
+
+    private Boolean getBoolean(final PluginSettings settings, final String key) {
+        return Boolean.valueOf(getValue(settings, key));
     }
 
     private void setValue(final PluginSettings settings, final String key, final Object value) {

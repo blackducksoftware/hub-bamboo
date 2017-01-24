@@ -61,6 +61,12 @@
 		      	<label> </label>
 		      	<div id="hubTimeoutError" class="error "></div>
 		      </div>
+		      
+		      <div class="field-group">
+		        <label class="label" for="hubWorkspaceCheck">$i18n.getText("hub.integration.bamboo.workspace.check.label")</label>
+		        <input type="checkbox" id="hubWorkspaceCheck" name="hubWorkspaceCheck" >
+		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.workspace.check.description')"></span>
+		      </div>
 		   </div>
       </fieldset>
       

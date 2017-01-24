@@ -139,14 +139,14 @@
     
     <web-resource name="Admin Web Resources" key="hub-bamboo-config-admin-resources"> 
   		<dependency>com.atlassian.auiplugin:ajs</dependency> 
-  		<resource type="download" name="js/hub-admin.js" location="js/hub-admin.js"/> 
+  		<resource type="download" name="js/hub-bamboo.js" location="js/hub-bamboo.js"/> 
   		<resource type="download" name="hub-bamboo-config.css" location="/css/hub-bamboo-config.css"/>
   		<resource type="download" name="fonts/" location="/font-awesome-4.5.0/fonts"/>
         <resource type="download" name="font-awesome.min.css" location="/font-awesome-4.5.0/css/font-awesome.min.css"/>
   		 <context>hub-bamboo-config</context>
 	</web-resource>
     
-    <servlet key="admin-servlet" class="com.blackducksoftware.integration.hub.bamboo.HubAdminServlet">
+    <servlet key="hub-bamboo-servlet" class="com.blackducksoftware.integration.hub.bamboo.HubBambooServlet">
   		<url-pattern>/hub-bamboo/admin</url-pattern>
 	</servlet>
     

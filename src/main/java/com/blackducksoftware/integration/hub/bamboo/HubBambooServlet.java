@@ -40,7 +40,7 @@ import com.atlassian.sal.api.user.UserManager;
 import com.atlassian.templaterenderer.TemplateRenderer;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubConfigKeys;
 
-public class HubAdminServlet extends HttpServlet {
+public class HubBambooServlet extends HttpServlet {
 
     private static final long serialVersionUID = 8293922701957754642L;
 
@@ -52,7 +52,7 @@ public class HubAdminServlet extends HttpServlet {
 
     private final PluginSettingsFactory pluginSettingsFactory;
 
-    public HubAdminServlet(final UserManager userManager, final LoginUriProvider loginUriProvider,
+    public HubBambooServlet(final UserManager userManager, final LoginUriProvider loginUriProvider,
             final TemplateRenderer renderer, final PluginSettingsFactory pluginSettingsFactory) {
         this.userManager = userManager;
         this.loginUriProvider = loginUriProvider;
@@ -97,7 +97,7 @@ public class HubAdminServlet extends HttpServlet {
             return;
         }
         response.setContentType("text/html;charset=utf-8");
-        renderer.render("hub-admin.vm", response.getWriter());
+        renderer.render("hub-bamboo.vm", response.getWriter());
     }
 
     private void redirectToLogin(final HttpServletRequest request, final HttpServletResponse response)

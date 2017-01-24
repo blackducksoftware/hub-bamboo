@@ -54,6 +54,7 @@ function putConfig(restUrl, successMessage, failureMessage) {
 		    + '", "hubNoProxyHosts": "' + encodeURI(AJS.$("#noProxyHost").val())
 		    + '", "hubProxyUser": "' + encodeURI(AJS.$("#proxyUsername").val())
 		    + '", "hubProxyPassword": "' + encodeURI(AJS.$("#proxyPassword").val())
+		    + '", "hubWorkspaceCheck": "' + AJS.$("#hubWorkspaceCheck").prop('checked')
 		    + '"}',
 		    processData: false,
 		    success: function() {
@@ -106,6 +107,7 @@ function populateForm() {
 	      updateValue("proxyUsername", config.hubProxyUser);
 	      updateValue("proxyPassword", config.hubProxyPassword);
 	      updateValue("noProxyHost", config.hubNoProxyHosts);
+	      updateCheckBox("hubWorkspaceCheck", config.hubWorkspaceCheck);
 	      
 	      checkProxyConfig();
 	      
@@ -179,6 +181,11 @@ function checkProxyConfig(){
 	if(!proxyHost && !proxyPort && !noProxyHost && !proxyUsername && !proxyPassword){
 		toggleDisplayById("proxyConfigDisplayIcon",'proxyConfigArea');
 	}
+}
+
+function updateCheckBox(fieldId, checked) {
+
+	AJS.$("#" + fieldId).prop('checked', checked);
 }
 
 function updateValue(fieldId, configField) {
