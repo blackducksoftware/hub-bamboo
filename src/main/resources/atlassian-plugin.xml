@@ -155,6 +155,6 @@
     <web-item key="bamboo-menu-item" name="Hub Admin" section="system.admin/plugins" weight="10" application="bamboo"> 
 	  <description>Link to hub admin page.</description> 
 	  <label key="hub.integration.bamboo.label" /> 
-	  <link linkId="hub-admin-link">/plugins/servlet/hub-bamboo/admin</link> 
+	  <link linkId="hub-bamboo-link">/plugins/servlet/hub-bamboo/admin</link> 
 	</web-item>
 </atlassian-plugin>
