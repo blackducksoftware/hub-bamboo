@@ -24,6 +24,7 @@
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -261,15 +262,15 @@ public class HubScanTask implements TaskType {
                     .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
                             hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
             return result;
-        } catch (final Exception e) {
-            logger.error(e.getMessage(), e);
+        } catch (final IllegalStateException e) {
+            logger.error(e.getMessage());
         }
         return null;
     }
 
     private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
             final String thirdPartyVersion, final String pluginVersion,
-            final IntLogger logger) {
+            final IntLogger logger) throws IOException {
         try {
             final String project = configMap.get(HubScanConfigFieldEnum.PROJECT.getKey());
             final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
@@ -321,8 +322,8 @@ public class HubScanTask implements TaskType {
                 hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
             }
             return hubScanConfigBuilder.build();
-        } catch (final Exception e) {
-            logger.error(e.getMessage(), e);
+        } catch (final IllegalStateException e) {
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -349,7 +350,7 @@ public class HubScanTask implements TaskType {
             if (!publishResult.shouldContinueBuild()) {
                 logger.error("Could not publish the artifacts for the Risk Report");
             }
-            // cleanupReportFiles(baseDirectory);
+            cleanupReportFiles(baseDirectory);
         } catch (final HubIntegrationException ex) {
             logger.error("Could not publish the Risk Report", ex);
         }
