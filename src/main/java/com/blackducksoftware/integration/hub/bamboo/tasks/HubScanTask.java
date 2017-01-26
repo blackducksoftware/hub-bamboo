@@ -24,7 +24,6 @@
 package com.blackducksoftware.integration.hub.bamboo.tasks;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,7 +51,6 @@ import com.atlassian.bamboo.util.BuildUtils;
 import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.plugin.PluginAccessor;
-import com.blackducksoftware.integration.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusEnum;
 import com.blackducksoftware.integration.hub.api.policy.PolicyStatusItem;
 import com.blackducksoftware.integration.hub.api.scan.ScanSummaryItem;
@@ -155,6 +153,11 @@ public class HubScanTask implements TaskType {
             }
             final HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir, thirdPartyVersion, pluginVersion,
                     logger);
+            if (hubScanConfig == null) {
+                result = resultBuilder.failedWithError().build();
+                logTaskResult(logger, result);
+                return result;
+            }
 
             final boolean isFailOnPolicySelected = taskConfigMap
                     .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
@@ -241,80 +244,87 @@ public class HubScanTask implements TaskType {
         }
     }
 
-    private HubServerConfig getHubServerConfig(final IntLogger logger)
-            throws IllegalArgumentException, EncryptionException {
+    private HubServerConfig getHubServerConfig(final IntLogger logger) {
+        try {
+            final String hubUrl = getPersistedValue(HubConfigKeys.CONFIG_HUB_URL);
+            final String hubUser = getPersistedValue(HubConfigKeys.CONFIG_HUB_USER);
+            final String hubPass = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS);
+            final String hubPassLength = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS_LENGTH);
+            final String hubProxyUrl = getPersistedValue(HubConfigKeys.CONFIG_PROXY_HOST);
+            final String hubProxyPort = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PORT);
+            final String hubProxyNoHost = getPersistedValue(HubConfigKeys.CONFIG_PROXY_NO_HOST);
+            final String hubProxyUser = getPersistedValue(HubConfigKeys.CONFIG_PROXY_USER);
+            final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
+            final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-        final String hubUrl = getPersistedValue(HubConfigKeys.CONFIG_HUB_URL);
-        final String hubUser = getPersistedValue(HubConfigKeys.CONFIG_HUB_USER);
-        final String hubPass = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS);
-        final String hubPassLength = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS_LENGTH);
-        final String hubProxyUrl = getPersistedValue(HubConfigKeys.CONFIG_PROXY_HOST);
-        final String hubProxyPort = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PORT);
-        final String hubProxyNoHost = getPersistedValue(HubConfigKeys.CONFIG_PROXY_NO_HOST);
-        final String hubProxyUser = getPersistedValue(HubConfigKeys.CONFIG_PROXY_USER);
-        final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
-        final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
-
-        final HubServerConfig result = HubBambooUtils.getInstance()
-                .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
-                        hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
-        return result;
+            final HubServerConfig result = HubBambooUtils.getInstance()
+                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+                            hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+            return result;
+        } catch (final Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
     }
 
     private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
             final String thirdPartyVersion, final String pluginVersion,
-            final IntLogger logger) throws HubIntegrationException, IOException {
-        final String project = configMap.get(HubScanConfigFieldEnum.PROJECT.getKey());
-        final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
-        final String phase = configMap.get(HubScanConfigFieldEnum.PHASE.getKey());
-        final String distribution = configMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
+            final IntLogger logger) {
+        try {
+            final String project = configMap.get(HubScanConfigFieldEnum.PROJECT.getKey());
+            final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
+            final String phase = configMap.get(HubScanConfigFieldEnum.PHASE.getKey());
+            final String distribution = configMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
 
-        final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
-        final String cleanupLogsOnSuccess = configMap.get(HubScanConfigFieldEnum.CLEANUP_LOGS_ON_SUCCESS.getKey());
+            final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
+            final String cleanupLogsOnSuccess = configMap.get(HubScanConfigFieldEnum.CLEANUP_LOGS_ON_SUCCESS.getKey());
 
-        final String excludePatternsConfig = configMap.get(HubScanConfigFieldEnum.EXCLUDE_PATTERNS.getKey());
+            final String excludePatternsConfig = configMap.get(HubScanConfigFieldEnum.EXCLUDE_PATTERNS.getKey());
 
-        final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsConfig);
+            final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsConfig);
 
-        final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
-        final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
-        final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
+            final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
+            final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
+            final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
-        final String hubWorkspaceCheckString = getPersistedValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
+            final String hubWorkspaceCheckString = getPersistedValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
 
-        Boolean hubWorkspaceCheck = true;
-        if (StringUtils.isNotBlank(hubWorkspaceCheckString)) {
-            hubWorkspaceCheck = Boolean.valueOf(hubWorkspaceCheckString);
+            Boolean hubWorkspaceCheck = true;
+            if (StringUtils.isNotBlank(hubWorkspaceCheckString)) {
+                hubWorkspaceCheck = Boolean.valueOf(hubWorkspaceCheckString);
+            }
+
+            final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
+
+            if (scanTargets.isEmpty()) {
+                // no targets specified assume the working directory.
+                scanTargets.add(workingDirectory.getCanonicalPath());
+            }
+
+            final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
+            hubScanConfigBuilder.setProjectName(project);
+            hubScanConfigBuilder.setVersion(version);
+            hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
+            hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
+            hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
+            hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
+            hubScanConfigBuilder.setCleanupLogsOnSuccess(Boolean.valueOf(cleanupLogsOnSuccess));
+            hubScanConfigBuilder.setScanMemory(scanMemory);
+            hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
+            hubScanConfigBuilder.setExcludePatterns(excludePatterns);
+            hubScanConfigBuilder.setToolsDir(toolsDir);
+            hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.BAMBOO);
+            hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
+            hubScanConfigBuilder.setPluginVersion(pluginVersion);
+            hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
+            if (hubWorkspaceCheck) {
+                hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
+            }
+            return hubScanConfigBuilder.build();
+        } catch (final Exception e) {
+            logger.error(e.getMessage(), e);
         }
-
-        final List<String> scanTargets = HubBambooUtils.getInstance().createScanTargetPaths(targets, workingDirectory);
-
-        if (scanTargets.isEmpty()) {
-            // no targets specified assume the working directory.
-            scanTargets.add(workingDirectory.getCanonicalPath());
-        }
-
-        final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
-        hubScanConfigBuilder.setProjectName(project);
-        hubScanConfigBuilder.setVersion(version);
-        hubScanConfigBuilder.setPhase(PhaseEnum.getPhaseByDisplayValue(phase).name());
-        hubScanConfigBuilder.setDistribution(DistributionEnum.getDistributionByDisplayValue(distribution).name());
-        hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
-        hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
-        hubScanConfigBuilder.setCleanupLogsOnSuccess(Boolean.valueOf(cleanupLogsOnSuccess));
-        hubScanConfigBuilder.setScanMemory(scanMemory);
-        hubScanConfigBuilder.addAllScanTargetPaths(scanTargets);
-        hubScanConfigBuilder.setExcludePatterns(excludePatterns);
-        hubScanConfigBuilder.setToolsDir(toolsDir);
-        hubScanConfigBuilder.setThirdPartyName(ThirdPartyName.BAMBOO);
-        hubScanConfigBuilder.setThirdPartyVersion(thirdPartyVersion);
-        hubScanConfigBuilder.setPluginVersion(pluginVersion);
-        hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
-        if (hubWorkspaceCheck) {
-            hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
-        }
-        return hubScanConfigBuilder.build();
-
+        return null;
     }
 
     private String getPersistedValue(final String key) {
