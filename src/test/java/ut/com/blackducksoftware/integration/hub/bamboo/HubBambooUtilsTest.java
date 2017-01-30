@@ -59,7 +59,7 @@ public class HubBambooUtilsTest {
 
     private static final String VALID_USERNAME = "memyselfandi";
 
-    private static final String VALID_IGNORE_HOST = "google.com";
+    private static final String VALID_IGNORE_HOST = ".*google.com.*";
 
     private static final String EMPTY_PASSWORD_LENGTH = "";
 
