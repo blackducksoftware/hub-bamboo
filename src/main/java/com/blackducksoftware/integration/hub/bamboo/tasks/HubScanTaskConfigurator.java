@@ -29,6 +29,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
@@ -62,6 +64,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         final String project = params.getString(HubScanConfigFieldEnum.PROJECT.getKey());
         final String version = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
+        final String bomWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
 
         List<String> scanTargets = new ArrayList<>();
@@ -88,6 +91,35 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             if (!scanTargets.isEmpty()) {
                 checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
             }
+        }
+        checkBomWaitTime(bomWaitTime, errorCollection);
+    }
+
+    private void checkBomWaitTime(final String bomWaitTime, final ErrorCollection errorCollection) {
+        if (StringUtils.isBlank(bomWaitTime)) {
+            return;
+        }
+        int bomWaitTimeInt = 0;
+        try {
+            final String integerString = StringUtils.trimToNull(bomWaitTime);
+            if (integerString != null) {
+                try {
+                    bomWaitTimeInt = Integer.valueOf(integerString);
+                } catch (final NumberFormatException e) {
+                    errorCollection.addError(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
+                            "The String : " + bomWaitTime + " , is not an Integer.");
+                    return;
+                }
+            } else {
+                errorCollection.addError(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(), "The String : " + bomWaitTime + " , is not an Integer.");
+            }
+        } catch (final IllegalArgumentException e) {
+            errorCollection.addError(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(), e.getMessage());
+            return;
+        }
+        if (bomWaitTimeInt <= 0) {
+            errorCollection.addError(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
+                    "The maximum wait time for the BOM Update must be greater than 0.");
         }
     }
 
