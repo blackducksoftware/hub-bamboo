@@ -96,8 +96,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             if (!scanTargets.isEmpty()) {
                 checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
             }
-            checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, result, errorCollection);
         }
+        checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, result, errorCollection);
         checkBomWaitTime(bomWaitTime, errorCollection);
     }
 
