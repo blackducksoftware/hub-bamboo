@@ -156,7 +156,7 @@ public class HubScanTask implements TaskType {
 
             if (StringUtils.isNotBlank(maxWaitTimeForRiskReport)) {
                 waitTimeForReport = NumberUtils.toInt(maxWaitTimeForRiskReport);
-                if (waitTimeForReport == 0) {
+                if (waitTimeForReport <= 0) {
                     // 5 minutes is the default
                     waitTimeForReport = 5 * 60 * 1000;
                 } else {
