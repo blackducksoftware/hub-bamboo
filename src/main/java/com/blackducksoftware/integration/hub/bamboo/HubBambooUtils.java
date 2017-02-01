@@ -102,7 +102,7 @@ public class HubBambooUtils implements Cloneable {
         return configBuilder.build();
     }
 
-    public String[] createExcludePatterns(final String excludePatternConfig) throws IOException {
+    public String[] createExcludePatterns(final String excludePatternConfig) {
 
         String[] excludePatternArray = new String[0];
         if (StringUtils.isNotBlank(excludePatternConfig)) {

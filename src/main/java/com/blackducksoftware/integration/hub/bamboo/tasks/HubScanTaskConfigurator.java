@@ -66,6 +66,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String bomWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
+        final String excludePatternsString = params.getString(HubScanConfigFieldEnum.EXCLUDE_PATTERNS.getKey());
 
         List<String> scanTargets = new ArrayList<>();
         try {
@@ -74,12 +75,15 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             errorCollection.addError(HubScanConfigFieldEnum.TARGETS.getKey(), e.getMessage());
         }
 
+        final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsString);
+
         final HubScanConfigValidator hubScanJobConfigValidator = new HubScanConfigValidator();
         hubScanJobConfigValidator.setProjectName(project);
         hubScanJobConfigValidator.setVersion(version);
         hubScanJobConfigValidator.setScanMemory(scanMemory);
         hubScanJobConfigValidator.addAllScanTargetPaths(new HashSet<>(scanTargets));
         hubScanJobConfigValidator.disableScanTargetPathExistenceCheck();
+        hubScanJobConfigValidator.setExcludePatterns(excludePatterns);
         final ValidationResults result = hubScanJobConfigValidator.assertValid();
 
         if (!result.isSuccess()) {
@@ -91,6 +95,7 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             if (!scanTargets.isEmpty()) {
                 checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
             }
+            checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, result, errorCollection);
         }
         checkBomWaitTime(bomWaitTime, errorCollection);
     }
