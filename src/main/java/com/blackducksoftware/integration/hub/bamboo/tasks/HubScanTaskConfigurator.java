@@ -40,6 +40,8 @@ import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
+import com.blackducksoftware.integration.validator.ValidationResult;
+import com.blackducksoftware.integration.validator.ValidationResultEnum;
 import com.blackducksoftware.integration.validator.ValidationResults;
 
 public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
@@ -83,9 +85,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         hubScanJobConfigValidator.setScanMemory(scanMemory);
         hubScanJobConfigValidator.addAllScanTargetPaths(new HashSet<>(scanTargets));
         hubScanJobConfigValidator.disableScanTargetPathExistenceCheck();
-        hubScanJobConfigValidator.setExcludePatterns(excludePatterns);
         final ValidationResults result = hubScanJobConfigValidator.assertValid();
-
+        validateExcludePatterns(result, excludePatterns);
         if (!result.isSuccess()) {
 
             checkValidationErrors(HubScanConfigFieldEnum.PROJECT, result, errorCollection);
@@ -98,6 +99,33 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
             checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, result, errorCollection);
         }
         checkBomWaitTime(bomWaitTime, errorCollection);
+    }
+
+    private void validateExcludePatterns(final ValidationResults result, final String[] excludePatterns) {
+        if (excludePatterns == null || excludePatterns.length == 0) {
+            return;
+        }
+
+        for (final String excludePattern : excludePatterns) {
+            validateExcludePattern(result, excludePattern);
+        }
+    }
+
+    private void validateExcludePattern(final ValidationResults result, final String excludePattern) {
+        if (StringUtils.isNotBlank(excludePattern)) {
+            if (!excludePattern.startsWith("/")) {
+                result.addResult(HubScanConfigFieldEnum.EXCLUDE_PATTERNS,
+                        new ValidationResult(ValidationResultEnum.WARN, "The exclusion pattern : " + excludePattern + " must start with a /."));
+            }
+            if (!excludePattern.endsWith("/")) {
+                result.addResult(HubScanConfigFieldEnum.EXCLUDE_PATTERNS,
+                        new ValidationResult(ValidationResultEnum.WARN, "The exclusion pattern : " + excludePattern + " must end with a /."));
+            }
+            if (excludePattern.contains("**")) {
+                result.addResult(HubScanConfigFieldEnum.EXCLUDE_PATTERNS,
+                        new ValidationResult(ValidationResultEnum.WARN, " The exclusion pattern : " + excludePattern + " can not contain **."));
+            }
+        }
     }
 
     private void checkBomWaitTime(final String bomWaitTime, final ErrorCollection errorCollection) {
