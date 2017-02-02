@@ -139,6 +139,7 @@ public class HubScanTask implements TaskType {
             restConnection.connect();
 
             final HubServicesFactory services = new HubServicesFactory(restConnection);
+            services.addEnvironmentVariables(envVars);
             final MetaService metaService = services.createMetaService(logger);
             final CLIDataService cliDataService = services.createCLIDataService(logger);
             final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
