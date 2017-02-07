@@ -23,59 +23,15 @@
  */
 package com.blackducksoftware.integration.hub.bamboo.reports;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.lang.reflect.InvocationTargetException;
-
 import com.atlassian.bamboo.build.ViewBuildResults;
-import com.atlassian.utils.process.IOUtils;
-import com.blackducksoftware.integration.hub.api.report.HubRiskReportData;
-import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.util.HubResourceBundleHelper;
-import com.google.gson.Gson;
 
 public class HubRiskReportAction extends ViewBuildResults {
 
-	private static final long serialVersionUID = 4076165272346339757L;
+    private static final long serialVersionUID = 4076165272346339757L;
 
-	private HubRiskReportData hubRiskReportData;
-	private HubResourceBundleHelper bundle;
+    @Override
+    public String doExecute() throws Exception {
+        return SUCCESS;
+    }
 
-	@Override
-	public String doExecute() throws Exception {
-		if (hubRiskReportData == null) {
-			createReportData();
-			bundle = new HubResourceBundleHelper();
-			bundle.setKeyPrefix(HubBambooUtils.HUB_I18N_KEY_PREFIX);
-
-		}
-		return SUCCESS;
-	}
-
-	public HubRiskReportData getHubRiskReportData() {
-		return hubRiskReportData;
-	}
-
-	public HubResourceBundleHelper getBundle() {
-		return bundle;
-	}
-
-	private void createReportData() {
-		final String planKey = getPlanKey();
-		final int buildNumber = getBuildNumber();
-
-		FileReader reader = null;
-		try {
-			final File fileData = HubBambooUtils.getInstance().getRiskReportFile(planKey, buildNumber);
-			reader = new FileReader(fileData);
-			final Gson gson = new Gson();
-			hubRiskReportData = gson.fromJson(reader, HubRiskReportData.class);
-
-		} catch (final FileNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
-				| IllegalArgumentException | InvocationTargetException e) {
-		} finally {
-			IOUtils.closeQuietly(reader);
-		}
-	}
 }

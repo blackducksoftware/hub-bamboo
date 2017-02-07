@@ -24,7 +24,6 @@
 package ut.com.blackducksoftware.integration.hub.bamboo.actions;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -43,82 +42,82 @@ import com.google.gson.GsonBuilder;
 
 public class HubRiskReportActionTest {
 
-	private static final Integer BUILD_NUMBER = new Integer(1);
-	private static final String PLAN_KEY = "HUB-TEST-JOB";
+    private static final Integer BUILD_NUMBER = new Integer(1);
 
-	private static HubBambooUtils singleton;
-	private static HubRiskReportData reportData;
+    private static final String PLAN_KEY = "HUB-TEST-JOB";
 
-	@BeforeClass
-	public static void captureSingleton() throws Exception {
-		singleton = HubBambooUtils.getInstance();
+    private static HubBambooUtils singleton;
 
-		final HubBambooUtils original = HubBambooUtils.getInstance();
-		final HubBambooUtils utilClass = Mockito.mock(HubBambooUtils.class);
-		final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
-		field.setAccessible(true);
-		field.set(original, utilClass);
-		final File file = new File(PLAN_KEY + "-" + BUILD_NUMBER.toString() + ".txt");
-		file.deleteOnExit();
-		file.createNewFile();
+    private static HubRiskReportData reportData;
 
-		Mockito.when(utilClass.getRiskReportFile(Mockito.anyString(), Mockito.anyInt())).thenReturn(file);
+    @BeforeClass
+    public static void captureSingleton() throws Exception {
+        singleton = HubBambooUtils.getInstance();
 
-		reportData = createReportData();
-		printJSonData(file);
-	}
+        final HubBambooUtils original = HubBambooUtils.getInstance();
+        final HubBambooUtils utilClass = Mockito.mock(HubBambooUtils.class);
+        final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
+        field.setAccessible(true);
+        field.set(original, utilClass);
+        final File file = new File(PLAN_KEY + "-" + BUILD_NUMBER.toString() + ".txt");
+        file.deleteOnExit();
+        file.createNewFile();
 
-	@AfterClass
-	public static void resetSingleton() {
-		try {
-			final HubBambooUtils obj = HubBambooUtils.getInstance();
+        Mockito.when(utilClass.getRiskReportFile(Mockito.anyString(), Mockito.anyInt())).thenReturn(file);
 
-			final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
-			field.setAccessible(true);
-			field.set(obj, singleton);
-		} catch (final Exception ex) {
+        reportData = createReportData();
+        printJSonData(file);
+    }
 
-		}
-	}
+    @AfterClass
+    public static void resetSingleton() {
+        try {
+            final HubBambooUtils obj = HubBambooUtils.getInstance();
 
-	private static void printJSonData(final File file) {
+            final Field field = HubBambooUtils.class.getDeclaredField("myInstance");
+            field.setAccessible(true);
+            field.set(obj, singleton);
+        } catch (final Exception ex) {
 
-		FileWriter output = null;
-		try {
+        }
+    }
 
-			output = new FileWriter(file);
-			final Gson gson = new GsonBuilder().create();
-			final String jsonString = gson.toJson(reportData);
-			output.write(jsonString);
+    private static void printJSonData(final File file) {
 
-		} catch (final Exception ex) {
+        FileWriter output = null;
+        try {
 
-		} finally {
-			if (output != null) {
-				try {
-					output.close();
-				} catch (final Exception ex) {
+            output = new FileWriter(file);
+            final Gson gson = new GsonBuilder().create();
+            final String jsonString = gson.toJson(reportData);
+            output.write(jsonString);
 
-				}
-			}
-		}
-	}
+        } catch (final Exception ex) {
 
-	private static HubRiskReportData createReportData() {
-		final HubRiskReportData data = new HubRiskReportData();
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (final Exception ex) {
 
-		return data;
-	}
+                }
+            }
+        }
+    }
 
-	@Test
-	public void testDoExecute() throws Exception {
-		final HubRiskReportAction action = new HubRiskReportAction();
-		action.setPlanKey(PLAN_KEY);
-		action.setBuildNumber(BUILD_NUMBER);
-		final String result = action.doExecute();
+    private static HubRiskReportData createReportData() {
+        final HubRiskReportData data = new HubRiskReportData();
 
-		assertEquals(com.opensymphony.xwork2.Action.SUCCESS, result);
-		assertNotNull(action.getBundle());
-		assertNotNull(action.getHubRiskReportData());
-	}
+        return data;
+    }
+
+    @Test
+    public void testDoExecute() throws Exception {
+        final HubRiskReportAction action = new HubRiskReportAction();
+        action.setPlanKey(PLAN_KEY);
+        action.setBuildNumber(BUILD_NUMBER);
+        final String result = action.doExecute();
+
+        assertEquals(com.opensymphony.xwork2.Action.SUCCESS, result);
+    }
 }
