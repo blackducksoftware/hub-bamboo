@@ -176,7 +176,7 @@ public class HubScanTask implements TaskType {
             List<ScanSummaryView> scanSummaryList = null;
             try {
                 scanSummaryList = cliDataService.installAndRunScan(hubConfig, hubScanConfig,
-                        new IntegrationInfo(ThirdPartyName.TEAM_CITY.getName(), thirdPartyVersion, pluginVersion));
+                        new IntegrationInfo(ThirdPartyName.BAMBOO.getName(), thirdPartyVersion, pluginVersion));
 
             } catch (final ScanFailedException e) {
                 if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
