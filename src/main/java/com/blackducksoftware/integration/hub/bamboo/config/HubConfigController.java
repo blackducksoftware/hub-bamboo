@@ -49,14 +49,15 @@ import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
 import com.blackducksoftware.integration.encryption.PasswordEncrypter;
 import com.blackducksoftware.integration.exception.EncryptionException;
+import com.blackducksoftware.integration.exception.IntegrationException;
+import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubConfigKeys;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
-import com.blackducksoftware.integration.hub.exception.HubIntegrationException;
 import com.blackducksoftware.integration.hub.global.HubCredentialsFieldEnum;
 import com.blackducksoftware.integration.hub.global.HubProxyInfoFieldEnum;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.global.HubServerConfigFieldEnum;
-import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
+import com.blackducksoftware.integration.hub.rest.RestConnection;
 import com.blackducksoftware.integration.validator.AbstractValidator;
 import com.blackducksoftware.integration.validator.ValidationResults;
 
@@ -293,10 +294,10 @@ public class HubConfigController {
                     } else {
                         final HubServerConfig serverConfig = serverConfigBuilder.build();
                         try {
-                            final CredentialsRestConnection restConnection = new CredentialsRestConnection(serverConfig);
+                            final RestConnection restConnection = HubBambooUtils.getInstance().getRestConnection(null, serverConfig);
                             restConnection.connect();
 
-                        } catch (EncryptionException | HubIntegrationException e) {
+                        } catch (final IntegrationException e) {
                             if (e.getMessage().toLowerCase().contains("unauthorized")) {
                                 config.setUsernameError(
                                         "Username and Password are invalid for : " + serverConfig.getHubUrl());

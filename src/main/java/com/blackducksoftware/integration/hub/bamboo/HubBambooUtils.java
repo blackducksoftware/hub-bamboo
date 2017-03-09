@@ -41,8 +41,12 @@ import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContextImpl;
 import com.atlassian.bamboo.security.SecureToken;
 import com.atlassian.bamboo.utils.SystemProperty;
+import com.blackducksoftware.integration.exception.EncryptionException;
 import com.blackducksoftware.integration.hub.builder.HubServerConfigBuilder;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
+import com.blackducksoftware.integration.hub.rest.CredentialsRestConnection;
+import com.blackducksoftware.integration.hub.rest.RestConnection;
+import com.blackducksoftware.integration.log.IntLogger;
 
 public class HubBambooUtils implements Cloneable {
 
@@ -100,6 +104,18 @@ public class HubBambooUtils implements Cloneable {
             }
         }
         return configBuilder.build();
+    }
+
+    public RestConnection getRestConnection(final IntLogger logger, final HubServerConfig hubServerConfig) throws EncryptionException {
+        final RestConnection restConnection = new CredentialsRestConnection(logger, hubServerConfig.getHubUrl(),
+                hubServerConfig.getGlobalCredentials().getUsername(), hubServerConfig.getGlobalCredentials().getDecryptedPassword(),
+                hubServerConfig.getTimeout());
+        restConnection.proxyHost = hubServerConfig.getProxyInfo().getHost();
+        restConnection.proxyPort = hubServerConfig.getProxyInfo().getPort();
+        restConnection.proxyNoHosts = hubServerConfig.getProxyInfo().getIgnoredProxyHosts();
+        restConnection.proxyUsername = hubServerConfig.getProxyInfo().getUsername();
+        restConnection.proxyPassword = hubServerConfig.getProxyInfo().getDecryptedPassword();
+        return restConnection;
     }
 
     public String[] createExcludePatterns(final String excludePatternConfig) {

@@ -35,8 +35,6 @@ import com.atlassian.bamboo.collections.ActionParametersMap;
 import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
-import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
-import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
@@ -173,8 +171,6 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         context.put(HubScanConfigFieldEnum.PROJECT.getKey(), "");
         context.put(HubScanConfigFieldEnum.VERSION.getKey(), "");
-        context.put(HubScanConfigFieldEnum.PHASE.getKey(), PhaseEnum.PLANNING.getDisplayValue());
-        context.put(HubScanConfigFieldEnum.DISTRIBUTION.getKey(), DistributionEnum.EXTERNAL.getDisplayValue());
         context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
         context.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
         context.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),

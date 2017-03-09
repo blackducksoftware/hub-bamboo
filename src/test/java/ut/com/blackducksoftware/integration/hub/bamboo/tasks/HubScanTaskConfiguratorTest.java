@@ -30,8 +30,6 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.blackducksoftware.integration.hub.api.version.DistributionEnum;
-import com.blackducksoftware.integration.hub.api.version.PhaseEnum;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubScanTaskConfigurator;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
@@ -44,8 +42,6 @@ public class HubScanTaskConfiguratorTest {
         final Map<String, String> configMap = new HashMap<>();
         configMap.put(HubScanConfigFieldEnum.PROJECT.getKey(), "");
         configMap.put(HubScanConfigFieldEnum.VERSION.getKey(), "");
-        configMap.put(HubScanConfigFieldEnum.PHASE.getKey(), PhaseEnum.PLANNING.getDisplayValue());
-        configMap.put(HubScanConfigFieldEnum.DISTRIBUTION.getKey(), DistributionEnum.EXTERNAL.getDisplayValue());
         configMap.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
         configMap.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
         configMap.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
@@ -59,8 +55,6 @@ public class HubScanTaskConfiguratorTest {
     private void assertDefaultValues(final Map<String, Object> context) {
         assertEquals("", context.get(HubScanConfigFieldEnum.PROJECT.getKey()));
         assertEquals("", context.get(HubScanConfigFieldEnum.VERSION.getKey()));
-        assertEquals(PhaseEnum.PLANNING.getDisplayValue(), context.get(HubScanConfigFieldEnum.PHASE.getKey()));
-        assertEquals(DistributionEnum.EXTERNAL.getDisplayValue(), context.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey()));
         assertEquals("false", context.get(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey()));
         assertEquals("false", context.get(HubScanConfigFieldEnum.DRY_RUN.getKey()));
         assertEquals(String.valueOf(HubScanConfigValidator.DEFAULT_BOM_UPDATE_WAIT_TIME_IN_MINUTES),
