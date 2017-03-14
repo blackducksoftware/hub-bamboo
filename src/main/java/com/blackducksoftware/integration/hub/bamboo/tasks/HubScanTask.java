@@ -309,6 +309,9 @@ public class HubScanTask implements TaskType {
             final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
             final String cleanupLogsOnSuccess = configMap.get(HubScanConfigFieldEnum.CLEANUP_LOGS_ON_SUCCESS.getKey());
 
+            final String unmapPreviousCodeLocations = configMap.get(HubScanConfigFieldEnum.UNMAP_PREVIOUS_CODE_LOCATIONS.getKey());
+            final String deletePreviousCodeLocations = configMap.get(HubScanConfigFieldEnum.DELETE_PREVIOUS_CODE_LOCATIONS.getKey());
+
             final String excludePatternsConfig = configMap.get(HubScanConfigFieldEnum.EXCLUDE_PATTERNS.getKey());
 
             final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsConfig);
@@ -342,6 +345,8 @@ public class HubScanTask implements TaskType {
             hubScanConfigBuilder.setExcludePatterns(excludePatterns);
             hubScanConfigBuilder.setToolsDir(toolsDir);
             hubScanConfigBuilder.setCodeLocationAlias(codeLocationName);
+            hubScanConfigBuilder.setUnmapPreviousCodeLocations(Boolean.valueOf(unmapPreviousCodeLocations));
+            hubScanConfigBuilder.setDeletePreviousCodeLocations(Boolean.valueOf(deletePreviousCodeLocations));
             if (hubWorkspaceCheck) {
                 hubScanConfigBuilder.enableScanTargetPathsWithinWorkingDirectoryCheck();
             }

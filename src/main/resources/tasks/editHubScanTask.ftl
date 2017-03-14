@@ -28,5 +28,7 @@ under the License.
 [@ww.textfield labelKey='blackduckhub.task.scan.codelocationname.label' name='codeLocationAlias' description='This will change the name of the Code Location that is created by this scan. Example Code Location Name could be $\{bamboo.buildPlanName}'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.dryrun.label' name='dryRun'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.cleanuponsuccessfulscan.label' name='cleanupLogsOnSuccess'/]
+[@ww.checkbox labelKey='blackduckhub.task.scan.unmapPreviousCodeLocations.label' name='unmapPreviousCodeLocations' description='Will unmap previous Code Locations mapped to this Project and Version.'/]
+[@ww.checkbox labelKey='blackduckhub.task.scan.deletePreviousCodeLocations.label' name='deletePreviousCodeLocations' description='Will delete previous Code Locations mapped to this Project and Version.'/]
 [@ww.textarea labelKey='blackduckhub.task.scan.scantargets.label' name='hubTargets' description='Path of the target to be scanned. One target per line.'/]
 [@ww.textarea labelKey='blackduckhub.task.scan.excludepatterns.label' name='excludePatterns' description='Excludes a directory from scanning. Leading and trailing slashes are required. One pattern per line.'/]
