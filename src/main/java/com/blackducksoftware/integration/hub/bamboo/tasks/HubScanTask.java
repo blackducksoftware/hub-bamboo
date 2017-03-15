@@ -187,12 +187,21 @@ public class HubScanTask implements TaskType {
                 }
             }
             if (!hubScanConfig.isDryRun()) {
-                final ProjectVersionView version = getProjectVersionFromScanStatus(services.createCodeLocationRequestService(logger),
-                        services.createProjectVersionRequestService(logger),
-                        metaService, scanSummaryList.get(0));
-                final ProjectView project = getProjectFromVersion(services.createProjectRequestService(), metaService, version);
+                ProjectVersionView version = null;
+                ProjectView project = null;
 
                 if (isRiskReportGenerated || isFailOnPolicySelected) {
+                    if (scanSummaryList.isEmpty()) {
+                        logger.error("Could not find the scan summaries. Check that the status directory exists.");
+                        result = resultBuilder.failedWithError().build();
+                        logTaskResult(logger, result);
+                        return result;
+                    }
+                    version = getProjectVersionFromScanStatus(services.createCodeLocationRequestService(logger),
+                            services.createProjectVersionRequestService(logger),
+                            metaService, scanSummaryList.get(0));
+                    project = getProjectFromVersion(services.createProjectRequestService(), metaService, version);
+
                     services.createScanStatusDataService(logger, waitTimeForReport).assertBomImportScansFinished(scanSummaryList);
                 }
                 if (isRiskReportGenerated) {
