@@ -20,7 +20,7 @@
     <amps.version>6.2.3</amps.version>
     <bamboo.data.version>5.3</bamboo.data.version>
     <bamboo.version>5.14.0</bamboo.version>
-    <hub.common.version>8.3.0</hub.common.version>
+    <hub.common.version>12.0.1</hub.common.version>
     <plugin.testrunner.version>1.1.4</plugin.testrunner.version>
     <source.java.version>1.8</source.java.version>
     <target.java.version>1.8</target.java.version>
@@ -57,6 +57,11 @@
   </pluginRepositories>
 
   <dependencies>
+    <dependency>
+      <groupId>com.blackducksoftware.integration</groupId>
+      <artifactId>hub-common-rest</artifactId>
+      <version>2.1.1</version>
+    </dependency>
     <dependency>
       <groupId>com.blackducksoftware.integration</groupId>
       <artifactId>hub-common</artifactId>
