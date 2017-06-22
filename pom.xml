@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hub-bamboo</artifactId>
-  <version>3.1.0</version>
+  <version>3.1.1-SNAPSHOT</version>
   <packaging>atlassian-plugin</packaging>
 
   <!-- If the group or artifact changes then you must update HubBambooPluginHelper -->
@@ -57,11 +57,6 @@
   </pluginRepositories>
 
   <dependencies>
-    <dependency>
-      <groupId>com.blackducksoftware.integration</groupId>
-      <artifactId>hub-common-rest</artifactId>
-      <version>2.1.1</version>
-    </dependency>
     <dependency>
       <groupId>com.blackducksoftware.integration</groupId>
       <artifactId>hub-common</artifactId>
