@@ -46,7 +46,6 @@ import com.atlassian.bamboo.task.TaskContext;
 import com.atlassian.bamboo.task.TaskException;
 import com.atlassian.bamboo.task.TaskResult;
 import com.atlassian.bamboo.task.TaskResultBuilder;
-import com.atlassian.bamboo.task.TaskState;
 import com.atlassian.bamboo.task.TaskType;
 import com.atlassian.bamboo.util.BuildUtils;
 import com.atlassian.bamboo.v2.build.BuildContext;
@@ -179,12 +178,10 @@ public class HubScanTask implements TaskType {
                         new IntegrationInfo(ThirdPartyName.BAMBOO.getName(), thirdPartyVersion, pluginVersion));
 
             } catch (final ScanFailedException e) {
-                if (resultBuilder.getTaskState() != TaskState.SUCCESS) {
-                    logger.error("Hub Scan Failed : " + e.getMessage());
-                    result = resultBuilder.build();
-                    logTaskResult(logger, result);
-                    return result;
-                }
+                logger.error("Hub Scan Failed : " + e.getMessage());
+                result = resultBuilder.failedWithError().build();
+                logTaskResult(logger, result);
+                return result;
             }
             if (!hubScanConfig.isDryRun()) {
                 ProjectVersionView version = null;
