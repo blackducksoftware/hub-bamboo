@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -101,6 +102,7 @@ public class HubBambooUtilsTest {
         assertNotNull(HubBambooUtils.getInstance());
     }
 
+    @Ignore
     @Test
     public void testBuildConfig() throws Exception {
         final HubServerConfig config = HubBambooUtils.getInstance()

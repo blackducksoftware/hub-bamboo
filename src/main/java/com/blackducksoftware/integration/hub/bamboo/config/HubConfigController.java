@@ -364,7 +364,11 @@ public class HubConfigController {
             serverConfigBuilder
                     .setPasswordLength(NumberUtils.toInt(getValue(settings, HubConfigKeys.CONFIG_HUB_PASS_LENGTH)));
         }
-        serverConfigBuilder.setAutoImportHttpsCertificates(config.getImportSSLCerts());
+
+        if (config.getImportSSLCerts() != null) {
+            serverConfigBuilder.setAutoImportHttpsCertificates(config.getImportSSLCerts());
+        }
+
         serverConfigBuilder.setProxyHost(config.getHubProxyHost());
         serverConfigBuilder.setProxyPort(config.getHubProxyPort());
         serverConfigBuilder.setIgnoredProxyHosts(config.getHubNoProxyHosts());
