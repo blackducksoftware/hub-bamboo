@@ -64,6 +64,12 @@
 		      </div>
 		      
 		      <div class="field-group">
+                <label class="label" for="importSSLCerts">$i18n.getText("hub.integration.bamboo.import.certificates.label")</label>
+                <input type="checkbox" id="importSSLCerts" name="importSSLCerts">
+                <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.import.certificates.description')"></span>
+              </div>
+              
+		      <div class="field-group">
 		        <label class="label" for="hubWorkspaceCheck">$i18n.getText("hub.integration.bamboo.workspace.check.label")</label>
 		        <input type="checkbox" id="hubWorkspaceCheck" name="hubWorkspaceCheck">
 		        <span class="fa fa-info-circle infoIcon" title="$i18n.getText('hub.integration.bamboo.workspace.check.description')"></span>

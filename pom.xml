@@ -9,7 +9,7 @@
   </parent>
 
   <artifactId>hub-bamboo</artifactId>
-  <version>3.1.1-SNAPSHOT</version>
+  <version>3.2.0-SNAPSHOT</version>
   <packaging>atlassian-plugin</packaging>
 
   <!-- If the group or artifact changes then you must update HubBambooPluginHelper -->
@@ -20,7 +20,7 @@
     <amps.version>6.2.3</amps.version>
     <bamboo.data.version>5.3</bamboo.data.version>
     <bamboo.version>5.14.0</bamboo.version>
-    <hub.common.version>12.0.1</hub.common.version>
+    <hub.common.version>13.1.0</hub.common.version>
     <plugin.testrunner.version>1.1.4</plugin.testrunner.version>
     <source.java.version>1.8</source.java.version>
     <target.java.version>1.8</target.java.version>

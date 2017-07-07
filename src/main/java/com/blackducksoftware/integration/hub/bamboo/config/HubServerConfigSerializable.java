@@ -103,6 +103,9 @@ public class HubServerConfigSerializable implements Serializable {
     private int hubProxyPasswordLength;
 
     @XmlElement
+    private Boolean importSSLCerts;
+
+    @XmlElement
     private Boolean hubWorkspaceCheck;
 
     public HubServerConfigSerializable() {
@@ -340,6 +343,14 @@ public class HubServerConfigSerializable implements Serializable {
 
     public void setTestConnectionError(final String testConnectionError) {
         this.testConnectionError = testConnectionError;
+    }
+
+    public Boolean getImportSSLCerts() {
+        return importSSLCerts;
+    }
+
+    public void setImportSSLCerts(final Boolean importSSLCerts) {
+        this.importSSLCerts = importSSLCerts;
     }
 
     public Boolean getHubWorkspaceCheck() {

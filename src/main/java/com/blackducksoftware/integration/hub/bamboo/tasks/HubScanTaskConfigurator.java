@@ -36,6 +36,7 @@ import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
+import com.blackducksoftware.integration.hub.request.validator.ProjectRequestValidator;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
 import com.blackducksoftware.integration.validator.ValidationResult;
@@ -61,8 +62,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
     public void validate(final ActionParametersMap params, final ErrorCollection errorCollection) {
         super.validate(params, errorCollection);
 
-        final String project = params.getString(HubScanConfigFieldEnum.PROJECT.getKey());
-        final String version = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
+        final String projectName = params.getString(HubScanConfigFieldEnum.PROJECT.getKey());
+        final String versionName = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String bomWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
@@ -77,25 +78,28 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsString);
 
+        final ProjectRequestValidator projectRequestValidator = new ProjectRequestValidator();
+        projectRequestValidator.setProjectName(projectName);
+        projectRequestValidator.setVersionName(versionName);
+        final ValidationResults projectRequesResult = projectRequestValidator.assertValid();
+        if (!projectRequesResult.isSuccess()) {
+            checkValidationErrors(HubScanConfigFieldEnum.PROJECT, projectRequesResult, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.VERSION, projectRequesResult, errorCollection);
+        }
         final HubScanConfigValidator hubScanJobConfigValidator = new HubScanConfigValidator();
-        hubScanJobConfigValidator.setProjectName(project);
-        hubScanJobConfigValidator.setVersion(version);
         hubScanJobConfigValidator.setScanMemory(scanMemory);
         hubScanJobConfigValidator.addAllScanTargetPaths(new HashSet<>(scanTargets));
         hubScanJobConfigValidator.disableScanTargetPathExistenceCheck();
-        final ValidationResults result = hubScanJobConfigValidator.assertValid();
-        validateExcludePatterns(result, excludePatterns);
-        if (!result.isSuccess()) {
-
-            checkValidationErrors(HubScanConfigFieldEnum.PROJECT, result, errorCollection);
-            checkValidationErrors(HubScanConfigFieldEnum.VERSION, result, errorCollection);
-            checkValidationErrors(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, result, errorCollection);
-            checkValidationErrors(HubScanConfigFieldEnum.SCANMEMORY, result, errorCollection);
+        final ValidationResults scanConfigResult = hubScanJobConfigValidator.assertValid();
+        validateExcludePatterns(scanConfigResult, excludePatterns);
+        if (!scanConfigResult.isSuccess()) {
+            checkValidationErrors(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE, scanConfigResult, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.SCANMEMORY, scanConfigResult, errorCollection);
             if (!scanTargets.isEmpty()) {
-                checkValidationErrors(HubScanConfigFieldEnum.TARGETS, result, errorCollection);
+                checkValidationErrors(HubScanConfigFieldEnum.TARGETS, scanConfigResult, errorCollection);
             }
         }
-        checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, result, errorCollection);
+        checkValidationErrors(HubScanConfigFieldEnum.EXCLUDE_PATTERNS, scanConfigResult, errorCollection);
         checkBomWaitTime(bomWaitTime, errorCollection);
     }
 

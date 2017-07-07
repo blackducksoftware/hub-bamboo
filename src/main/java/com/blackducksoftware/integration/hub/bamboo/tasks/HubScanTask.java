@@ -52,10 +52,8 @@ import com.atlassian.bamboo.v2.build.BuildContext;
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.plugin.PluginAccessor;
 import com.blackducksoftware.integration.exception.IntegrationException;
-import com.blackducksoftware.integration.hub.api.codelocation.CodeLocationRequestService;
 import com.blackducksoftware.integration.hub.api.item.MetaService;
 import com.blackducksoftware.integration.hub.api.project.ProjectRequestService;
-import com.blackducksoftware.integration.hub.api.project.version.ProjectVersionRequestService;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooLogger;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooPluginHelper;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
@@ -66,12 +64,11 @@ import com.blackducksoftware.integration.hub.dataservice.report.RiskReportDataSe
 import com.blackducksoftware.integration.hub.exception.ScanFailedException;
 import com.blackducksoftware.integration.hub.global.HubServerConfig;
 import com.blackducksoftware.integration.hub.model.enumeration.VersionBomPolicyStatusOverallStatusEnum;
-import com.blackducksoftware.integration.hub.model.view.CodeLocationView;
 import com.blackducksoftware.integration.hub.model.view.ProjectVersionView;
 import com.blackducksoftware.integration.hub.model.view.ProjectView;
-import com.blackducksoftware.integration.hub.model.view.ScanSummaryView;
 import com.blackducksoftware.integration.hub.model.view.VersionBomPolicyStatusView;
 import com.blackducksoftware.integration.hub.phonehome.IntegrationInfo;
+import com.blackducksoftware.integration.hub.request.builder.ProjectRequestBuilder;
 import com.blackducksoftware.integration.hub.rest.RestConnection;
 import com.blackducksoftware.integration.hub.scan.HubScanConfig;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
@@ -136,7 +133,7 @@ public class HubScanTask implements TaskType {
             final HubServicesFactory services = new HubServicesFactory(restConnection);
             services.addEnvironmentVariables(envVars);
             final MetaService metaService = services.createMetaService(logger);
-            final CLIDataService cliDataService = services.createCLIDataService(logger);
+            final CLIDataService cliDataService = services.createCLIDataService(logger, hubConfig.getTimeout() * 60 * 1000);
             final File toolsDir = new File(HubBambooUtils.getInstance().getBambooHome(), CLI_FOLDER_NAME);
 
             final String thirdPartyVersion = BuildUtils.getCurrentVersion();
@@ -168,15 +165,18 @@ public class HubScanTask implements TaskType {
                 logTaskResult(logger, result);
                 return result;
             }
+            final ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder();
+            projectRequestBuilder.setProjectName(taskConfigMap.get(HubScanConfigFieldEnum.PROJECT.getKey()));
+            projectRequestBuilder.setVersionName(taskConfigMap.get(HubScanConfigFieldEnum.VERSION.getKey()));
 
             final boolean isFailOnPolicySelected = taskConfigMap
                     .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 
-            List<ScanSummaryView> scanSummaryList = null;
+            ProjectVersionView version = null;
             try {
-                scanSummaryList = cliDataService.installAndRunScan(hubConfig, hubScanConfig,
+                version = cliDataService.installAndRunControlledScan(
+                        hubConfig, hubScanConfig, projectRequestBuilder.build(), isRiskReportGenerated || isFailOnPolicySelected,
                         new IntegrationInfo(ThirdPartyName.BAMBOO.getName(), thirdPartyVersion, pluginVersion));
-
             } catch (final ScanFailedException e) {
                 logger.error("Hub Scan Failed : " + e.getMessage());
                 result = resultBuilder.failedWithError().build();
@@ -184,22 +184,10 @@ public class HubScanTask implements TaskType {
                 return result;
             }
             if (!hubScanConfig.isDryRun()) {
-                ProjectVersionView version = null;
                 ProjectView project = null;
 
                 if (isRiskReportGenerated || isFailOnPolicySelected) {
-                    if (scanSummaryList.isEmpty()) {
-                        logger.error("Could not find the scan summaries. Check that the status directory exists.");
-                        result = resultBuilder.failedWithError().build();
-                        logTaskResult(logger, result);
-                        return result;
-                    }
-                    version = getProjectVersionFromScanStatus(services.createCodeLocationRequestService(logger),
-                            services.createProjectVersionRequestService(logger),
-                            metaService, scanSummaryList.get(0));
                     project = getProjectFromVersion(services.createProjectRequestService(logger), metaService, version);
-
-                    services.createScanStatusDataService(logger, waitTimeForReport).assertBomImportScansFinished(scanSummaryList);
                 }
                 if (isRiskReportGenerated) {
                     final SecureToken token = SecureToken.createFromString(taskContext.getRuntimeTaskContext().get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
@@ -232,16 +220,6 @@ public class HubScanTask implements TaskType {
 
     private void logTaskResult(final IntLogger logger, final TaskResult result) {
         logger.info("HUB Scan Task result: " + result.getTaskState());
-    }
-
-    private ProjectVersionView getProjectVersionFromScanStatus(final CodeLocationRequestService codeLocationRequestService,
-            final ProjectVersionRequestService projectVersionRequestService, final MetaService metaService, final ScanSummaryView scanSummaryItem)
-            throws IntegrationException {
-        final CodeLocationView codeLocationItem = codeLocationRequestService
-                .getItem(metaService.getFirstLink(scanSummaryItem, MetaService.CODE_LOCATION_BOM_STATUS_LINK), CodeLocationView.class);
-        final String projectVersionUrl = codeLocationItem.mappedProjectVersion;
-        final ProjectVersionView projectVersion = projectVersionRequestService.getItem(projectVersionUrl, ProjectVersionView.class);
-        return projectVersion;
     }
 
     private ProjectView getProjectFromVersion(final ProjectRequestService projectRequestService, final MetaService metaService,
@@ -288,6 +266,7 @@ public class HubScanTask implements TaskType {
             final String hubUser = getPersistedValue(HubConfigKeys.CONFIG_HUB_USER);
             final String hubPass = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS);
             final String hubPassLength = getPersistedValue(HubConfigKeys.CONFIG_HUB_PASS_LENGTH);
+            final String hubImportSSLCerts = getPersistedValue(HubConfigKeys.CONFIG_HUB_IMPORT_SSL_CERTIFICATES);
             final String hubProxyUrl = getPersistedValue(HubConfigKeys.CONFIG_PROXY_HOST);
             final String hubProxyPort = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PORT);
             final String hubProxyNoHost = getPersistedValue(HubConfigKeys.CONFIG_PROXY_NO_HOST);
@@ -296,7 +275,7 @@ public class HubScanTask implements TaskType {
             final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
             final HubServerConfig result = HubBambooUtils.getInstance()
-                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubProxyUrl, hubProxyPort,
+                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubImportSSLCerts, hubProxyUrl, hubProxyPort,
                             hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
             return result;
         } catch (final IllegalStateException e) {
@@ -309,9 +288,6 @@ public class HubScanTask implements TaskType {
     private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
             final IntLogger logger) throws IOException {
         try {
-            final String project = configMap.get(HubScanConfigFieldEnum.PROJECT.getKey());
-            final String version = configMap.get(HubScanConfigFieldEnum.VERSION.getKey());
-
             final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
             final String cleanupLogsOnSuccess = configMap.get(HubScanConfigFieldEnum.CLEANUP_LOGS_ON_SUCCESS.getKey());
 
@@ -341,8 +317,6 @@ public class HubScanTask implements TaskType {
             }
 
             final HubScanConfigBuilder hubScanConfigBuilder = new HubScanConfigBuilder();
-            hubScanConfigBuilder.setProjectName(project);
-            hubScanConfigBuilder.setVersion(version);
             hubScanConfigBuilder.setWorkingDirectory(workingDirectory);
             hubScanConfigBuilder.setDryRun(Boolean.valueOf(dryRun));
             hubScanConfigBuilder.setCleanupLogsOnSuccess(Boolean.valueOf(cleanupLogsOnSuccess));

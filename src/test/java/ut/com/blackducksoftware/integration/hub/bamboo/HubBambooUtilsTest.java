@@ -104,7 +104,7 @@ public class HubBambooUtilsTest {
     @Test
     public void testBuildConfig() throws Exception {
         final HubServerConfig config = HubBambooUtils.getInstance()
-                .buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, VALID_HOST, VALID_PORT,
+                .buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, null, VALID_HOST, VALID_PORT,
                         VALID_IGNORE_HOST, null, null, EMPTY_PASSWORD_LENGTH);
         assertNotNull(config);
         assertEquals(new URL(HUB_URL), config.getHubUrl());
@@ -115,7 +115,7 @@ public class HubBambooUtilsTest {
     @Test
     public void testInvalidConfig() throws Exception {
         exception.expect(IllegalStateException.class);
-        HubBambooUtils.getInstance().buildConfigFromStrings(null, null, null, null, VALID_HOST, VALID_PORT,
+        HubBambooUtils.getInstance().buildConfigFromStrings(null, null, null, null, null, VALID_HOST, VALID_PORT,
                 VALID_IGNORE_HOST, VALID_USERNAME, VALID_PASSWORD, EMPTY_PASSWORD_LENGTH);
     }
 

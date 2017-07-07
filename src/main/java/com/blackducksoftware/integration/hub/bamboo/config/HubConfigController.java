@@ -49,6 +49,7 @@ import com.atlassian.sal.api.transaction.TransactionTemplate;
 import com.atlassian.sal.api.user.UserManager;
 import com.blackducksoftware.integration.encryption.PasswordEncrypter;
 import com.blackducksoftware.integration.exception.EncryptionException;
+import com.blackducksoftware.integration.exception.IntegrationCertificateException;
 import com.blackducksoftware.integration.exception.IntegrationException;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
 import com.blackducksoftware.integration.hub.bamboo.tasks.HubConfigKeys;
@@ -131,9 +132,14 @@ public class HubConfigController {
                 final String proxyPassword = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS);
                 final String proxyPasswordLength = getValue(settings, HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
+                final String importSSLCertsString = getValue(settings, HubConfigKeys.CONFIG_HUB_IMPORT_SSL_CERTIFICATES);
                 final String hubWorkspaceCheckString = getValue(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
 
+                Boolean importSSLCerts = false;
                 Boolean hubWorkspaceCheck = true;
+                if (StringUtils.isNotBlank(importSSLCertsString)) {
+                    importSSLCerts = Boolean.valueOf(importSSLCerts);
+                }
                 if (StringUtils.isNotBlank(hubWorkspaceCheckString)) {
                     hubWorkspaceCheck = Boolean.valueOf(hubWorkspaceCheckString);
                 }
@@ -145,6 +151,7 @@ public class HubConfigController {
                 serverConfigBuilder.setTimeout(timeout);
                 serverConfigBuilder.setUsername(username);
                 serverConfigBuilder.setPassword(password);
+                serverConfigBuilder.setAutoImportHttpsCertificates(importSSLCerts);
                 serverConfigBuilder.setPasswordLength(NumberUtils.toInt(passwordLength));
                 serverConfigBuilder.setProxyHost(proxyHost);
                 serverConfigBuilder.setProxyPort(proxyPort);
@@ -241,6 +248,7 @@ public class HubConfigController {
                 setValue(settings, HubConfigKeys.CONFIG_PROXY_NO_HOST, config.getHubNoProxyHosts());
                 setValue(settings, HubConfigKeys.CONFIG_PROXY_USER, config.getHubProxyUser());
 
+                setValue(settings, HubConfigKeys.CONFIG_HUB_IMPORT_SSL_CERTIFICATES, config.getImportSSLCerts());
                 setValue(settings, HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK, config.getHubWorkspaceCheck());
 
                 final String proxyPassword = config.getHubProxyPassword();
@@ -283,25 +291,38 @@ public class HubConfigController {
             transactionTemplate.execute(new TransactionCallback() {
                 @Override
                 public Object doInTransaction() {
-
                     final HubServerConfigBuilder serverConfigBuilder = setConfigBuilderFromSerializableConfig(config,
                             settings);
 
                     setConfigFromResult(config, serverConfigBuilder.createValidator());
 
-                    if (config.hasErrors()) {
+                    if (config.hasErrors() && !config.getImportSSLCerts()) {
                         return config;
                     } else {
-                        final HubServerConfig serverConfig = serverConfigBuilder.build();
+                        HubServerConfig serverConfig = null;
                         try {
-                            final RestConnection restConnection = HubBambooUtils.getInstance().getRestConnection(null, serverConfig);
-                            restConnection.connect();
-
+                            try {
+                                serverConfig = serverConfigBuilder.build();
+                            } catch (final IllegalStateException e) {
+                                if (e instanceof IntegrationCertificateException
+                                        || e.getMessage().toLowerCase().contains("ssl")) {
+                                    config.setHubUrlError("ERROR: Certificate could not be imported into the java keystore. "
+                                            + "Please ensure the bamboo user has proper read/write access.");
+                                } else {
+                                    config.setHubUrlError(e.getMessage());
+                                }
+                            }
+                            if (serverConfig != null) {
+                                // if a cert was imported, we can connect and remove error messages
+                                final RestConnection restConnection = HubBambooUtils.getInstance().getRestConnection(null,
+                                        serverConfig);
+                                restConnection.connect();
+                                config.setHubUrlError(null);
+                            }
                         } catch (final IntegrationException e) {
                             if (e.getMessage().toLowerCase().contains("unauthorized")) {
                                 config.setUsernameError(
-                                        "Username and Password are invalid for : " + serverConfig.getHubUrl());
-
+                                        "Username and Password are invalid for : " + config.getHubUrl());
                             } else {
                                 config.setTestConnectionError(e.toString());
                             }
@@ -343,6 +364,7 @@ public class HubConfigController {
             serverConfigBuilder
                     .setPasswordLength(NumberUtils.toInt(getValue(settings, HubConfigKeys.CONFIG_HUB_PASS_LENGTH)));
         }
+        serverConfigBuilder.setAutoImportHttpsCertificates(config.getImportSSLCerts());
         serverConfigBuilder.setProxyHost(config.getHubProxyHost());
         serverConfigBuilder.setProxyPort(config.getHubProxyPort());
         serverConfigBuilder.setIgnoredProxyHosts(config.getHubNoProxyHosts());

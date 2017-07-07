@@ -54,6 +54,7 @@ function putConfig(restUrl, successMessage, failureMessage) {
 		    + '", "hubNoProxyHosts": "' + encodeURI(AJS.$("#noProxyHost").val())
 		    + '", "hubProxyUser": "' + encodeURI(AJS.$("#proxyUsername").val())
 		    + '", "hubProxyPassword": "' + encodeURI(AJS.$("#proxyPassword").val())
+		    + '", "importSSLCerts": "' + AJS.$("#importSSLCerts").prop('checked')
 		    + '", "hubWorkspaceCheck": "' + AJS.$("#hubWorkspaceCheck").prop('checked')
 		    + '"}',
 		    processData: false,
@@ -107,6 +108,7 @@ function populateForm() {
 	      updateValue("proxyUsername", config.hubProxyUser);
 	      updateValue("proxyPassword", config.hubProxyPassword);
 	      updateValue("noProxyHost", config.hubNoProxyHosts);
+	      updateCheckBox("importSSLCerts", config.importSSLCerts);
 	      updateCheckBox("hubWorkspaceCheck", config.hubWorkspaceCheck);
 	      
 	      checkProxyConfig();
