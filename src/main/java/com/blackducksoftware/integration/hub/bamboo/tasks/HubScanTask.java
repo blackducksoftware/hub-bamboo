@@ -168,6 +168,9 @@ public class HubScanTask implements TaskType {
             final ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder();
             projectRequestBuilder.setProjectName(taskConfigMap.get(HubScanConfigFieldEnum.PROJECT.getKey()));
             projectRequestBuilder.setVersionName(taskConfigMap.get(HubScanConfigFieldEnum.VERSION.getKey()));
+            projectRequestBuilder.setPhase(taskConfigMap.get(HubScanConfigFieldEnum.PHASE.getKey()));
+            projectRequestBuilder.setDistribution(taskConfigMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey()));
+            projectRequestBuilder.setProjectLevelAdjustments(taskConfigMap.getAsBoolean(HubScanConfigFieldEnum.PROJECT_LEVEL_ADJUSTMENTS.getKey()));
 
             final boolean isFailOnPolicySelected = taskConfigMap
                     .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());

@@ -26,6 +26,7 @@ package com.blackducksoftware.integration.hub.bamboo.tasks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +37,8 @@ import com.atlassian.bamboo.task.AbstractTaskConfigurator;
 import com.atlassian.bamboo.task.TaskDefinition;
 import com.atlassian.bamboo.utils.error.ErrorCollection;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
+import com.blackducksoftware.integration.hub.model.enumeration.ProjectVersionDistributionEnum;
+import com.blackducksoftware.integration.hub.model.enumeration.ProjectVersionPhaseEnum;
 import com.blackducksoftware.integration.hub.request.validator.ProjectRequestValidator;
 import com.blackducksoftware.integration.hub.scan.HubScanConfigFieldEnum;
 import com.blackducksoftware.integration.hub.validator.HubScanConfigValidator;
@@ -44,6 +47,10 @@ import com.blackducksoftware.integration.validator.ValidationResultEnum;
 import com.blackducksoftware.integration.validator.ValidationResults;
 
 public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
+
+    private static final String PHASES = "hubPhases";
+
+    private static final String DISTRIBUTIONS = "hubDistributions";
 
     @Override
     public Map<String, String> generateTaskConfigMap(final ActionParametersMap params,
@@ -64,6 +71,8 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         final String projectName = params.getString(HubScanConfigFieldEnum.PROJECT.getKey());
         final String versionName = params.getString(HubScanConfigFieldEnum.VERSION.getKey());
+        final String phase = params.getString(HubScanConfigFieldEnum.PHASE.getKey());
+        final String distribution = params.getString(HubScanConfigFieldEnum.DISTRIBUTION.getKey());
         final String scanMemory = params.getString(HubScanConfigFieldEnum.SCANMEMORY.getKey());
         final String bomWaitTime = params.getString(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey());
         final String scanTargetText = params.getString(HubScanConfigFieldEnum.TARGETS.getKey());
@@ -81,10 +90,14 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         final ProjectRequestValidator projectRequestValidator = new ProjectRequestValidator();
         projectRequestValidator.setProjectName(projectName);
         projectRequestValidator.setVersionName(versionName);
+        projectRequestValidator.setPhase(phase);
+        projectRequestValidator.setDistribution(distribution);
         final ValidationResults projectRequesResult = projectRequestValidator.assertValid();
         if (!projectRequesResult.isSuccess()) {
             checkValidationErrors(HubScanConfigFieldEnum.PROJECT, projectRequesResult, errorCollection);
             checkValidationErrors(HubScanConfigFieldEnum.VERSION, projectRequesResult, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.PHASE, projectRequesResult, errorCollection);
+            checkValidationErrors(HubScanConfigFieldEnum.DISTRIBUTION, projectRequesResult, errorCollection);
         }
         final HubScanConfigValidator hubScanJobConfigValidator = new HubScanConfigValidator();
         hubScanJobConfigValidator.setScanMemory(scanMemory);
@@ -175,6 +188,11 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
 
         context.put(HubScanConfigFieldEnum.PROJECT.getKey(), "");
         context.put(HubScanConfigFieldEnum.VERSION.getKey(), "");
+        context.put(HubScanConfigFieldEnum.PHASE.getKey(), "");
+        context.put(PHASES, getHubPhases());
+        context.put(HubScanConfigFieldEnum.DISTRIBUTION.getKey(), "");
+        context.put(DISTRIBUTIONS, getHubDistributions());
+        context.put(HubScanConfigFieldEnum.PROJECT_LEVEL_ADJUSTMENTS.getKey(), "true");
         context.put(HubScanConfigFieldEnum.GENERATE_RISK_REPORT.getKey(), "false");
         context.put(HubScanConfigFieldEnum.DRY_RUN.getKey(), "false");
         context.put(HubScanConfigFieldEnum.MAX_WAIT_TIME_FOR_BOM_UPDATE.getKey(),
@@ -199,12 +217,32 @@ public class HubScanTaskConfigurator extends AbstractTaskConfigurator {
         populateContextMap(context, taskDefinition);
     }
 
+    private Map<String, String> getHubPhases() {
+        final Map<String, String> map = new LinkedHashMap<>();
+        map.put(ProjectVersionPhaseEnum.PLANNING.toString(), "In Planning");
+        map.put(ProjectVersionPhaseEnum.DEVELOPMENT.toString(), "In Development");
+        map.put(ProjectVersionPhaseEnum.RELEASED.toString(), "Released");
+        map.put(ProjectVersionPhaseEnum.DEPRECATED.toString(), "Deprecated");
+        map.put(ProjectVersionPhaseEnum.ARCHIVED.toString(), "Archived");
+        return map;
+    }
+
+    private Map<String, String> getHubDistributions() {
+        final Map<String, String> map = new LinkedHashMap<>();
+        map.put(ProjectVersionDistributionEnum.EXTERNAL.toString(), "External");
+        map.put(ProjectVersionDistributionEnum.SAAS.toString(), "SaaS");
+        map.put(ProjectVersionDistributionEnum.INTERNAL.toString(), "Internal");
+        map.put(ProjectVersionDistributionEnum.OPENSOURCE.toString(), "Open Source");
+        return map;
+    }
+
     private void populateContextMap(final Map<String, Object> context, final TaskDefinition taskDefinition) {
 
         for (final HubScanConfigFieldEnum param : HubScanConfigFieldEnum.values()) {
-
             final String key = param.getKey();
             context.put(key, taskDefinition.getConfiguration().get(key));
         }
+        context.put(PHASES, getHubPhases());
+        context.put(DISTRIBUTIONS, getHubDistributions());
     }
 }
