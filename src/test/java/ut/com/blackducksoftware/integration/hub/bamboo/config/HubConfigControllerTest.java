@@ -24,7 +24,6 @@
 package ut.com.blackducksoftware.integration.hub.bamboo.config;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -32,7 +31,6 @@ import static org.junit.Assert.assertTrue;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.atlassian.sal.api.pluginsettings.PluginSettings;
@@ -140,116 +138,6 @@ public class HubConfigControllerTest {
         assertNull(config.getHubProxyPasswordError());
         assertEquals("You have the Hub Atlassian Config installed, please un-install that plugin to reduce confusion.", config.getTestConnectionError());
         assertTrue(config.hasErrors());
-    }
-
-    @Ignore
-    @Test
-    public void testGetConfigNotAdminInGroup() throws Exception {
-        final String testUrl = "https://www.google.com";
-        final String username = "username";
-        final String passwordClear = "password";
-        final String passwordEnc = PasswordEncrypter.encrypt(passwordClear);
-        final String passwordMasked = HubServerConfigSerializable.getMaskedString(passwordClear.length());
-        final String timeout = "120";
-        final String group = "TestGroup";
-
-        final UserManagerMock managerMock = new UserManagerMock();
-        managerMock.setRemoteUsername("User");
-        managerMock.setUserGroup(group);
-        final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
-        final PluginSettings settings = settingsFactory.createGlobalSettings();
-        settings.put(HubConfigKeys.HUB_CONFIG_GROUPS, group);
-        settings.put(HubConfigKeys.CONFIG_HUB_URL, testUrl);
-        settings.put(HubConfigKeys.CONFIG_HUB_USER, username);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS, passwordEnc);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS_LENGTH, String.valueOf(passwordClear.length()));
-        settings.put(HubConfigKeys.CONFIG_HUB_TIMEOUT, timeout);
-
-        final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
-        final HttpServletRequestMock requestMock = new HttpServletRequestMock();
-        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
-
-        final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager, pluginAccessorMock);
-
-        final Response response = controller.get(requestMock);
-        assertNotNull(response);
-        final Object configObject = response.getEntity();
-        assertNotNull(configObject);
-        final HubServerConfigSerializable config = (HubServerConfigSerializable) configObject;
-        assertEquals(testUrl, config.getHubUrl());
-        assertEquals(username, config.getUsername());
-        assertEquals(passwordMasked, config.getPassword());
-        assertEquals(Integer.valueOf(passwordClear.length()), Integer.valueOf(config.getPasswordLength()));
-        assertEquals(timeout, config.getTimeout());
-        assertNull(config.getHubProxyHost());
-        assertNull(config.getHubProxyUser());
-        assertNull(config.getHubProxyPassword());
-        assertEquals(Integer.valueOf(0), Integer.valueOf(config.getHubProxyPasswordLength()));
-
-        assertNull(config.getHubUrlError());
-        assertNull(config.getUsernameError());
-        assertNull(config.getPasswordError());
-        assertNull(config.getTimeoutError());
-        assertNull(config.getHubProxyHostError());
-        assertNull(config.getHubProxyUserError());
-        assertNull(config.getHubProxyPasswordError());
-        assertNull(config.getTestConnectionError());
-        assertFalse(config.hasErrors());
-    }
-
-    @Ignore
-    @Test
-    public void testGetConfig() throws Exception {
-        final String testUrl = "https://www.google.com";
-        final String username = "username";
-        final String passwordClear = "password";
-        final String passwordEnc = PasswordEncrypter.encrypt(passwordClear);
-        final String passwordMasked = HubServerConfigSerializable.getMaskedString(passwordClear.length());
-        final String timeout = "120";
-
-        final UserManagerMock managerMock = new UserManagerMock();
-        managerMock.setRemoteUsername("User");
-        managerMock.setIsSystemAdmin(true);
-        final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
-        final PluginSettings settings = settingsFactory.createGlobalSettings();
-        settings.put(HubConfigKeys.CONFIG_HUB_URL, testUrl);
-        settings.put(HubConfigKeys.CONFIG_HUB_USER, username);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS, passwordEnc);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS_LENGTH, String.valueOf(passwordClear.length()));
-        settings.put(HubConfigKeys.CONFIG_HUB_TIMEOUT, timeout);
-
-        final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
-        final HttpServletRequestMock requestMock = new HttpServletRequestMock();
-        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
-
-        final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager, pluginAccessorMock);
-
-        final Response response = controller.get(requestMock);
-        assertNotNull(response);
-        final Object configObject = response.getEntity();
-        assertNotNull(configObject);
-        final HubServerConfigSerializable config = (HubServerConfigSerializable) configObject;
-        assertEquals(testUrl, config.getHubUrl());
-        assertEquals(username, config.getUsername());
-        assertEquals(passwordMasked, config.getPassword());
-        assertEquals(Integer.valueOf(passwordClear.length()), Integer.valueOf(config.getPasswordLength()));
-        assertEquals(timeout, config.getTimeout());
-        assertNull(config.getHubProxyHost());
-        assertNull(config.getHubProxyUser());
-        assertNull(config.getHubProxyPassword());
-        assertEquals(Integer.valueOf(0), Integer.valueOf(config.getHubProxyPasswordLength()));
-
-        assertNull(config.getHubUrlError());
-        assertNull(config.getUsernameError());
-        assertNull(config.getPasswordError());
-        assertNull(config.getTimeoutError());
-        assertNull(config.getHubProxyHostError());
-        assertNull(config.getHubProxyUserError());
-        assertNull(config.getHubProxyPasswordError());
-        assertNull(config.getTestConnectionError());
-        assertFalse(config.hasErrors());
     }
 
     @Test
@@ -456,66 +344,6 @@ public class HubConfigControllerTest {
         assertNull(settings.get(HubConfigKeys.CONFIG_HUB_PASS_LENGTH));
         assertNull(settings.get(HubConfigKeys.CONFIG_HUB_TIMEOUT));
 
-    }
-
-    @Ignore
-    @Test
-    public void testSaveConfigNoUpdate() throws Exception {
-        final String testUrl = "https://www.google.com";
-        final String username = "username";
-        final String passwordClear = "password";
-        final String passwordEnc = PasswordEncrypter.encrypt(passwordClear);
-        final String passwordMasked = HubServerConfigSerializable.getMaskedString(passwordClear.length());
-        final String timeout = "120";
-
-        final UserManagerMock managerMock = new UserManagerMock();
-        managerMock.setRemoteUsername("User");
-        managerMock.setIsSystemAdmin(true);
-        final PluginSettingsFactoryMock settingsFactory = new PluginSettingsFactoryMock();
-        final PluginSettings settings = settingsFactory.createGlobalSettings();
-        settings.put(HubConfigKeys.CONFIG_HUB_URL, testUrl);
-        settings.put(HubConfigKeys.CONFIG_HUB_USER, username);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS, passwordEnc);
-        settings.put(HubConfigKeys.CONFIG_HUB_PASS_LENGTH, String.valueOf(passwordClear.length()));
-        settings.put(HubConfigKeys.CONFIG_HUB_TIMEOUT, timeout);
-
-        final TransactionTemplateMock transactionManager = new TransactionTemplateMock();
-        final HttpServletRequestMock requestMock = new HttpServletRequestMock();
-        final PluginAccessorMock pluginAccessorMock = new PluginAccessorMock();
-
-        final HubConfigController controller = new HubConfigController(managerMock, settingsFactory,
-                transactionManager, pluginAccessorMock);
-
-        final HubServerConfigSerializable config = new HubServerConfigSerializable();
-        config.setHubUrl(testUrl);
-        config.setUsername(username);
-        config.setPassword(passwordMasked);
-        config.setTimeout(timeout);
-
-        final Response response = controller.put(config, requestMock);
-        assertNotNull(response);
-        assertEquals(Integer.valueOf(Status.NO_CONTENT.getStatusCode()), Integer.valueOf(response.getStatus()));
-
-        assertEquals(testUrl, config.getHubUrl());
-        assertEquals(username, config.getUsername());
-        assertEquals(passwordMasked, config.getPassword());
-        assertEquals(Integer.valueOf(0), Integer.valueOf(config.getPasswordLength()));
-        assertEquals(timeout, config.getTimeout());
-        assertNull(config.getHubProxyHost());
-        assertNull(config.getHubProxyPort());
-        assertNull(config.getHubProxyUser());
-        assertNull(config.getHubProxyPassword());
-        assertEquals(Integer.valueOf(0), Integer.valueOf(config.getHubProxyPasswordLength()));
-
-        assertNull(config.getHubUrlError());
-        assertNull(config.getUsernameError());
-        assertNull(config.getPasswordError());
-        assertNull(config.getTimeoutError());
-        assertNull(config.getHubProxyHostError());
-        assertNull(config.getHubProxyUserError());
-        assertNull(config.getHubProxyPasswordError());
-        assertNull(config.getTestConnectionError());
-        assertFalse(config.hasErrors());
     }
 
     @Test
