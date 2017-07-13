@@ -29,12 +29,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -42,7 +40,6 @@ import org.junit.rules.ExpectedException;
 import com.atlassian.bamboo.plan.artifact.ArtifactDefinitionContext;
 import com.atlassian.bamboo.security.SecureToken;
 import com.blackducksoftware.integration.hub.bamboo.HubBambooUtils;
-import com.blackducksoftware.integration.hub.global.HubServerConfig;
 
 public class HubBambooUtilsTest {
 
@@ -100,18 +97,6 @@ public class HubBambooUtilsTest {
     @Test
     public void testGetInstance() throws Exception {
         assertNotNull(HubBambooUtils.getInstance());
-    }
-
-    @Ignore
-    @Test
-    public void testBuildConfig() throws Exception {
-        final HubServerConfig config = HubBambooUtils.getInstance()
-                .buildConfigFromStrings(HUB_URL, USER, PASSWORD, EMPTY_PASSWORD_LENGTH, null, VALID_HOST, VALID_PORT,
-                        VALID_IGNORE_HOST, null, null, EMPTY_PASSWORD_LENGTH);
-        assertNotNull(config);
-        assertEquals(new URL(HUB_URL), config.getHubUrl());
-        assertEquals(USER, config.getGlobalCredentials().getUsername());
-        assertEquals(PASSWORD, config.getGlobalCredentials().getDecryptedPassword());
     }
 
     @Test
