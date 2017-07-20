@@ -97,8 +97,7 @@ public class HubScanTask implements TaskType {
 
     private final PluginAccessor pluginAccessor;
 
-    public HubScanTask(final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager,
-            final ArtifactManager artifactManager, final PluginAccessor pluginAccessor) {
+    public HubScanTask(final EnvironmentVariableAccessor environmentVariableAccessor, final BandanaManager bandanaManager, final ArtifactManager artifactManager, final PluginAccessor pluginAccessor) {
         this.environmentVariableAccessor = environmentVariableAccessor;
         this.bandanaManager = bandanaManager;
         this.artifactManager = artifactManager;
@@ -110,8 +109,7 @@ public class HubScanTask implements TaskType {
         final TaskResultBuilder resultBuilder = TaskResultBuilder.newBuilder(taskContext).success();
         TaskResult result;
         final HubBambooLogger logger = new HubBambooLogger(taskContext.getBuildLogger());
-        final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(
-                environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
+        final Map<String, String> envVars = HubBambooUtils.getInstance().getEnvironmentVariablesMap(environmentVariableAccessor.getEnvironment(), environmentVariableAccessor.getEnvironment(taskContext));
 
         final CIEnvironmentVariables commonEnvVars = new CIEnvironmentVariables();
         commonEnvVars.putAll(envVars);
@@ -158,27 +156,24 @@ public class HubScanTask implements TaskType {
             } else {
                 waitTimeForReport = 5 * 60 * 1000;
             }
-            final HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir,
-                    logger);
+            final HubScanConfig hubScanConfig = getScanConfig(taskConfigMap, taskContext.getWorkingDirectory(), toolsDir, logger);
             if (hubScanConfig == null) {
                 result = resultBuilder.failedWithError().build();
                 logTaskResult(logger, result);
                 return result;
             }
             final ProjectRequestBuilder projectRequestBuilder = new ProjectRequestBuilder();
-            projectRequestBuilder.setProjectName(taskConfigMap.get(HubScanConfigFieldEnum.PROJECT.getKey()));
-            projectRequestBuilder.setVersionName(taskConfigMap.get(HubScanConfigFieldEnum.VERSION.getKey()));
+            projectRequestBuilder.setProjectName(taskConfigMap.get(HubScanConfigFieldEnum.PROJECT.getKey()).trim());
+            projectRequestBuilder.setVersionName(taskConfigMap.get(HubScanConfigFieldEnum.VERSION.getKey()).trim());
             projectRequestBuilder.setPhase(taskConfigMap.get(HubScanConfigFieldEnum.PHASE.getKey()));
             projectRequestBuilder.setDistribution(taskConfigMap.get(HubScanConfigFieldEnum.DISTRIBUTION.getKey()));
             projectRequestBuilder.setProjectLevelAdjustments(taskConfigMap.getAsBoolean(HubScanConfigFieldEnum.PROJECT_LEVEL_ADJUSTMENTS.getKey()));
 
-            final boolean isFailOnPolicySelected = taskConfigMap
-                    .getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
+            final boolean isFailOnPolicySelected = taskConfigMap.getAsBoolean(HubScanConfigFieldEnum.FAIL_ON_POLICY_VIOLATION.getKey());
 
             ProjectVersionView version = null;
             try {
-                version = cliDataService.installAndRunControlledScan(
-                        hubConfig, hubScanConfig, projectRequestBuilder.build(), isRiskReportGenerated || isFailOnPolicySelected,
+                version = cliDataService.installAndRunControlledScan(hubConfig, hubScanConfig, projectRequestBuilder.build(), isRiskReportGenerated || isFailOnPolicySelected,
                         new IntegrationInfo(ThirdPartyName.BAMBOO.getName(), thirdPartyVersion, pluginVersion));
             } catch (final ScanFailedException e) {
                 logger.error("Hub Scan Failed : " + e.getMessage());
@@ -194,12 +189,10 @@ public class HubScanTask implements TaskType {
                 }
                 if (isRiskReportGenerated) {
                     final SecureToken token = SecureToken.createFromString(taskContext.getRuntimeTaskContext().get(HubBambooUtils.HUB_TASK_SECURE_TOKEN));
-                    publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger, waitTimeForReport),
-                            project, version);
+                    publishRiskReportFiles(logger, taskContext, token, services.createRiskReportDataService(logger, waitTimeForReport), project, version);
                 }
                 if (isFailOnPolicySelected) {
-                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, services, metaService, version,
-                            hubScanConfig.isDryRun());
+                    final TaskResultBuilder policyResult = checkPolicyFailures(resultBuilder, taskContext, logger, services, metaService, version, hubScanConfig.isDryRun());
 
                     result = policyResult.build();
                 }
@@ -225,17 +218,14 @@ public class HubScanTask implements TaskType {
         logger.info("HUB Scan Task result: " + result.getTaskState());
     }
 
-    private ProjectView getProjectFromVersion(final ProjectRequestService projectRequestService, final MetaService metaService,
-            final ProjectVersionView version)
-            throws IntegrationException {
+    private ProjectView getProjectFromVersion(final ProjectRequestService projectRequestService, final MetaService metaService, final ProjectVersionView version) throws IntegrationException {
         final String projectURL = metaService.getFirstLink(version, MetaService.PROJECT_LINK);
         final ProjectView projectVersion = projectRequestService.getItem(projectURL, ProjectView.class);
         return projectVersion;
     }
 
-    private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext,
-            final IntLogger logger, final HubServicesFactory services, final MetaService metaService, final ProjectVersionView version,
-            final boolean isDryRun) {
+    private TaskResultBuilder checkPolicyFailures(final TaskResultBuilder resultBuilder, final TaskContext taskContext, final IntLogger logger, final HubServicesFactory services, final MetaService metaService,
+            final ProjectVersionView version, final boolean isDryRun) {
         try {
             if (isDryRun) {
                 logger.warn("Will not run the Failure conditions because this was a dry run scan.");
@@ -277,9 +267,8 @@ public class HubScanTask implements TaskType {
             final String hubProxyPass = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS);
             final String hubProxyPassLength = getPersistedValue(HubConfigKeys.CONFIG_PROXY_PASS_LENGTH);
 
-            final HubServerConfig result = HubBambooUtils.getInstance()
-                    .buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubImportSSLCerts, hubProxyUrl, hubProxyPort,
-                            hubProxyNoHost, hubProxyUser, hubProxyPass, hubProxyPassLength);
+            final HubServerConfig result = HubBambooUtils.getInstance().buildConfigFromStrings(hubUrl, hubUser, hubPass, hubPassLength, hubImportSSLCerts, hubProxyUrl, hubProxyPort, hubProxyNoHost, hubProxyUser, hubProxyPass,
+                    hubProxyPassLength);
             return result;
         } catch (final IllegalStateException e) {
             logger.error(e.getMessage());
@@ -288,8 +277,7 @@ public class HubScanTask implements TaskType {
         return null;
     }
 
-    private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir,
-            final IntLogger logger) throws IOException {
+    private HubScanConfig getScanConfig(final ConfigurationMap configMap, final File workingDirectory, final File toolsDir, final IntLogger logger) throws IOException {
         try {
             final String dryRun = configMap.get(HubScanConfigFieldEnum.DRY_RUN.getKey());
             final String cleanupLogsOnSuccess = configMap.get(HubScanConfigFieldEnum.CLEANUP_LOGS_ON_SUCCESS.getKey());
@@ -302,7 +290,7 @@ public class HubScanTask implements TaskType {
             final String[] excludePatterns = HubBambooUtils.getInstance().createExcludePatterns(excludePatternsConfig);
 
             final String scanMemory = configMap.get(HubScanConfigFieldEnum.SCANMEMORY.getKey());
-            final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey());
+            final String codeLocationName = configMap.get(HubScanConfigFieldEnum.CODE_LOCATION_ALIAS.getKey()).trim();
             final String targets = configMap.get(HubScanConfigFieldEnum.TARGETS.getKey());
 
             final String hubWorkspaceCheckString = getPersistedValue(HubConfigKeys.CONFIG_HUB_WORKSPACE_CHECK);
@@ -345,9 +333,7 @@ public class HubScanTask implements TaskType {
         return (String) bandanaManager.getValue(PlanAwareBandanaContext.GLOBAL_CONTEXT, key);
     }
 
-    private void publishRiskReportFiles(final IntLogger logger, final TaskContext taskContext, final SecureToken token,
-            final RiskReportDataService riskReportDataService, final ProjectView project,
-            final ProjectVersionView version) {
+    private void publishRiskReportFiles(final IntLogger logger, final TaskContext taskContext, final SecureToken token, final RiskReportDataService riskReportDataService, final ProjectView project, final ProjectVersionView version) {
 
         final BuildContext buildContext = taskContext.getBuildContext();
         final PlanResultKey planResultKey = buildContext.getPlanResultKey();
@@ -358,8 +344,7 @@ public class HubScanTask implements TaskType {
             riskReportDataService.createReportFiles(baseDirectory, project, version);
             final Map<String, String> config = new HashMap<>();
             final ArtifactDefinitionContext artifact = createArtifactDefContext(token);
-            final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey,
-                    baseDirectory, artifact, config, RISK_REPORT_MINIMUM_FILE_COUNT);
+            final ArtifactPublishingResult publishResult = artifactManager.publish(buildLogger, planResultKey, baseDirectory, artifact, config, RISK_REPORT_MINIMUM_FILE_COUNT);
             if (!publishResult.shouldContinueBuild()) {
                 logger.error("Could not publish the artifacts for the Risk Report");
             }
@@ -379,8 +364,7 @@ public class HubScanTask implements TaskType {
     }
 
     private ArtifactDefinitionContextImpl createArtifactDefContext(final SecureToken token) {
-        final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(
-                HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
+        final ArtifactDefinitionContextImpl artifact = new ArtifactDefinitionContextImpl(HubBambooUtils.HUB_RISK_REPORT_ARTIFACT_NAME, false, token);
         artifact.setCopyPattern("**/*");
         return artifact;
     }
