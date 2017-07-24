@@ -21,6 +21,9 @@ under the License.
  -->
 [@ww.textfield labelKey='blackduckhub.task.scan.project.label' name='hubProject'/]
 [@ww.textfield labelKey='blackduckhub.task.scan.version.label' name='hubVersion'/]
+[@ww.select labelKey='blackduckhub.task.scan.phase.label' name='hubPhase' list='hubPhases' emptyOption='false'/]
+[@ww.select labelKey='blackduckhub.task.scan.distribution.label' name='hubDistribution' list='hubDistributions' emptyOption='false'/]
+[@ww.checkbox labelKey='blackduckhub.task.scan.projectleveladjustments.label' name='projectLevelAdjustments'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.genriskreport.label' name='shouldGenerateRiskReport'/]
 [@ww.checkbox labelKey='blackduckhub.task.scan.failonpolicy.label' name='failOnPolicyViolation'/]
 [@ww.textfield labelKey='blackduckhub.task.scan.maxwaittimebomupdate.label' name='maxWaitTimeForBomUpdate'/] 
